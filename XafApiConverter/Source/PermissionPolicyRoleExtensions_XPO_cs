@@ -1,0 +1,57 @@
+﻿using System;
+using DevExpress.ExpressApp.Security;
+using DevExpress.ExpressApp.Security.Strategy;
+using DevExpress.Persistent.Base;
+
+namespace DevExpress.Persistent.BaseImpl.PermissionPolicy {
+    static class PermissionPolicyRoleExtensions {
+        public static IPermissionPolicyTypePermissionObject EnsureTypePermissions<T>(this PermissionPolicyRole role, string operations) where T : class {
+            return role.AddTypePermission<T>(operations, SecurityPermissionState.Allow);
+        }
+        public static IPermissionPolicyTypePermissionObject EnsureTypePermissions(this PermissionPolicyRole role, Type targetType, string securityOperations) {
+            return role.AddTypePermission(targetType, securityOperations, SecurityPermissionState.Allow);
+        }
+        public static IPermissionPolicyTypePermissionObject EnsureTypePermissionObject(this PermissionPolicyRole role, Type targetType) {
+            return role.EnsureTypePermission(targetType);
+        }
+        public static IPermissionPolicyTypePermissionObject EnsureTypePermissionObject<T>(this PermissionPolicyRole role) where T : class {
+            return role.EnsureTypePermission<T>();
+        }
+        public static IPermissionPolicyTypePermissionObject SetTypePermissions<T>(this PermissionPolicyRole role, string securityOperations, SecuritySystemModifier modifier) where T : class {
+            return role.AddTypePermission<T>(securityOperations, modifier == SecuritySystemModifier.Allow ? SecurityPermissionState.Allow : SecurityPermissionState.Deny);
+        }
+        public static IPermissionPolicyTypePermissionObject SetTypePermissions(this PermissionPolicyRole role, Type targetType, string securityOperations, SecuritySystemModifier modifier) {
+            return role.AddTypePermission(targetType, securityOperations, modifier == SecuritySystemModifier.Allow ? SecurityPermissionState.Allow : SecurityPermissionState.Deny);
+        }
+        public static IPermissionPolicyObjectPermissionsObject AddObjectAccessPermission<T>(this PermissionPolicyRole role, string criteria, string operations) where T : class {
+            return role.AddObjectPermission<T>(operations, criteria, SecurityPermissionState.Allow);
+        }
+        public static IPermissionPolicyObjectPermissionsObject AddObjectAccessPermission(this PermissionPolicyRole role, Type targetType, string criteria, string operations) {
+            return role.AddObjectPermission(targetType, operations, criteria, SecurityPermissionState.Allow);
+        }
+        public static IPermissionPolicyMemberPermissionsObject AddMemberAccessPermission<T>(this PermissionPolicyRole role, string properties, string operations) where T : class {
+            return role.AddMemberPermission<T>(operations, properties, null, SecurityPermissionState.Allow);
+        }
+        public static IPermissionPolicyMemberPermissionsObject AddMemberAccessPermission<T>(this PermissionPolicyRole role, string properties, string operations, string criteria) where T : class {
+            return role.AddMemberPermission<T>(operations, properties, criteria, SecurityPermissionState.Allow);
+        }
+        public static IPermissionPolicyMemberPermissionsObject AddMemberAccessPermission(this PermissionPolicyRole role, Type targetType, string members, string operations) {
+            return role.AddMemberPermission(targetType, operations, members, null, SecurityPermissionState.Allow);
+        }
+        public static IPermissionPolicyMemberPermissionsObject AddMemberAccessPermission(this PermissionPolicyRole role, Type targetType, string members, string operations, string criteria) {
+            return role.AddMemberPermission(targetType, operations, members, criteria, SecurityPermissionState.Allow);
+        }
+        public static void SetTypePermissionsRecursively<T>(this PermissionPolicyRole role, string securityOperations, SecuritySystemModifier modifier) {
+            role.AddTypePermissionsRecursively<T>(securityOperations, modifier == SecuritySystemModifier.Allow ? SecurityPermissionState.Allow : SecurityPermissionState.Deny);
+        }
+        public static void SetTypePermissionsRecursively(this PermissionPolicyRole role, Type targetType, string securityOperations, SecuritySystemModifier modifier) {
+            role.AddTypePermissionsRecursively(targetType, securityOperations, modifier == SecuritySystemModifier.Allow ? SecurityPermissionState.Allow : SecurityPermissionState.Deny);
+        }
+        public static IPermissionPolicyTypePermissionObject FindTypePermissionObject<T>(this PermissionPolicyRole role) where T : class {
+            return role.FindFirstTypePermission<T>();
+        }
+        public static IPermissionPolicyTypePermissionObject FindTypePermissionObject(this PermissionPolicyRole role, Type targetType) {
+            return role.FindFirstTypePermission(targetType);
+        }
+    }
+}
