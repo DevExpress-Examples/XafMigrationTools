@@ -54,7 +54,6 @@ namespace XafApiConverter {
         }
 
         static bool ProcessDocument(Document doc) {
-            var semanticModel = doc.GetSemanticModelAsync().Result;
             var syntaxRoot = doc.GetSyntaxRootAsync().Result;
             var oldSyntaxRoot = syntaxRoot;
             bool isProjectReferencesEf = IsProjectReferencesEF6(doc.Project);
@@ -108,6 +107,14 @@ namespace XafApiConverter {
                     syntaxRoot = UsingsRewriter.AddUsingNamespaces(syntaxRoot, new string[] { "DevExpress.Persistent.BaseImpl.PermissionPolicy" });
                     CreateFileFromResource(doc.Project, "PermissionPolicyRoleExtensions.cs", "XafApiConverter.PermissionPolicyRoleExtensions_XPO_cs");
                 }
+            }
+
+            if (syntaxRoot != oldSyntaxRoot) {
+                doc = doc.WithText(syntaxRoot.GetText());
+                syntaxRoot = doc.GetSyntaxRootAsync().Result;
+                var semanticModel = doc.GetSemanticModelAsync().Result;
+                var permissionStateReplacer = new PermissionStateSetterRewriter(semanticModel);
+                syntaxRoot = permissionStateReplacer.Visit(syntaxRoot);
             }
 
             if (syntaxRoot != oldSyntaxRoot) {
