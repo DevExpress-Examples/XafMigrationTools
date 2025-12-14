@@ -5,13 +5,9 @@ using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace XafApiConverter {
     class FeatureToggleRemoveRewriter : CSharpSyntaxRewriter {
-        readonly SemanticModel semanticModel;
-        readonly SyntaxNode syntaxRoot;
         readonly string[] featureTogglesToRemove;
 
-        public FeatureToggleRemoveRewriter(SemanticModel semanticModel, SyntaxNode syntaxRoot, string[] featureTogglesToRemove) {
-            this.semanticModel = semanticModel;
-            this.syntaxRoot = syntaxRoot;
+        public FeatureToggleRemoveRewriter(string[] featureTogglesToRemove) {
             this.featureTogglesToRemove = featureTogglesToRemove;
         }
 
@@ -25,19 +21,13 @@ namespace XafApiConverter {
                 isInsideAssignmentExpression = false;
                 if (hasFeatureToggleAccess) {
                     hasFeatureToggleAccess = false;
-                    newNode = CommentLine(newNode);
+                    newNode = SyntaxTreeHelper.CommentLine(newNode);
                 }
                 return newNode;
             }
             else {
                 return base.VisitAssignmentExpression(node);
             }
-        }
-
-        static SyntaxNode CommentLine(SyntaxNode line) {
-            var trivias = line.GetLeadingTrivia();
-            trivias = trivias.Add(SyntaxFactory.Comment("// "));
-            return line.WithLeadingTrivia(trivias);
         }
 
         public override SyntaxNode VisitIdentifierName(IdentifierNameSyntax node) {

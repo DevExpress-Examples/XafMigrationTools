@@ -59,7 +59,7 @@ namespace XafApiConverter {
             var oldSyntaxRoot = syntaxRoot;
             bool isProjectReferencesEf = IsProjectReferencesEF6(doc.Project);
 
-            var featureTogglesRemover = new FeatureToggleRemoveRewriter(semanticModel, syntaxRoot, new string[] {
+            var featureTogglesRemover = new FeatureToggleRemoveRewriter(new string[] {
                 "SecuritySystemRole.AutoAssociationPermissions",
                 "PasswordCryptographer.EnableRfc2898",
                 "PasswordCryptographer.SupportLegacySha512"
@@ -84,7 +84,7 @@ namespace XafApiConverter {
                 typeReplacements.Add("DevExpress.ExpressApp.Security.Strategy.SecuritySystemMemberPermissionsObject", "DevExpress.Persistent.BaseImpl.PermissionPolicy.PermissionPolicyMemberPermissionsObject");
             }
             foreach (var typeReplacement in typeReplacements) {
-                var replacer = new TypeReplaceRewriter(semanticModel, syntaxRoot, typeReplacement.Key, typeReplacement.Value);
+                var replacer = new TypeReplaceRewriter(typeReplacement.Key, typeReplacement.Value);
                 syntaxRoot = replacer.Visit(syntaxRoot);
             }
 

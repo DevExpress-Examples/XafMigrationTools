@@ -5,8 +5,6 @@ using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 namespace XafApiConverter {
     class TypeReplaceRewriter : CSharpSyntaxRewriter {
-        readonly SemanticModel semanticModel;
-        readonly SyntaxNode syntaxRoot;
         readonly string replaceFromFullName;
         readonly string replaceFromShortName;
         readonly string[] replaceFromNameParts;
@@ -14,11 +12,8 @@ namespace XafApiConverter {
         readonly string replaceToShortName;
         readonly string[] replaceToNameParts;
 
-        public TypeReplaceRewriter(SemanticModel semanticModel, SyntaxNode syntaxRoot,
-            string replaceFromFullName,
+        public TypeReplaceRewriter(string replaceFromFullName,
             string replaceToFullName) {
-            this.semanticModel = semanticModel;
-            this.syntaxRoot = syntaxRoot;
             replaceFromNameParts = replaceFromFullName.Split('.');
             replaceToNameParts = replaceToFullName.Split('.');
             this.replaceFromFullName = replaceFromFullName;
