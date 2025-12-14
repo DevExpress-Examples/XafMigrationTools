@@ -45,6 +45,13 @@ namespace XafApiConverter {
                                 node = node.WithRight(denyValue).WithTriviaFrom(node);
                             }
                         }
+                        else {
+                            var newRightText = $" ? DevExpress.Persistent.Base.SecurityPermissionState.Allow : DevExpress.Persistent.Base.SecurityPermissionState.Deny";
+                            var trailing = node.Right.GetTrailingTrivia();
+                            trailing = trailing.Insert(0, SyntaxFactory.Comment(newRightText));
+                            var newRight = node.Right.WithTrailingTrivia(trailing);
+                            node = node.WithRight(newRight);
+                        }
                     }
                 }
             }
