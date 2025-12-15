@@ -234,7 +234,25 @@ namespace XafApiConverter.Converter {
 
         private void AddCustomItems(XElement project, XDocument originalDoc) {
             // Add other custom items that SDK doesn't auto-include
-            var customItems = new List<XElement>();
+            
+            // CRITICAL: Preserve ProjectReference elements
+            var projectReferences = originalDoc.Descendants()
+                .Where(e => e.Name.LocalName == "ProjectReference")
+                .ToList();
+
+            if (projectReferences.Any()) {
+                var projectRefGroup = new XElement("ItemGroup");
+                foreach (var projRef in projectReferences) {
+                    // Simplify ProjectReference for SDK-style
+                    var include = projRef.Attribute("Include")?.Value;
+                    if (!string.IsNullOrEmpty(include)) {
+                        var newProjRef = new XElement("ProjectReference");
+                        newProjRef.SetAttributeValue("Include", include);
+                        projectRefGroup.Add(newProjRef);
+                    }
+                }
+                project.Add(projectRefGroup);
+            }
 
             // Get None items with special metadata
             var noneItems = originalDoc.Descendants()
@@ -246,14 +264,17 @@ namespace XafApiConverter.Converter {
                 .Where(e => e.Name.LocalName == "Content" && e.HasElements)
                 .ToList();
 
-            customItems.AddRange(noneItems);
-            customItems.AddRange(contentItems);
-
-            if (customItems.Any()) {
+            if (noneItems.Any() || contentItems.Any()) {
                 var itemGroup = new XElement("ItemGroup");
-                foreach (var item in customItems) {
+                
+                foreach (var item in noneItems) {
                     itemGroup.Add(new XElement(item));
                 }
+                
+                foreach (var item in contentItems) {
+                    itemGroup.Add(new XElement(item));
+                }
+                
                 project.Add(itemGroup);
             }
         }

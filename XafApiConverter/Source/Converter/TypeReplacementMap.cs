@@ -234,8 +234,6 @@ namespace XafApiConverter.Converter {
                 null,
                 "KpiModule has no .NET equivalent") },
 
-            KpiModule
-
             { "WebMapsPropertyEditor", new TypeReplacement(
                 "WebMapsPropertyEditor",
                 null,
