@@ -56,6 +56,13 @@ namespace XafApiConverter.Converter {
                 // Step 4: Analyze project type
                 var projectInfo = AnalyzeProject(doc, projectDir);
 
+                // Step 4.5: Process AssemblyInfo.cs if it has Web-specific attributes
+                if (projectInfo.HasManualAssemblyInfo && 
+                    AssemblyInfoProcessor.HasWebSpecificAttributes(projectDir)) {
+                    Console.WriteLine("  Processing AssemblyInfo.cs for Web-specific attributes...");
+                    AssemblyInfoProcessor.ProcessAssemblyInfo(projectDir);
+                }
+
                 // Step 5: Create new SDK-style project
                 var newDoc = CreateSdkStyleProject(doc, projectInfo, projectPath);
 
@@ -86,9 +93,19 @@ namespace XafApiConverter.Converter {
         }
 
         private ProjectInfo AnalyzeProject(XDocument doc, string projectDir) {
+            var projectPath = Path.Combine(projectDir, Path.GetFileName(projectDir) + ".csproj");
+            if (!File.Exists(projectPath)) {
+                // Try to find .csproj file in directory
+                var csprojFiles = Directory.GetFiles(projectDir, "*.csproj");
+                if (csprojFiles.Length > 0) {
+                    projectPath = csprojFiles[0];
+                }
+            }
+
             var info = new ProjectInfo {
                 IsWindowsProject = DetectWindowsProject(doc),
                 IsWebProject = DetectWebProject(doc, projectDir),
+                IsEfProject = PackageManager.IsProjectReferencesEF(projectPath),
                 RootNamespace = ExtractProperty(doc, "RootNamespace"),
                 AssemblyName = ExtractProperty(doc, "AssemblyName"),
                 HasManualAssemblyInfo = HasManualAssemblyInfo(projectDir)
@@ -175,7 +192,7 @@ namespace XafApiConverter.Converter {
 
 
         private void AddPackageReferences(XElement project, ProjectInfo info) {
-            var packages = _packageManager.GetPackages(info.IsWindowsProject, info.IsWebProject);
+            var packages = _packageManager.GetPackages(info.IsWindowsProject, info.IsWebProject, info.IsEfProject);
 
             if (packages.Any()) {
                 var itemGroup = new XElement("ItemGroup");
@@ -316,6 +333,7 @@ namespace XafApiConverter.Converter {
         private class ProjectInfo {
             public bool IsWindowsProject { get; set; }
             public bool IsWebProject { get; set; }
+            public bool IsEfProject { get; set; }
             public string RootNamespace { get; set; }
             public string AssemblyName { get; set; }
             public bool HasManualAssemblyInfo { get; set; }

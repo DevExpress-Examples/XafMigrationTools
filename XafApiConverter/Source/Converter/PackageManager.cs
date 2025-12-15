@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 
 namespace XafApiConverter.Converter {
@@ -15,13 +16,13 @@ namespace XafApiConverter.Converter {
         }
 
         /// <summary>
-        /// Get all required packages based on project type
+        /// Get all required packages based on project type and ORM
         /// </summary>
-        public List<PackageReference> GetPackages(bool isWindowsProject, bool isWebProject) {
+        public List<PackageReference> GetPackages(bool isWindowsProject, bool isWebProject, bool isEfProject = false) {
             var packages = new List<PackageReference>();
 
             // BASE packages (always included)
-            AddBasePackages(packages);
+            AddBasePackages(packages, isEfProject);
 
             // WINDOWS packages
             if (isWindowsProject) {
@@ -30,15 +31,36 @@ namespace XafApiConverter.Converter {
 
             // BLAZOR_WEB packages
             if (isWebProject) {
-                AddBlazorWebPackages(packages);
+                AddBlazorWebPackages(packages, isEfProject);
             }
 
             // Deduplicate (APPENDIX B rules)
             return DeduplicatePackages(packages);
         }
 
+        /// <summary>
+        /// Detect if project uses EF6 or EFCore
+        /// </summary>
+        public static bool IsProjectReferencesEF(string projectPath) {
+            if (!File.Exists(projectPath)) {
+                return false;
+            }
 
-        private void AddBasePackages(List<PackageReference> packages) {
+            var efReferences = new[] {
+                "DevExpress.ExpressApp.EF6",
+                "DevExpress.Persistent.BaseImpl.EF6",
+                "DevExpress.ExpressApp.Security.EF6",
+                "DevExpress.ExpressApp.EFCore",
+                "DevExpress.Persistent.BaseImpl.EFCore",
+                "DevExpress.ExpressApp.Security.EFCore"
+            };
+
+            var content = File.ReadAllText(projectPath);
+            return efReferences.Any(efRef => content.Contains(efRef, StringComparison.OrdinalIgnoreCase));
+        }
+
+
+        private void AddBasePackages(List<PackageReference> packages, bool isEfProject) {
             var dx = _config.DxPackageVersion;
 
             // DevExpress packages
@@ -53,12 +75,25 @@ namespace XafApiConverter.Converter {
                 new PackageReference("DevExpress.ExpressApp.Security", dx),
                 new PackageReference("DevExpress.ExpressApp.Validation", dx),
                 new PackageReference("DevExpress.ExpressApp.ViewVariantsModule", dx),
-                new PackageReference("DevExpress.Persistent.BaseImpl.Xpo", dx),
                 new PackageReference("DevExpress.ExpressApp.Notifications", dx),
                 new PackageReference("DevExpress.ExpressApp.Scheduler", dx),
                 new PackageReference("DevExpress.ExpressApp.StateMachine", dx),
-                new PackageReference("DevExpress.ExpressApp.Dashboards", dx)
+                new PackageReference("DevExpress.ExpressApp.Dashboards", dx),
+                new PackageReference("DevExpress.ExpressApp.Chart", dx),
+                new PackageReference("DevExpress.ExpressApp.PivotGrid.Win", dx)
             });
+
+            // ORM-specific base packages
+            if (isEfProject) {
+                // EF Core packages
+                packages.Add(new PackageReference("DevExpress.Persistent.BaseImpl.EFCore", dx));
+                packages.Add(new PackageReference("DevExpress.ExpressApp.AuditTrail.EFCore", dx));
+            }
+            else {
+                // XPO packages (default)
+                packages.Add(new PackageReference("DevExpress.Persistent.BaseImpl.Xpo", dx));
+                packages.Add(new PackageReference("DevExpress.ExpressApp.AuditTrail.Xpo", dx));
+            }
 
             // Microsoft packages
             packages.AddRange(new[] {
@@ -103,11 +138,13 @@ namespace XafApiConverter.Converter {
                 new PackageReference("DevExpress.ExpressApp.Dashboards.Win", dx, PackageSet.Windows),
                 new PackageReference("DevExpress.ExpressApp.Scheduler.Win", dx, PackageSet.Windows),
                 new PackageReference("DevExpress.ExpressApp.TreeListEditors.Win", dx, PackageSet.Windows),
+                new PackageReference("DevExpress.ExpressApp.Chart.Win", dx, PackageSet.Windows),
+                new PackageReference("DevExpress.ExpressApp.PivotGrid.Win", dx, PackageSet.Windows),
                 new PackageReference("DevExpress.Win.Demos", dx, PackageSet.Windows)
             });
         }
 
-        private void AddBlazorWebPackages(List<PackageReference> packages) {
+        private void AddBlazorWebPackages(List<PackageReference> packages, bool isEfProject) {
             var dx = _config.DxPackageVersion;
 
             // DevExtreme
@@ -134,20 +171,33 @@ namespace XafApiConverter.Converter {
                 new PackageReference("System.Security.Permissions", _config.PackageVersions["VER_SYSTEM_SECURITY_PERMISSIONS"], PackageSet.BlazorWeb)
             });
 
-            // DevExpress Blazor
+            // DevExpress Blazor (common)
             packages.AddRange(new[] {
                 new PackageReference("DevExpress.ExpressApp.Notifications.Blazor", dx, PackageSet.BlazorWeb),
-                new PackageReference("DevExpress.ExpressApp.AuditTrail.Xpo", dx, PackageSet.BlazorWeb),
                 new PackageReference("DevExpress.ExpressApp.ReportsV2.Blazor", dx, PackageSet.BlazorWeb),
                 new PackageReference("DevExpress.ExpressApp.Scheduler.Blazor", dx, PackageSet.BlazorWeb),
                 new PackageReference("DevExpress.ExpressApp.Dashboards.Blazor", dx, PackageSet.BlazorWeb),
                 new PackageReference("DevExpress.ExpressApp.FileAttachment.Blazor", dx, PackageSet.BlazorWeb),
                 new PackageReference("DevExpress.ExpressApp.Office.Blazor", dx, PackageSet.BlazorWeb),
                 new PackageReference("DevExpress.ExpressApp.Validation.Blazor", dx, PackageSet.BlazorWeb),
-                new PackageReference("DevExpress.ExpressApp.Security.Xpo", dx, PackageSet.BlazorWeb),
-                new PackageReference("DevExpress.ExpressApp.WebApi.Xpo", dx, PackageSet.BlazorWeb),
+                new PackageReference("DevExpress.ExpressApp.Security.AspNetCore", dx, PackageSet.BlazorWeb),
                 new PackageReference("DevExpress.Drawing.Skia", dx, PackageSet.BlazorWeb)
             });
+
+            // ORM-specific Blazor packages
+            if (isEfProject) {
+                // EF Core packages
+                packages.AddRange(new[] {
+                    new PackageReference("DevExpress.ExpressApp.Security.AspNetCore.EFCore", dx, PackageSet.BlazorWeb),
+                });
+            }
+            else {
+                // XPO packages (default)
+                packages.AddRange(new[] {
+                    new PackageReference("DevExpress.ExpressApp.Security.AspNetCore.Xpo", dx, PackageSet.BlazorWeb),
+                    new PackageReference("DevExpress.ExpressApp.WebApi.Xpo", dx, PackageSet.BlazorWeb)
+                });
+            }
         }
 
         /// <summary>
