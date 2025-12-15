@@ -111,6 +111,32 @@ namespace XafApiConverter.Converter {
                 
                 // If multiple classes with same name found (shouldn't happen in valid C#), take the first
                 var classDecl = allClasses.First();
+                
+                // STEP 4.5: Check if this is a partial class and find all its parts
+                bool isPartial = classDecl.Modifiers.Any(m => m.IsKind(SyntaxKind.PartialKeyword));
+                if (isPartial) {
+                    var partialParts = FindPartialClassParts(className, filePath);
+                    if (partialParts.Any()) {
+                        Console.WriteLine($"      [INFO] Class {className} is partial with {partialParts.Count} additional part(s)");
+                        Console.WriteLine($"      [WARNING] Partial class detected. All parts must be commented out together:");
+                        Console.WriteLine($"         - {Path.GetFileName(filePath)} (current)");
+                        foreach (var part in partialParts) {
+                            Console.WriteLine($"         - {Path.GetFileName(part.FilePath)}");
+                        }
+                        Console.WriteLine($"      [ACTION] Commenting out all parts of partial class {className}...");
+                        
+                        // Comment out all other parts first
+                        foreach (var part in partialParts) {
+                            if (!CommentOutPartialClassPart(part.FilePath, className, problematicClass)) {
+                                Console.WriteLine($"      [ERROR] Failed to comment out partial class part in {Path.GetFileName(part.FilePath)}");
+                                return false;
+                            }
+                        }
+                        
+                        // Then comment out the current part (this file)
+                        // Continue with normal flow below...
+                    }
+                }
 
                 // STEP 5: Additional check - verify the class is not inside a comment
                 // by checking if it's part of a trivia (comment)
@@ -125,6 +151,9 @@ namespace XafApiConverter.Converter {
 
                 // STEP 6: Build comment header
                 var comment = BuildClassComment(problematicClass);
+                if (isPartial) {
+                    comment = comment.Replace("// NOTE:", "// NOTE: Partial class");
+                }
 
                 // STEP 7: Get ONLY the class code directly from file content
                 // Use direct substring instead of GetText() to avoid Roslyn capturing commented code
@@ -149,7 +178,7 @@ namespace XafApiConverter.Converter {
                 // STEP 10: Save file (this invalidates all syntax nodes)
                 File.WriteAllText(filePath, newContent, Encoding.UTF8);
                 
-                Console.WriteLine($"      [SUCCESS] Class {className} commented out successfully");
+                Console.WriteLine($"      [SUCCESS] Class {className} commented out successfully{(isPartial ? " (partial)" : "")}");
                 
                 // STEP 11: Syntax tree is now stale - will be reloaded on next iteration
                 return true;
@@ -157,6 +186,62 @@ namespace XafApiConverter.Converter {
             catch (Exception ex) {
                 Console.WriteLine($"      [ERROR] Failed to comment out class {className} in {filePath}: {ex.Message}");
                 Console.WriteLine($"      Stack trace: {ex.StackTrace}");
+                return false;
+            }
+        }
+        
+        /// <summary>
+        /// Comment out a single part of a partial class
+        /// </summary>
+        private bool CommentOutPartialClassPart(string filePath, string className, ProblematicClass problematicClass) {
+            try {
+                var content = File.ReadAllText(filePath);
+                
+                // Check if already commented
+                if (IsClassAlreadyCommented(content, className)) {
+                    Console.WriteLine($"         - {Path.GetFileName(filePath)}: already commented, skipping");
+                    return true;
+                }
+                
+                var syntaxTree = CSharpSyntaxTree.ParseText(content);
+                var root = syntaxTree.GetRoot() as CompilationUnitSyntax;
+                
+                if (root == null) return false;
+                
+                var classDecl = root.DescendantNodes()
+                    .OfType<ClassDeclarationSyntax>()
+                    .Where(c => c.Identifier.Text == className)
+                    .Where(c => !IsClassInsideComment(c, content))
+                    .FirstOrDefault();
+                
+                if (classDecl == null) {
+                    Console.WriteLine($"         - {Path.GetFileName(filePath)}: class not found, skipping");
+                    return true;
+                }
+                
+                var comment = BuildClassComment(problematicClass);
+                comment = comment.Replace("// NOTE:", "// NOTE: Partial class part");
+                
+                var classStartPosition = classDecl.SpanStart;
+                var classLength = classDecl.Span.Length;
+                var classText = content.Substring(classStartPosition, classLength);
+                var leadingTrivia = classDecl.GetLeadingTrivia();
+                
+                var commentedClass = BuildCommentedClassText(comment, classText, leadingTrivia);
+                
+                var beforeClass = content.Substring(0, classStartPosition);
+                var afterClass = content.Length > classStartPosition + classLength
+                    ? content.Substring(classStartPosition + classLength)
+                    : string.Empty;
+                
+                var newContent = beforeClass + commentedClass + afterClass;
+                File.WriteAllText(filePath, newContent, Encoding.UTF8);
+                
+                Console.WriteLine($"         - {Path.GetFileName(filePath)}: commented successfully");
+                return true;
+            }
+            catch (Exception ex) {
+                Console.WriteLine($"         - {Path.GetFileName(filePath)}: ERROR - {ex.Message}");
                 return false;
             }
         }
@@ -258,6 +343,51 @@ namespace XafApiConverter.Converter {
             }
             
             return false;
+        }
+        
+        /// <summary>
+        /// Find all parts of a partial class across the project
+        /// Returns list of (filePath, className) tuples for all partial class parts
+        /// </summary>
+        private List<(string FilePath, string ClassName)> FindPartialClassParts(string className, string currentFilePath) {
+            var parts = new List<(string, string)>();
+            
+            // Get the directory of the current file
+            var directory = Path.GetDirectoryName(currentFilePath);
+            if (string.IsNullOrEmpty(directory)) {
+                return parts;
+            }
+            
+            // Search for potential partial class files
+            // Common patterns: ClassName.cs, ClassName.Designer.cs, ClassName.Generated.cs, etc.
+            var potentialFiles = Directory.GetFiles(directory, "*.cs", SearchOption.TopDirectoryOnly)
+                .Where(f => !f.Equals(currentFilePath, StringComparison.OrdinalIgnoreCase));
+            
+            foreach (var file in potentialFiles) {
+                try {
+                    var content = File.ReadAllText(file);
+                    var tree = CSharpSyntaxTree.ParseText(content);
+                    var root = tree.GetRoot() as CompilationUnitSyntax;
+                    
+                    if (root != null) {
+                        // Find partial classes with the same name
+                        var partialClasses = root.DescendantNodes()
+                            .OfType<ClassDeclarationSyntax>()
+                            .Where(c => c.Identifier.Text == className && 
+                                       c.Modifiers.Any(m => m.IsKind(SyntaxKind.PartialKeyword)))
+                            .Where(c => !IsClassInsideComment(c, content));
+                        
+                        foreach (var partialClass in partialClasses) {
+                            parts.Add((file, className));
+                        }
+                    }
+                }
+                catch (Exception ex) {
+                    Console.WriteLine($"      [WARNING] Error checking file {file} for partial class: {ex.Message}");
+                }
+            }
+            
+            return parts;
         }
         
         /// <summary>
