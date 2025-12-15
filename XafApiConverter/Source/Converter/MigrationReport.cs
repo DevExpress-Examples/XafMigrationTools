@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -52,7 +52,7 @@ namespace XafApiConverter.Converter {
             sb.AppendLine($"| XAFML Files Processed | {XafmlFilesProcessed} |");
             sb.AppendLine($"| Namespaces Replaced | {NamespacesReplaced} |");
             sb.AppendLine($"| Types Replaced | {TypesReplaced} |");
-            sb.AppendLine($"| Build Status | {(BuildSuccessful ? "? Success" : "? Failed")} |");
+            sb.AppendLine($"| Build Status | {(BuildSuccessful ? "✅ Success" : "❌ Failed")} |");
             sb.AppendLine($"| Problematic Classes | {ProblematicClasses.Count} |");
             sb.AppendLine($"| XAFML Problems | {XafmlProblems.Count} |");
             sb.AppendLine($"| Fixable Errors | {FixableErrors.Count} |");
@@ -60,25 +60,25 @@ namespace XafApiConverter.Converter {
             sb.AppendLine();
 
             // Automatic Changes
-            sb.AppendLine("## ? Automatic Changes Applied");
+            sb.AppendLine("## ✅ Automatic Changes Applied");
             sb.AppendLine();
             sb.AppendLine($"The migration tool has automatically applied {NamespacesReplaced} namespace replacements ");
             sb.AppendLine($"and {TypesReplaced} type replacements across {FilesProcessed} files.");
             sb.AppendLine();
             sb.AppendLine("**Namespace Migrations:**");
-            sb.AppendLine("- `System.Data.SqlClient` ? `Microsoft.Data.SqlClient`");
-            sb.AppendLine("- `DevExpress.ExpressApp.Web.*` ? `DevExpress.ExpressApp.Blazor.*`");
+            sb.AppendLine("- `System.Data.SqlClient` → `Microsoft.Data.SqlClient`");
+            sb.AppendLine("- `DevExpress.ExpressApp.Web.*` → `DevExpress.ExpressApp.Blazor.*`");
             sb.AppendLine();
             sb.AppendLine("**Type Replacements:**");
-            sb.AppendLine("- `WebApplication` ? `BlazorApplication`");
-            sb.AppendLine("- `ASPxGridListEditor` ? `DxGridListEditor`");
-            sb.AppendLine("- `ASPxLookupPropertyEditor` ? `LookupPropertyEditor`");
-            sb.AppendLine("- `*AspNetModule` ? `*BlazorModule`");
+            sb.AppendLine("- `WebApplication` → `BlazorApplication`");
+            sb.AppendLine("- `ASPxGridListEditor` → `DxGridListEditor`");
+            sb.AppendLine("- `ASPxLookupPropertyEditor` → `LookupPropertyEditor`");
+            sb.AppendLine("- `*AspNetModule` → `*BlazorModule`");
             sb.AppendLine();
 
             // Problematic Classes
             if (ProblematicClasses.Any()) {
-                sb.AppendLine("## ?? Classes Requiring LLM Analysis");
+                sb.AppendLine("## ⚠️ Classes Requiring LLM Analysis");
                 sb.AppendLine();
                 sb.AppendLine($"Found **{ProblematicClasses.Count} classes** that use types with NO Blazor equivalent.");
                 sb.AppendLine("These require manual review and decision-making:");
@@ -92,10 +92,10 @@ namespace XafApiConverter.Converter {
                     sb.AppendLine("**Problems:**");
                     foreach (var problem in problematicClass.Problems) {
                         var severity = problem.Severity switch {
-                            ProblemSeverity.Critical => "?? CRITICAL",
-                            ProblemSeverity.High => "?? HIGH",
-                            ProblemSeverity.Medium => "?? MEDIUM",
-                            _ => "?? LOW"
+                            ProblemSeverity.Critical => "🔴 CRITICAL",
+                            ProblemSeverity.High => "🟠 HIGH",
+                            ProblemSeverity.Medium => "🟡 MEDIUM",
+                            _ => "🟢 LOW"
                         };
                         sb.AppendLine($"- {severity}: {problem.Reason}");
                         sb.AppendLine($"  - Type: `{problem.FullTypeName}`");
@@ -106,7 +106,7 @@ namespace XafApiConverter.Converter {
                     sb.AppendLine();
 
                     if (problematicClass.DependentClasses.Any()) {
-                        sb.AppendLine("**?? Dependent Classes (will also need to be commented out):**");
+                        sb.AppendLine("**⚠️ Dependent Classes (will also need to be commented out):**");
                         foreach (var dependent in problematicClass.DependentClasses) {
                             sb.AppendLine($"- `{dependent}`");
                         }
@@ -128,7 +128,7 @@ namespace XafApiConverter.Converter {
 
             // XAFML Problems
             if (XafmlProblems.Any()) {
-                sb.AppendLine("## ?? XAFML Files Requiring Attention");
+                sb.AppendLine("## ⚠️ XAFML Files Requiring Attention");
                 sb.AppendLine();
                 sb.AppendLine($"Found **{XafmlProblems.Count} XAFML problems** in model files.");
                 sb.AppendLine();
@@ -148,11 +148,11 @@ namespace XafApiConverter.Converter {
 
             // Build Errors
             if (!BuildSuccessful) {
-                sb.AppendLine("## ?? Build Errors Analysis");
+                sb.AppendLine("## 🔧 Build Errors Analysis");
                 sb.AppendLine();
 
                 if (FixableErrors.Any()) {
-                    sb.AppendLine($"### ? Fixable Errors ({FixableErrors.Count})");
+                    sb.AppendLine($"### ✅ Fixable Errors ({FixableErrors.Count})");
                     sb.AppendLine();
                     sb.AppendLine("These errors can be fixed automatically or with simple changes:");
                     sb.AppendLine();
@@ -174,7 +174,7 @@ namespace XafApiConverter.Converter {
                 }
 
                 if (UnfixableErrors.Any()) {
-                    sb.AppendLine($"### ? Unfixable Errors ({UnfixableErrors.Count})");
+                    sb.AppendLine($"### ❌ Unfixable Errors ({UnfixableErrors.Count})");
                     sb.AppendLine();
                     sb.AppendLine("These errors require manual intervention or commenting out code:");
                     sb.AppendLine();
@@ -197,7 +197,7 @@ namespace XafApiConverter.Converter {
             }
 
             // Recommendations
-            sb.AppendLine("## ?? Next Steps for LLM");
+            sb.AppendLine("## 📋 Next Steps for LLM");
             sb.AppendLine();
             sb.AppendLine("### Phase 1: Review Problematic Classes");
             if (ProblematicClasses.Any()) {
@@ -209,7 +209,7 @@ namespace XafApiConverter.Converter {
                 sb.AppendLine("3. Consider dependency cascade effects");
             }
             else {
-                sb.AppendLine("? No problematic classes detected!");
+                sb.AppendLine("✅ No problematic classes detected!");
             }
             sb.AppendLine();
 
@@ -221,7 +221,7 @@ namespace XafApiConverter.Converter {
                 sb.AppendLine($"2. Review and manually fix {UnfixableErrors.Count} unfixable errors");
             }
             if (BuildSuccessful) {
-                sb.AppendLine("? Project builds successfully!");
+                sb.AppendLine("✅ Project builds successfully!");
             }
             sb.AppendLine();
 
@@ -232,12 +232,12 @@ namespace XafApiConverter.Converter {
                 sb.AppendLine("3. Test application behavior after XAFML changes");
             }
             else {
-                sb.AppendLine("? No XAFML problems detected!");
+                sb.AppendLine("✅ No XAFML problems detected!");
             }
             sb.AppendLine();
 
             // Standard Comment Format
-            sb.AppendLine("## ?? Standard Comment Format");
+            sb.AppendLine("## 📝 Standard Comment Format");
             sb.AppendLine();
             sb.AppendLine("When commenting out code, use this format:");
             sb.AppendLine();
@@ -279,53 +279,53 @@ namespace XafApiConverter.Converter {
         /// </summary>
         public void PrintSummary() {
             Console.WriteLine();
-            Console.WriteLine("???????????????????????????????????????????????");
+            Console.WriteLine("═══════════════════════════════════════════════");
             Console.WriteLine("      Type Migration Report Summary");
-            Console.WriteLine("???????????????????????????????????????????????");
+            Console.WriteLine("═══════════════════════════════════════════════");
             Console.WriteLine();
 
             Console.ForegroundColor = ConsoleColor.Green;
-            Console.WriteLine($"? Automatic Changes:");
+            Console.WriteLine($"✅ Automatic Changes:");
             Console.ResetColor();
-            Console.WriteLine($"   � Namespaces replaced: {NamespacesReplaced}");
-            Console.WriteLine($"   � Types replaced: {TypesReplaced}");
-            Console.WriteLine($"   � Files processed: {FilesProcessed}");
-            Console.WriteLine($"   � XAFML files: {XafmlFilesProcessed}");
+            Console.WriteLine($"   • Namespaces replaced: {NamespacesReplaced}");
+            Console.WriteLine($"   • Types replaced: {TypesReplaced}");
+            Console.WriteLine($"   • Files processed: {FilesProcessed}");
+            Console.WriteLine($"   • XAFML files: {XafmlFilesProcessed}");
             Console.WriteLine();
 
             if (ProblematicClasses.Any() || XafmlProblems.Any()) {
                 Console.ForegroundColor = ConsoleColor.Yellow;
-                Console.WriteLine($"??  Requires LLM Analysis:");
+                Console.WriteLine($"⚠️  Requires LLM Analysis:");
                 Console.ResetColor();
                 if (ProblematicClasses.Any()) {
-                    Console.WriteLine($"   � Problematic classes: {ProblematicClasses.Count}");
+                    Console.WriteLine($"   • Problematic classes: {ProblematicClasses.Count}");
                     var totalDependencies = ProblematicClasses.Sum(c => c.DependentClasses.Count);
                     if (totalDependencies > 0) {
-                        Console.WriteLine($"   � Dependent classes: {totalDependencies}");
+                        Console.WriteLine($"   • Dependent classes: {totalDependencies}");
                     }
                 }
                 if (XafmlProblems.Any()) {
-                    Console.WriteLine($"   � XAFML problems: {XafmlProblems.Count}");
+                    Console.WriteLine($"   • XAFML problems: {XafmlProblems.Count}");
                 }
                 Console.WriteLine();
             }
 
             if (!BuildSuccessful) {
                 Console.ForegroundColor = ConsoleColor.Red;
-                Console.WriteLine($"?? Build Errors:");
+                Console.WriteLine($"🔧 Build Errors:");
                 Console.ResetColor();
-                Console.WriteLine($"   � Fixable: {FixableErrors.Count}");
-                Console.WriteLine($"   � Unfixable: {UnfixableErrors.Count}");
+                Console.WriteLine($"   • Fixable: {FixableErrors.Count}");
+                Console.WriteLine($"   • Unfixable: {UnfixableErrors.Count}");
                 Console.WriteLine();
             }
             else {
                 Console.ForegroundColor = ConsoleColor.Green;
-                Console.WriteLine($"? Project builds successfully!");
+                Console.WriteLine($"✅ Project builds successfully!");
                 Console.ResetColor();
                 Console.WriteLine();
             }
 
-            Console.WriteLine("???????????????????????????????????????????????");
+            Console.WriteLine("═══════════════════════════════════════════════");
             Console.WriteLine();
         }
     }

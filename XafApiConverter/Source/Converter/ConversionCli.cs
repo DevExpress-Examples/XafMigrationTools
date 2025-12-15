@@ -2,6 +2,7 @@ using System;
 using System.IO;
 using System.Linq;
 
+
 namespace XafApiConverter.Converter {
     /// <summary>
     /// Command-line interface for project conversion
@@ -61,9 +62,9 @@ namespace XafApiConverter.Converter {
                         options.ValidateOnly = true;
                         break;
 
-                    case "--no-backup":
-                    case "-nb":
-                        options.CreateBackup = false;
+                    case "--backup":
+                    case "-b":
+                        options.CreateBackup = true;
                         break;
 
                     case "--directory-packages":
@@ -178,7 +179,7 @@ Options:
   -dx, --dx-version         DevExpress package version (default: 25.1.6)
                             Example: 25.1.6, 26.1.6
   -v, --validate            Validate project without converting
-  -nb, --no-backup          Don't create backup file
+  -b, --backup              Create backup file
   -dp, --directory-packages Use Directory.Packages.props
   -h, --help                Show this help message
 
@@ -217,7 +218,7 @@ For more information, see Convert_to_NET.md
             public string TargetFramework { get; set; }
             public string DxVersion { get; set; }
             public bool ValidateOnly { get; set; }
-            public bool CreateBackup { get; set; } = true;
+            public bool CreateBackup { get; set; } = false;
             public bool UseDirectoryPackages { get; set; }
         }
     }

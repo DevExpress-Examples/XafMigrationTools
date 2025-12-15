@@ -19,6 +19,7 @@ namespace XafApiConverter.Converter {
         private Solution _solution;
         private MigrationReport _report;
 
+
         public TypeMigrationTool(string solutionPath) {
             _solutionPath = solutionPath;
             _report = new MigrationReport { SolutionPath = solutionPath };

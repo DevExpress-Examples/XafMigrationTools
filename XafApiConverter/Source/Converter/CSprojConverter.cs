@@ -168,6 +168,7 @@ namespace XafApiConverter.Converter {
             return propertyGroup;
         }
 
+
         private void AddPackageReferences(XElement project, ProjectInfo info) {
             var packages = _packageManager.GetPackages(info.IsWindowsProject, info.IsWebProject);
 

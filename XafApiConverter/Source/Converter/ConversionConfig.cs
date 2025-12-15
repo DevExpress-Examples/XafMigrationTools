@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 
+
 namespace XafApiConverter.Converter {
     /// <summary>
     /// Configuration for .NET Framework to .NET Core/5+ project conversion

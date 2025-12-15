@@ -37,6 +37,7 @@ namespace XafApiConverter.Converter {
             return DeduplicatePackages(packages);
         }
 
+
         private void AddBasePackages(List<PackageReference> packages) {
             var dx = _config.DxPackageVersion;
 

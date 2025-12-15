@@ -23,6 +23,7 @@ namespace XafApiConverter.Converter.Examples {
             result.PrintResults();
         }
 
+
         /// <summary>
         /// Example 2: Conversion to .NET 10 with custom DevExpress version
         /// </summary>

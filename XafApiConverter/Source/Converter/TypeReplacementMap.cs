@@ -19,6 +19,7 @@ namespace XafApiConverter.Converter {
                 "SqlClient namespace migration",
                 new[] { ".cs" }) },
 
+
             // TRANS-007: DevExpress Web ? Blazor
             { "DevExpress.ExpressApp.Web", new NamespaceReplacement(
                 "DevExpress.ExpressApp.Web",

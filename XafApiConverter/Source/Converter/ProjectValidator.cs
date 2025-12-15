@@ -115,6 +115,7 @@ namespace XafApiConverter.Converter {
             }
         }
 
+
         private static void ValidateAssemblyReferences(XDocument doc, ValidationResult result) {
             // TRANS-004: Check for DevExpress and System.Web assembly references (should be removed)
             var assemblyRefs = doc.Descendants()

@@ -52,6 +52,7 @@ namespace XafApiConverter.Converter {
             return problematicClasses;
         }
 
+
         private List<TypeProblem> AnalyzeClass(
             ClassDeclarationSyntax classDecl,
             SemanticModel semanticModel,
