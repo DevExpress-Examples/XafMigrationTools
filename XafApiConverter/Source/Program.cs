@@ -1,72 +1,100 @@
 ﻿using Microsoft.Build.Locator;
-using Microsoft.CodeAnalysis;
-using Microsoft.CodeAnalysis.MSBuild;
 using XafApiConverter.Converter;
 
 namespace XafApiConverter {
     static class Program {
         static void Main(string[] args) {
-            // Check if user wants to run conversion CLI
-            if(args.Length > 0 && args[0].Equals("convert", StringComparison.OrdinalIgnoreCase)) {
-                // Remove "convert" from args and run CLI
-                var cliArgs = args.Skip(1).ToArray();
-                Environment.Exit(ConversionCli.Run(cliArgs));
-                return;
+            // Register MSBuild
+            MSBuildLocator.RegisterDefaults();
+
+            // Check for specific CLI commands
+            if (args.Length > 0) {
+                var command = args[0].ToLowerInvariant();
+
+                // Legacy support: explicit "convert" command
+                if (command == "convert") {
+                    var cliArgs = args.Skip(1).ToArray();
+                    Environment.Exit(ConversionCli.Run(cliArgs));
+                    return;
+                }
+
+                // Legacy support: explicit "migrate-types" command
+                if (command == "migrate-types") {
+                    var cliArgs = args.Skip(1).ToArray();
+                    Environment.Exit(TypeMigrationCli.Run(cliArgs));
+                    return;
+                }
+
+                // Legacy support: explicit "security-update" command
+                if (command == "security-update") {
+                    var cliArgs = args.Skip(1).ToArray();
+                    Environment.Exit(SecurityUpdateCli.Run(cliArgs));
+                    return;
+                }
             }
 
-            // Check if user wants to run type migration
-            if(args.Length > 0 && args[0].Equals("migrate-types", StringComparison.OrdinalIgnoreCase)) {
-                // Remove "migrate-types" from args and run type migration CLI
-                var cliArgs = args.Skip(1).ToArray();
-                Environment.Exit(TypeMigrationCli.Run(cliArgs));
-                return;
-            }
+            // Default: Run unified migration workflow
+            // Executes all 3 steps by default
+            Environment.Exit(UnifiedMigrationCli.Run(args));
+        }
+    }
 
-            string solutionPath;
-            if(args.Length == 0) {
-                Console.WriteLine($"Usage: {typeof(Program).Assembly.GetName().Name}.exe <PathToSolution | PathToDirectory>");
-                return;
-            } else {
-                solutionPath = args[0];
-            }
-
-            var solutions = new List<string>();
-            if(File.Exists(solutionPath)) {
-                solutions.Add(solutionPath);
-            } else {
-                solutions.AddRange(Directory.GetFiles(solutionPath, "*.sln", SearchOption.AllDirectories));
-                solutions.AddRange(Directory.GetFiles(solutionPath, "*.slnx", SearchOption.AllDirectories));
+    /// <summary>
+    /// CLI wrapper for SecurityTypesUpdater (for legacy support)
+    /// </summary>
+    internal static class SecurityUpdateCli {
+        public static int Run(string[] args) {
+            if (args.Length == 0 || args.Contains("--help") || args.Contains("-h")) {
+                PrintHelp();
+                return 0;
             }
 
             try {
-                MSBuildLocator.RegisterDefaults();
-                foreach(string solution in solutions) {
-                    Console.WriteLine(solution);
-                    ProcessSolution(solution);
+                var solutionPath = args[0];
+                
+                if (!File.Exists(solutionPath)) {
+                    Console.WriteLine($"Error: Solution file not found: {solutionPath}");
+                    return 1;
                 }
-            } catch(Exception ex) {
-                Console.WriteLine(ex.ToString());
+
+                Console.WriteLine($"Processing solution: {solutionPath}");
+                Console.WriteLine();
+
+                var result = SecurityTypesUpdater.ProcessSolution(solutionPath);
+
+                Console.WriteLine();
+                Console.WriteLine($"✅ Security update complete");
+                Console.WriteLine($"   Files changed: {result.FilesChanged}");
+
+                return result.Success ? 0 : 1;
+            }
+            catch (Exception ex) {
+                Console.ForegroundColor = ConsoleColor.Red;
+                Console.WriteLine($"Error: {ex.Message}");
+                Console.ResetColor();
+                return 1;
             }
         }
 
-        static void ProcessSolution(string solutionPath) {
-            using(var workspace = MSBuildWorkspace.Create()) {
-                Solution solution = workspace.OpenSolutionAsync(solutionPath).Result;
-                foreach(Project project in solution.Projects) {
-                    Console.WriteLine(project.FilePath);
+        private static void PrintHelp() {
+            Console.WriteLine(@"
+Security Types Updater
+======================
 
-                    // Convert project to SDK-style if needed
-                    // Uncomment the line below to enable automatic conversion
-                    // CSprojConverter.Convert(project);
+Updates security types from SecuritySystem* to PermissionPolicy*
 
-                    foreach(var document in project.Documents) {
-                        if(!document.FilePath.EndsWith(".cs")) {
-                            continue;
-                        }
-                        SecurityTypesUpdater.ProcessDocument(document);
-                    }
-                }
-            }
+Usage:
+  XafApiConverter security-update <solution.sln>
+
+Arguments:
+  <solution.sln>   Path to solution file
+
+Example:
+  XafApiConverter security-update MySolution.sln
+
+Note: This is a legacy command. Consider using the unified workflow:
+  XafApiConverter <solution.sln>  (runs all steps including security update)
+");
         }
     }
 }

@@ -2,9 +2,42 @@
 using Microsoft.CodeAnalysis.MSBuild;
 using System.Text;
 using System.Xml.Linq;
+using XafApiConverter.Converter;
 
 namespace XafApiConverter {
     public static class SecurityTypesUpdater {
+        /// <summary>
+        /// Process entire solution - security types update
+        /// </summary>
+        public static SecurityUpdateResult ProcessSolution(string solutionPath) {
+            var result = new SecurityUpdateResult { Success = true };
+
+            try {
+                using (var workspace = MSBuildWorkspace.Create()) {
+                    var solution = workspace.OpenSolutionAsync(solutionPath).Result;
+
+                    foreach (var project in solution.Projects) {
+                        foreach (var document in project.Documents) {
+                            if (!document.FilePath.EndsWith(".cs")) {
+                                continue;
+                            }
+
+                            if (ProcessDocument(document)) {
+                                result.FilesChanged++;
+                                result.ChangedFiles.Add(document.FilePath);
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception ex) {
+                result.Success = false;
+                Console.WriteLine($"Error processing solution: {ex.Message}");
+            }
+
+            return result;
+        }
+
         public static bool ProcessDocument(Document doc) {
             var syntaxRoot = doc.GetSyntaxRootAsync().Result;
             var oldSyntaxRoot = syntaxRoot;
@@ -18,14 +51,15 @@ namespace XafApiConverter {
             syntaxRoot = featureTogglesRemover.Visit(syntaxRoot);
 
             var typeReplacements = new Dictionary<string, string>();
-            if(isProjectReferencesEf) {
+            if (isProjectReferencesEf) {
                 // EF6
                 typeReplacements.Add("DevExpress.Persistent.BaseImpl.EF.User", "DevExpress.Persistent.BaseImpl.EF.PermissionPolicy.PermissionPolicyUser");
                 typeReplacements.Add("DevExpress.Persistent.BaseImpl.EF.Role", "DevExpress.Persistent.BaseImpl.EF.PermissionPolicy.PermissionPolicyRole");
                 typeReplacements.Add("DevExpress.Persistent.BaseImpl.EF.TypePermissionObject", "DevExpress.Persistent.BaseImpl.EF.PermissionPolicy.PermissionPolicyTypePermissionObject");
                 typeReplacements.Add("DevExpress.Persistent.BaseImpl.EF.SecuritySystemObjectPermissionsObject", "DevExpress.Persistent.BaseImpl.EF.PermissionPolicy.PermissionPolicyObjectPermissionsObject");
                 typeReplacements.Add("DevExpress.Persistent.BaseImpl.EF.SecuritySystemMemberPermissionsObject", "DevExpress.Persistent.BaseImpl.EF.PermissionPolicy.PermissionPolicyMemberPermissionsObject");
-            } else {
+            }
+            else {
                 // XPO
                 typeReplacements.Add("DevExpress.ExpressApp.Security.Strategy.SecuritySystemUser", "DevExpress.Persistent.BaseImpl.PermissionPolicy.PermissionPolicyUser");
                 typeReplacements.Add("DevExpress.ExpressApp.Security.Strategy.SecuritySystemRole", "DevExpress.Persistent.BaseImpl.PermissionPolicy.PermissionPolicyRole");
@@ -33,7 +67,7 @@ namespace XafApiConverter {
                 typeReplacements.Add("DevExpress.ExpressApp.Security.Strategy.SecuritySystemObjectPermissionsObject", "DevExpress.Persistent.BaseImpl.PermissionPolicy.PermissionPolicyObjectPermissionsObject");
                 typeReplacements.Add("DevExpress.ExpressApp.Security.Strategy.SecuritySystemMemberPermissionsObject", "DevExpress.Persistent.BaseImpl.PermissionPolicy.PermissionPolicyMemberPermissionsObject");
             }
-            foreach(var typeReplacement in typeReplacements) {
+            foreach (var typeReplacement in typeReplacements) {
                 var replacer = new TypeReplaceRewriter(typeReplacement.Key, typeReplacement.Value);
                 syntaxRoot = replacer.Visit(syntaxRoot);
             }
@@ -47,19 +81,20 @@ namespace XafApiConverter {
                 "SetTypePermissionsRecursively",
                 "FindTypePermissionObject"});
             roleInvocationFinder.Visit(syntaxRoot);
-            if(roleInvocationFinder.HasInvocation) {
-                if(isProjectReferencesEf) {
+            if (roleInvocationFinder.HasInvocation) {
+                if (isProjectReferencesEf) {
                     // EF6
                     syntaxRoot = UsingsRewriter.AddUsingNamespaces(syntaxRoot, new string[] { "DevExpress.Persistent.BaseImpl.EF.PermissionPolicy" });
                     CreateFileFromResource(doc.Project, "PermissionPolicyRoleExtensions.cs", "XafApiConverter.PermissionPolicyRoleExtensions_EF_cs");
-                } else {
+                }
+                else {
                     // XPO
                     syntaxRoot = UsingsRewriter.AddUsingNamespaces(syntaxRoot, new string[] { "DevExpress.Persistent.BaseImpl.PermissionPolicy" });
                     CreateFileFromResource(doc.Project, "PermissionPolicyRoleExtensions.cs", "XafApiConverter.PermissionPolicyRoleExtensions_XPO_cs");
                 }
             }
 
-            if(syntaxRoot != oldSyntaxRoot) {
+            if (syntaxRoot != oldSyntaxRoot) {
                 doc = doc.WithText(syntaxRoot.GetText());
                 syntaxRoot = doc.GetSyntaxRootAsync().Result;
                 var semanticModel = doc.GetSemanticModelAsync().Result;
@@ -67,7 +102,7 @@ namespace XafApiConverter {
                 syntaxRoot = permissionStateReplacer.Visit(syntaxRoot);
             }
 
-            if(syntaxRoot != oldSyntaxRoot) {
+            if (syntaxRoot != oldSyntaxRoot) {
                 File.WriteAllText(doc.FilePath, syntaxRoot.ToFullString());
                 Console.WriteLine($"[CHANGED] {doc.FilePath}");
                 return true;
@@ -79,18 +114,19 @@ namespace XafApiConverter {
 
         static void CreateFileFromResource(Project project, string fileName, string sourceResourceName) {
             string key = $"{project.FilePath}|{fileName}";
-            if(filesAddedToProjects.Contains(key)) {
+            if (filesAddedToProjects.Contains(key)) {
                 return;
             }
             filesAddedToProjects.Add(key);
             string filePath = Path.Combine(Path.GetDirectoryName(project.FilePath), fileName);
-            using(var stream = typeof(Program).Assembly.GetManifestResourceStream(sourceResourceName)) {
+            using (var stream = typeof(SecurityTypesUpdater).Assembly.GetManifestResourceStream(sourceResourceName)) {
                 byte[] data = new byte[stream.Length];
                 stream.ReadExactly(data, 0, data.Length);
-                if(IsProjectUsesDefaultCompileItems(project)) {
+                if (IsProjectUsesDefaultCompileItems(project)) {
                     File.WriteAllBytes(filePath, data);
-                } else {
-                    using(var tempWorkspace = MSBuildWorkspace.Create()) {
+                }
+                else {
+                    using (var tempWorkspace = MSBuildWorkspace.Create()) {
                         var tempProject = tempWorkspace.OpenProjectAsync(project.FilePath).Result;
                         var doc = tempProject.AddDocument(fileName, Encoding.UTF8.GetString(data));
                         tempWorkspace.TryApplyChanges(doc.Project.Solution);
