@@ -98,11 +98,12 @@ namespace XafApiConverter.Converter {
                 "Maps.Web has no Blazor equivalent",
                 new[] { ".cs", ".xafml" }) },
 
-            { "DevExpress.ExpressApp.Kpi", new NamespaceReplacement(
-                "DevExpress.ExpressApp.Kpi",
-                null,
-                "DevExpress.ExpressApp.Kpi has no .NET equivalent",
-                new[] { ".cs", ".xafml" }) },
+            //TODO: Revisit if Kpi gets a .NET equivalent in the future
+            //{ "DevExpress.ExpressApp.Kpi", new NamespaceReplacement(
+            //    "DevExpress.ExpressApp.Kpi",
+            //    null,
+            //    "DevExpress.ExpressApp.Kpi has no .NET equivalent",
+            //    new[] { ".cs", ".xafml" }) },
 
             { "DevExpress.ExpressApp.ScriptRecorder.Web", new NamespaceReplacement(
                 "DevExpress.ExpressApp.ScriptRecorder.Web",
