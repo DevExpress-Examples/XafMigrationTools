@@ -294,9 +294,14 @@ namespace XafApiConverter.Converter {
                 baseIndent = lastWhitespace.ToString();
             }
             
+            bool isFirstLine = true;
+
             // Add comment header
             foreach (var line in commentHeader.Split(new[] { "\r\n", "\r", "\n" }, StringSplitOptions.RemoveEmptyEntries)) {
-                sb.Append(baseIndent);
+                if(!isFirstLine) { 
+                    sb.Append(baseIndent);
+                }
+                isFirstLine = false;
                 sb.AppendLine(line);
             }
             
