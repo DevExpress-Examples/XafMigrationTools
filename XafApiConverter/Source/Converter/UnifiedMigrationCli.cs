@@ -277,11 +277,18 @@ namespace XafApiConverter.Converter {
 
         private static int RunProjectConversion(string solutionPath, MigrationOptions options) {
             try {
-                // Get all projects in solution
+                // Parse solution to get actual projects
                 var solutionDir = Path.GetDirectoryName(solutionPath);
-                var projectFiles = Directory.GetFiles(solutionDir, "*.csproj", SearchOption.AllDirectories);
+                var projectFiles = ParseSolutionForProjects(solutionPath);
 
-                Console.WriteLine($"Found {projectFiles.Length} project(s) to convert");
+                if (!projectFiles.Any()) {
+                    Console.ForegroundColor = ConsoleColor.Yellow;
+                    Console.WriteLine("No projects found in solution");
+                    Console.ResetColor();
+                    return 0;
+                }
+
+                Console.WriteLine($"Found {projectFiles.Count} project(s) in solution");
                 Console.WriteLine();
 
                 // Create conversion config
@@ -333,6 +340,46 @@ namespace XafApiConverter.Converter {
                 Console.ResetColor();
                 return 1;
             }
+        }
+
+        /// <summary>
+        /// Parse solution file to get list of projects
+        /// </summary>
+        private static List<string> ParseSolutionForProjects(string solutionPath) {
+            var projects = new List<string>();
+            var solutionDir = Path.GetDirectoryName(solutionPath);
+
+            try {
+                var solutionContent = File.ReadAllText(solutionPath);
+                
+                // Parse .sln file for project entries
+                // Format: Project("{...}") = "ProjectName", "Path\To\Project.csproj", "{...}"
+                var projectPattern = @"Project\(""\{[^}]+\}""\)\s*=\s*""[^""]+"",\s*""([^""]+\.csproj)""";
+                var matches = System.Text.RegularExpressions.Regex.Matches(solutionContent, projectPattern);
+
+                foreach (System.Text.RegularExpressions.Match match in matches) {
+                    if (match.Groups.Count > 1) {
+                        var projectRelativePath = match.Groups[1].Value;
+                        // Convert to absolute path
+                        var projectAbsolutePath = Path.GetFullPath(Path.Combine(solutionDir, projectRelativePath));
+                        
+                        if (File.Exists(projectAbsolutePath)) {
+                            projects.Add(projectAbsolutePath);
+                        }
+                    }
+                }
+            }
+            catch (Exception ex) {
+                Console.ForegroundColor = ConsoleColor.Yellow;
+                Console.WriteLine($"Warning: Could not parse solution file: {ex.Message}");
+                Console.WriteLine("Falling back to directory search...");
+                Console.ResetColor();
+                
+                // Fallback: search for .csproj files in solution directory
+                projects.AddRange(Directory.GetFiles(solutionDir, "*.csproj", SearchOption.AllDirectories));
+            }
+
+            return projects;
         }
 
         private static int RunTypeMigration(string solutionPath, MigrationOptions options) {
