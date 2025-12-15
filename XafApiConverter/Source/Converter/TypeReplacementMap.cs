@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -31,6 +31,12 @@ namespace XafApiConverter.Converter {
                 "DevExpress.ExpressApp.Web.Editors",
                 "DevExpress.ExpressApp.Blazor.Editors",
                 "Web editors to Blazor",
+                new[] { ".cs", ".xafml" }) },
+
+            { "DevExpress.ExpressApp.Web.Templates", new NamespaceReplacement(
+                "DevExpress.ExpressApp.Web.Templates",
+                "DevExpress.ExpressApp.Blazor.Templates",
+                "Web templates to Blazor",
                 new[] { ".cs", ".xafml" }) },
 
             { "DevExpress.ExpressApp.Web.Editors.ASPx", new NamespaceReplacement(

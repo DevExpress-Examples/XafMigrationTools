@@ -20,18 +20,18 @@ namespace XafApiConverter.Converter {
             _packageManager = new PackageManager(_config);
         }
 
-        /// <summary>
-        /// Convert a Roslyn Project to SDK-style format
-        /// </summary>
-        public static void Convert(Project project) {
-            var converter = new CSprojConverter();
-            converter.ConvertProject(project.FilePath);
-        }
+        ///// <summary>
+        ///// Convert a Roslyn Project to SDK-style format
+        ///// </summary>
+        //public static void Convert(Project project) {
+        //    var converter = new CSprojConverter();
+        //    converter.ConvertProject(project.FilePath);
+        //}
 
         /// <summary>
         /// Convert a project file by path
         /// </summary>
-        public void ConvertProject(string projectPath) {
+        public void ConvertProject(string projectPath, bool createBackup) {
             if (string.IsNullOrEmpty(projectPath) || !File.Exists(projectPath)) {
                 Console.WriteLine($"Project file not found: {projectPath}");
                 return;
@@ -59,15 +59,20 @@ namespace XafApiConverter.Converter {
                 // Step 5: Create new SDK-style project
                 var newDoc = CreateSdkStyleProject(doc, projectInfo, projectPath);
 
-                // Step 6: Backup original file
                 var backupPath = projectPath + ".backup";
-                File.Copy(projectPath, backupPath, true);
+                // Step 6: Backup original file
+                if (createBackup) {
+                    File.Copy(projectPath, backupPath, true);
+                    Console.WriteLine($"Backup created at: {backupPath}");
+                }
 
                 // Step 7: Save the new project file
                 SaveProject(newDoc, projectPath);
 
                 Console.WriteLine($"✓ Successfully converted: {projectPath}");
-                Console.WriteLine($"  Backup saved to: {backupPath}");
+                if(createBackup) {
+                    Console.WriteLine($"  Backup saved to: {backupPath}");
+                }
                 Console.WriteLine($"  Project type: {GetProjectTypeDescription(projectInfo)}");
             }
             catch (Exception ex) {

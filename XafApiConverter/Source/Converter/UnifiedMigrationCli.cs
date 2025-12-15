@@ -171,35 +171,35 @@ namespace XafApiConverter.Converter {
 
             Console.WriteLine($"\nFound {solutions.Count} solution(s):");
             foreach (var sln in solutions) {
-                Console.WriteLine($"  • {Path.GetFileName(sln)}");
+                Console.WriteLine($"  - {Path.GetFileName(sln)}");
             }
             Console.WriteLine();
 
             int totalErrors = 0;
 
             foreach (var solutionPath in solutions) {
-                Console.WriteLine("═══════════════════════════════════════════════════════════");
+                Console.WriteLine("===============================================================");
                 Console.WriteLine($"Processing: {Path.GetFileName(solutionPath)}");
-                Console.WriteLine("═══════════════════════════════════════════════════════════");
+                Console.WriteLine("===============================================================");
                 Console.WriteLine();
 
                 try {
                     // Step 1: Project Conversion (TRANS-001 to TRANS-005)
                     if (!options.SkipProjectConversion) {
                         Console.ForegroundColor = ConsoleColor.Cyan;
-                        Console.WriteLine("▶ Step 1/3: Project Conversion (.NET Framework → .NET)");
+                        Console.WriteLine(">> Step 1/3: Project Conversion (.NET Framework -> .NET)");
                         Console.ResetColor();
                         Console.WriteLine();
 
                         var conversionResult = RunProjectConversion(solutionPath, options);
                         if (conversionResult != 0) {
                             Console.ForegroundColor = ConsoleColor.Yellow;
-                            Console.WriteLine("⚠️  Step 1 completed with warnings");
+                            Console.WriteLine("[WARNING] Step 1 completed with warnings");
                             Console.ResetColor();
                         }
                         else {
                             Console.ForegroundColor = ConsoleColor.Green;
-                            Console.WriteLine("✅ Step 1 completed successfully");
+                            Console.WriteLine("[OK] Step 1 completed successfully");
                             Console.ResetColor();
                         }
                         Console.WriteLine();
@@ -208,19 +208,19 @@ namespace XafApiConverter.Converter {
                     // Step 2: Type Migration (TRANS-006 to TRANS-008)
                     if (!options.SkipTypeMigration) {
                         Console.ForegroundColor = ConsoleColor.Cyan;
-                        Console.WriteLine("▶ Step 2/3: Type Migration (Web → Blazor)");
+                        Console.WriteLine(">> Step 2/3: Type Migration (Web -> Blazor)");
                         Console.ResetColor();
                         Console.WriteLine();
 
                         var typeMigrationResult = RunTypeMigration(solutionPath, options);
                         if (typeMigrationResult != 0) {
                             Console.ForegroundColor = ConsoleColor.Yellow;
-                            Console.WriteLine("⚠️  Step 2 completed with warnings");
+                            Console.WriteLine("[WARNING] Step 2 completed with warnings");
                             Console.ResetColor();
                         }
                         else {
                             Console.ForegroundColor = ConsoleColor.Green;
-                            Console.WriteLine("✅ Step 2 completed successfully");
+                            Console.WriteLine("[OK] Step 2 completed successfully");
                             Console.ResetColor();
                         }
                         Console.WriteLine();
@@ -229,19 +229,19 @@ namespace XafApiConverter.Converter {
                     // Step 3: Security Types Update
                     if (!options.SkipSecurityUpdate) {
                         Console.ForegroundColor = ConsoleColor.Cyan;
-                        Console.WriteLine("▶ Step 3/3: Security Types Update");
+                        Console.WriteLine(">> Step 3/3: Security Types Update");
                         Console.ResetColor();
                         Console.WriteLine();
 
                         var securityResult = RunSecurityUpdate(solutionPath, options);
                         if (securityResult != 0) {
                             Console.ForegroundColor = ConsoleColor.Yellow;
-                            Console.WriteLine("⚠️  Step 3 completed with warnings");
+                            Console.WriteLine("[WARNING] Step 3 completed with warnings");
                             Console.ResetColor();
                         }
                         else {
                             Console.ForegroundColor = ConsoleColor.Green;
-                            Console.WriteLine("✅ Step 3 completed successfully");
+                            Console.WriteLine("[OK] Step 3 completed successfully");
                             Console.ResetColor();
                         }
                         Console.WriteLine();
@@ -249,7 +249,7 @@ namespace XafApiConverter.Converter {
                 }
                 catch (Exception ex) {
                     Console.ForegroundColor = ConsoleColor.Red;
-                    Console.WriteLine($"❌ Error processing solution: {ex.Message}");
+                    Console.WriteLine($"[ERROR] Error processing solution: {ex.Message}");
                     Console.ResetColor();
                     totalErrors++;
                 }
@@ -304,26 +304,26 @@ namespace XafApiConverter.Converter {
                         var projectName = Path.GetFileNameWithoutExtension(projectPath);
                         Console.Write($"  Converting {projectName}...");
 
-                        converter.ConvertProject(projectPath);
+                        converter.ConvertProject(projectPath, options.CreateBackup);
 
                         // Validate
                         var validation = ProjectValidator.Validate(projectPath, config);
                         if (validation.IsValid) {
                             Console.ForegroundColor = ConsoleColor.Green;
-                            Console.WriteLine(" ✓");
+                            Console.WriteLine(" [OK]");
                             Console.ResetColor();
                             converted++;
                         }
                         else {
                             Console.ForegroundColor = ConsoleColor.Yellow;
-                            Console.WriteLine(" ⚠");
+                            Console.WriteLine(" [WARN]");
                             Console.ResetColor();
                             skipped++;
                         }
                     }
                     catch (Exception ex) {
                         Console.ForegroundColor = ConsoleColor.Red;
-                        Console.WriteLine($" ✗ ({ex.Message})");
+                        Console.WriteLine($" [ERROR] ({ex.Message})");
                         Console.ResetColor();
                         failed++;
                     }
@@ -446,10 +446,10 @@ namespace XafApiConverter.Converter {
         }
 
         private static void PrintHeader() {
-            Console.WriteLine("╔═══════════════════════════════════════════════════════════╗");
-            Console.WriteLine("║     XAF Migration Tool - Complete Workflow               ║");
-            Console.WriteLine("║     .NET Framework → .NET + Web → Blazor Migration       ║");
-            Console.WriteLine("╚═══════════════════════════════════════════════════════════╝");
+            Console.WriteLine("===============================================================");
+            Console.WriteLine("     XAF Migration Tool - Complete Workflow");
+            Console.WriteLine("     .NET Framework -> .NET + Web -> Blazor Migration");
+            Console.WriteLine("===============================================================");
             Console.WriteLine();
         }
 
@@ -465,27 +465,27 @@ namespace XafApiConverter.Converter {
 
             Console.WriteLine();
             Console.WriteLine("Steps to execute:");
-            Console.WriteLine($"  {(options.SkipProjectConversion ? "☐" : "☑")} Step 1: Project Conversion");
-            Console.WriteLine($"  {(options.SkipTypeMigration ? "☐" : "☑")} Step 2: Type Migration");
-            Console.WriteLine($"  {(options.SkipSecurityUpdate ? "☐" : "☑")} Step 3: Security Update");
+            Console.WriteLine($"  {(options.SkipProjectConversion ? "[ ]" : "[X]")} Step 1: Project Conversion");
+            Console.WriteLine($"  {(options.SkipTypeMigration ? "[ ]" : "[X]")} Step 2: Type Migration");
+            Console.WriteLine($"  {(options.SkipSecurityUpdate ? "[ ]" : "[X]")} Step 3: Security Update");
             Console.WriteLine();
         }
 
         private static void PrintFinalSummary(int totalSolutions, int errors) {
-            Console.WriteLine("═══════════════════════════════════════════════════════════");
+            Console.WriteLine("===============================================================");
             Console.WriteLine("                    Final Summary");
-            Console.WriteLine("═══════════════════════════════════════════════════════════");
+            Console.WriteLine("===============================================================");
             Console.WriteLine();
             Console.WriteLine($"Solutions processed: {totalSolutions}");
 
             if (errors == 0) {
                 Console.ForegroundColor = ConsoleColor.Green;
-                Console.WriteLine("✅ All migrations completed successfully!");
+                Console.WriteLine("[OK] All migrations completed successfully!");
                 Console.ResetColor();
             }
             else {
                 Console.ForegroundColor = ConsoleColor.Yellow;
-                Console.WriteLine($"⚠️  Completed with {errors} error(s)");
+                Console.WriteLine($"[WARNING] Completed with {errors} error(s)");
                 Console.WriteLine("Review the output above for details");
                 Console.ResetColor();
             }
@@ -498,8 +498,8 @@ XAF Migration Tool - Complete Workflow
 ======================================
 
 Executes complete migration workflow:
-  1. Project Conversion (.NET Framework → .NET)
-  2. Type Migration (Web → Blazor)
+  1. Project Conversion (.NET Framework -> .NET)
+  2. Type Migration (Web -> Blazor)
   3. Security Types Update
 
 Usage:
@@ -565,14 +565,14 @@ Step 1: Project Conversion
   - Validates converted projects
 
 Step 2: Type Migration
-  - Migrates namespaces (Web → Blazor)
-  - Replaces types (ASPx* → Dx*, WebApplication → BlazorApplication)
+  - Migrates namespaces (Web -> Blazor)
+  - Replaces types (ASPx* -> Dx*, WebApplication -> BlazorApplication)
   - Processes .cs and .xafml files
   - Detects problematic types (NO_EQUIVALENT)
   - Generates detailed migration report
 
 Step 3: Security Update
-  - Updates security types (SecuritySystem* → PermissionPolicy*)
+  - Updates security types (SecuritySystem* -> PermissionPolicy*)
   - Removes obsolete feature toggles
   - Adds PermissionPolicyRoleExtensions
   - Updates permission state setters

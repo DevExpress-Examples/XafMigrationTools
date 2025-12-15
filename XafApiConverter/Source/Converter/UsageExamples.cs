@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.IO;
 using XafApiConverter.Converter;
 
@@ -16,7 +16,7 @@ namespace XafApiConverter.Converter.Examples {
             var projectPath = @"C:\Projects\MyProject\MyProject.csproj";
             
             var converter = new CSprojConverter();
-            converter.ConvertProject(projectPath);
+            converter.ConvertProject(projectPath, false);
 
             // Validate the result
             var result = ProjectValidator.Validate(projectPath);
@@ -41,7 +41,7 @@ namespace XafApiConverter.Converter.Examples {
             };
 
             var converter = new CSprojConverter(config);
-            converter.ConvertProject(projectPath);
+            converter.ConvertProject(projectPath, false);
         }
 
         /// <summary>
@@ -66,7 +66,7 @@ namespace XafApiConverter.Converter.Examples {
                 try {
                     if (File.Exists(projectPath)) {
                         Console.WriteLine($"\nConverting: {Path.GetFileName(projectPath)}");
-                        converter.ConvertProject(projectPath);
+                        converter.ConvertProject(projectPath, false);
                         
                         // Quick validation
                         var result = ProjectValidator.Validate(projectPath);
@@ -118,7 +118,7 @@ namespace XafApiConverter.Converter.Examples {
             };
 
             var converter = new CSprojConverter(config);
-            converter.ConvertProject(projectPath);
+            converter.ConvertProject(projectPath, false);
 
             // Note: You'll need to manually create Directory.Packages.props
             Console.WriteLine("\nIMPORTANT: Create Directory.Packages.props in solution root:");
@@ -182,7 +182,7 @@ namespace XafApiConverter.Converter.Examples {
             foreach (var projectPath in projectFiles) {
                 try {
                     Console.WriteLine($"Converting: {Path.GetFileName(projectPath)}");
-                    converter.ConvertProject(projectPath);
+                    converter.ConvertProject(projectPath, false);
                     
                     var validation = ProjectValidator.Validate(projectPath);
                     results.Add((Path.GetFileNameWithoutExtension(projectPath), validation.IsValid));

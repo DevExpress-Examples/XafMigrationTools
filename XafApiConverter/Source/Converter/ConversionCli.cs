@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.IO;
 using System.Linq;
 
@@ -132,7 +132,7 @@ namespace XafApiConverter.Converter {
             var converter = new CSprojConverter(config);
             
             try {
-                converter.ConvertProject(projectPath);
+                converter.ConvertProject(projectPath, createBackup);
                 Console.WriteLine();
 
                 // Validate after conversion
@@ -200,14 +200,14 @@ Examples:
   XafApiConverter convert MyProject.csproj --directory-packages
 
 Features:
-  ? Converts legacy .NET Framework .csproj to SDK-style format
-  ? Automatically detects Windows and Web project types
-  ? Adds appropriate NuGet packages based on project type
-  ? Removes legacy assembly references
-  ? Handles AssemblyInfo.cs correctly
-  ? Manages embedded resources properly
-  ? Creates backup before conversion
-  ? Validates converted project
+  [OK] Converts legacy .NET Framework .csproj to SDK-style format
+  [OK] Automatically detects Windows and Web project types
+  [OK] Adds appropriate NuGet packages based on project type
+  [OK] Removes legacy assembly references
+  [OK] Handles AssemblyInfo.cs correctly
+  [OK] Manages embedded resources properly
+  [OK] Creates backup before conversion
+  [OK] Validates converted project
 
 For more information, see Convert_to_NET.md
 ");
