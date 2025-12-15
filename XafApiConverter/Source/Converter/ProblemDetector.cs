@@ -42,8 +42,8 @@ namespace XafApiConverter.Converter {
                         problematicClasses.Add(new ProblematicClass {
                             ClassName = classDecl.Identifier.Text,
                             FilePath = document.FilePath,
-                            Problems = problems,
-                            ClassSyntax = classDecl
+                            Problems = problems
+                            // REMOVED: ClassSyntax - will be reloaded fresh each time
                         });
                     }
                 }
@@ -372,7 +372,6 @@ namespace XafApiConverter.Converter {
         public string ClassName { get; set; }
         public string FilePath { get; set; }
         public List<TypeProblem> Problems { get; set; }
-        public ClassDeclarationSyntax ClassSyntax { get; set; }
         public List<string> DependentClasses { get; set; } = new List<string>();
     }
 
