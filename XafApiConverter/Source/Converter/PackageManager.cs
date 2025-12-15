@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -53,7 +53,11 @@ namespace XafApiConverter.Converter {
                 new PackageReference("DevExpress.ExpressApp.Security", dx),
                 new PackageReference("DevExpress.ExpressApp.Validation", dx),
                 new PackageReference("DevExpress.ExpressApp.ViewVariantsModule", dx),
-                new PackageReference("DevExpress.Persistent.BaseImpl.Xpo", dx)
+                new PackageReference("DevExpress.Persistent.BaseImpl.Xpo", dx),
+                new PackageReference("DevExpress.ExpressApp.Notifications", dx),
+                new PackageReference("DevExpress.ExpressApp.Scheduler", dx),
+                new PackageReference("DevExpress.ExpressApp.StateMachine", dx),
+                new PackageReference("DevExpress.ExpressApp.Dashboards", dx)
             });
 
             // Microsoft packages
@@ -96,6 +100,7 @@ namespace XafApiConverter.Converter {
                 new PackageReference("DevExpress.ExpressApp.PivotChart.Win", dx, PackageSet.Windows),
                 new PackageReference("DevExpress.ExpressApp.ScriptRecorder.Win", dx, PackageSet.Windows),
                 new PackageReference("DevExpress.ExpressApp.FileAttachment.Win", dx, PackageSet.Windows),
+                new PackageReference("DevExpress.ExpressApp.Dashboards.Win", dx, PackageSet.Windows),
                 new PackageReference("DevExpress.ExpressApp.Scheduler.Win", dx, PackageSet.Windows),
                 new PackageReference("DevExpress.ExpressApp.TreeListEditors.Win", dx, PackageSet.Windows),
                 new PackageReference("DevExpress.Win.Demos", dx, PackageSet.Windows)
@@ -135,6 +140,7 @@ namespace XafApiConverter.Converter {
                 new PackageReference("DevExpress.ExpressApp.AuditTrail.Xpo", dx, PackageSet.BlazorWeb),
                 new PackageReference("DevExpress.ExpressApp.ReportsV2.Blazor", dx, PackageSet.BlazorWeb),
                 new PackageReference("DevExpress.ExpressApp.Scheduler.Blazor", dx, PackageSet.BlazorWeb),
+                new PackageReference("DevExpress.ExpressApp.Dashboards.Blazor", dx, PackageSet.BlazorWeb),
                 new PackageReference("DevExpress.ExpressApp.FileAttachment.Blazor", dx, PackageSet.BlazorWeb),
                 new PackageReference("DevExpress.ExpressApp.Office.Blazor", dx, PackageSet.BlazorWeb),
                 new PackageReference("DevExpress.ExpressApp.Validation.Blazor", dx, PackageSet.BlazorWeb),

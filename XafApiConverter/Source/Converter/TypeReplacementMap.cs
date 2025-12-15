@@ -39,6 +39,12 @@ namespace XafApiConverter.Converter {
                 "Web templates to Blazor",
                 new[] { ".cs", ".xafml" }) },
 
+            { "DevExpress.ExpressApp.Web.Layout", new NamespaceReplacement(
+                "DevExpress.ExpressApp.Web.Layout",
+                "DevExpress.ExpressApp.Blazor.Layout",
+                "Web layout to Blazor",
+                new[] { ".cs", ".xafml" }) },
+
             { "DevExpress.ExpressApp.Web.Editors.ASPx", new NamespaceReplacement(
                 "DevExpress.ExpressApp.Web.Editors.ASPx",
                 "DevExpress.ExpressApp.Blazor.Editors",
@@ -125,6 +131,14 @@ namespace XafApiConverter.Converter {
                 "DevExpress.ExpressApp.Web.Editors.ASPx",
                 "DevExpress.ExpressApp.Blazor.Editors",
                 "ASPx lookup to Blazor lookup") },
+
+            // Controller Types
+            { "WebModificationsController", new TypeReplacement(
+                "WebModificationsController",
+                "BlazorModificationsController",
+                "DevExpress.ExpressApp.Web.SystemModule",
+                "DevExpress.ExpressApp.Blazor.SystemModule",
+                "ASPx grid to Dx grid") },
 
             // Module Types
             { "SystemAspNetModule", new TypeReplacement(

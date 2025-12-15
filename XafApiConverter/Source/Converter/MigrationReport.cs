@@ -279,53 +279,53 @@ namespace XafApiConverter.Converter {
         /// </summary>
         public void PrintSummary() {
             Console.WriteLine();
-            Console.WriteLine("═══════════════════════════════════════════════");
+            Console.WriteLine("===============================================");
             Console.WriteLine("      Type Migration Report Summary");
-            Console.WriteLine("═══════════════════════════════════════════════");
+            Console.WriteLine("===============================================");
             Console.WriteLine();
 
             Console.ForegroundColor = ConsoleColor.Green;
-            Console.WriteLine($"✅ Automatic Changes:");
+            Console.WriteLine($"[OK] Automatic Changes:");
             Console.ResetColor();
-            Console.WriteLine($"   • Namespaces replaced: {NamespacesReplaced}");
-            Console.WriteLine($"   • Types replaced: {TypesReplaced}");
-            Console.WriteLine($"   • Files processed: {FilesProcessed}");
-            Console.WriteLine($"   • XAFML files: {XafmlFilesProcessed}");
+            Console.WriteLine($"   - Namespaces replaced: {NamespacesReplaced}");
+            Console.WriteLine($"   - Types replaced: {TypesReplaced}");
+            Console.WriteLine($"   - Files processed: {FilesProcessed}");
+            Console.WriteLine($"   - XAFML files: {XafmlFilesProcessed}");
             Console.WriteLine();
 
             if (ProblematicClasses.Any() || XafmlProblems.Any()) {
                 Console.ForegroundColor = ConsoleColor.Yellow;
-                Console.WriteLine($"⚠️  Requires LLM Analysis:");
+                Console.WriteLine($"[!] Requires LLM Analysis:");
                 Console.ResetColor();
                 if (ProblematicClasses.Any()) {
-                    Console.WriteLine($"   • Problematic classes: {ProblematicClasses.Count}");
+                    Console.WriteLine($"   - Problematic classes: {ProblematicClasses.Count}");
                     var totalDependencies = ProblematicClasses.Sum(c => c.DependentClasses.Count);
                     if (totalDependencies > 0) {
-                        Console.WriteLine($"   • Dependent classes: {totalDependencies}");
+                        Console.WriteLine($"   - Dependent classes: {totalDependencies}");
                     }
                 }
                 if (XafmlProblems.Any()) {
-                    Console.WriteLine($"   • XAFML problems: {XafmlProblems.Count}");
+                    Console.WriteLine($"   - XAFML problems: {XafmlProblems.Count}");
                 }
                 Console.WriteLine();
             }
 
             if (!BuildSuccessful) {
                 Console.ForegroundColor = ConsoleColor.Red;
-                Console.WriteLine($"🔧 Build Errors:");
+                Console.WriteLine($"[BUILD] Build Errors:");
                 Console.ResetColor();
-                Console.WriteLine($"   • Fixable: {FixableErrors.Count}");
-                Console.WriteLine($"   • Unfixable: {UnfixableErrors.Count}");
+                Console.WriteLine($"   - Fixable: {FixableErrors.Count}");
+                Console.WriteLine($"   - Unfixable: {UnfixableErrors.Count}");
                 Console.WriteLine();
             }
             else {
                 Console.ForegroundColor = ConsoleColor.Green;
-                Console.WriteLine($"✅ Project builds successfully!");
+                Console.WriteLine($"[OK] Project builds successfully!");
                 Console.ResetColor();
                 Console.WriteLine();
             }
 
-            Console.WriteLine("═══════════════════════════════════════════════");
+            Console.WriteLine("===============================================");
             Console.WriteLine();
         }
     }
