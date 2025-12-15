@@ -98,10 +98,22 @@ namespace XafApiConverter.Converter {
                 "Maps.Web has no Blazor equivalent",
                 new[] { ".cs", ".xafml" }) },
 
+            { "DevExpress.ExpressApp.Kpi", new NamespaceReplacement(
+                "DevExpress.ExpressApp.Kpi",
+                null,
+                "DevExpress.ExpressApp.Kpi has no .NET equivalent",
+                new[] { ".cs", ".xafml" }) },
+
             { "DevExpress.ExpressApp.ScriptRecorder.Web", new NamespaceReplacement(
                 "DevExpress.ExpressApp.ScriptRecorder.Web",
                 null,
                 "ScriptRecorder.Web has no Blazor equivalent",
+                new[] { ".cs", ".xafml" }) },
+
+            { "DevExpress.ExpressApp.ScriptRecorder", new NamespaceReplacement(
+                "DevExpress.ExpressApp.ScriptRecorder",
+                null,
+                "ScriptRecorder has no .NET equivalent",
                 new[] { ".cs", ".xafml" }) }
         };
 
@@ -214,6 +226,15 @@ namespace XafApiConverter.Converter {
                 "DevExpress.ExpressApp.ScriptRecorder",
                 null,
                 "ScriptRecorderModuleBase has no .NET equivalent") },
+
+            { "KpiModule", new TypeReplacement(
+                "KpiModule",
+                null,
+                "DevExpress.ExpressApp.Kpi",
+                null,
+                "KpiModule has no .NET equivalent") },
+
+            KpiModule
 
             { "WebMapsPropertyEditor", new TypeReplacement(
                 "WebMapsPropertyEditor",
