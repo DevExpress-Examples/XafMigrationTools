@@ -213,7 +213,7 @@ namespace XafApiConverter.Converter {
                 null,
                 "DevExpress.ExpressApp.ScriptRecorder",
                 null,
-                "ScriptRecorderModuleBase has no Blazor equivalent") },
+                "ScriptRecorderModuleBase has no .NET equivalent") },
 
             { "WebMapsPropertyEditor", new TypeReplacement(
                 "WebMapsPropertyEditor",

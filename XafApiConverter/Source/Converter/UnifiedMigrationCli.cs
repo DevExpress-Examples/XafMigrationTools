@@ -205,15 +205,15 @@ namespace XafApiConverter.Converter {
                         Console.WriteLine();
                     }
 
-                    // Step 2: Type Migration (TRANS-006 to TRANS-008)
-                    if (!options.SkipTypeMigration) {
+                    // Step 2: Security Types Update
+                    if (!options.SkipSecurityUpdate) {
                         Console.ForegroundColor = ConsoleColor.Cyan;
-                        Console.WriteLine(">> Step 2/3: Type Migration (Web -> Blazor)");
+                        Console.WriteLine(">> Step 2/3: Security Types Update");
                         Console.ResetColor();
                         Console.WriteLine();
 
-                        var typeMigrationResult = RunTypeMigration(solutionPath, options);
-                        if (typeMigrationResult != 0) {
+                        var securityResult = RunSecurityUpdate(solutionPath, options);
+                        if (securityResult != 0) {
                             Console.ForegroundColor = ConsoleColor.Yellow;
                             Console.WriteLine("[WARNING] Step 2 completed with warnings");
                             Console.ResetColor();
@@ -226,20 +226,19 @@ namespace XafApiConverter.Converter {
                         Console.WriteLine();
                     }
 
-                    // Step 3: Security Types Update
-                    if (!options.SkipSecurityUpdate) {
+                    // Step 2: Type Migration (TRANS-006 to TRANS-008)
+                    if(!options.SkipTypeMigration) {
                         Console.ForegroundColor = ConsoleColor.Cyan;
-                        Console.WriteLine(">> Step 3/3: Security Types Update");
+                        Console.WriteLine(">> Step 3/3: Type Migration (Web -> Blazor)");
                         Console.ResetColor();
                         Console.WriteLine();
 
-                        var securityResult = RunSecurityUpdate(solutionPath, options);
-                        if (securityResult != 0) {
+                        var typeMigrationResult = RunTypeMigration(solutionPath, options);
+                        if(typeMigrationResult != 0) {
                             Console.ForegroundColor = ConsoleColor.Yellow;
                             Console.WriteLine("[WARNING] Step 3 completed with warnings");
                             Console.ResetColor();
-                        }
-                        else {
+                        } else {
                             Console.ForegroundColor = ConsoleColor.Green;
                             Console.WriteLine("[OK] Step 3 completed successfully");
                             Console.ResetColor();

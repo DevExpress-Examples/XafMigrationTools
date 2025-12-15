@@ -1,4 +1,4 @@
-using Microsoft.CodeAnalysis;
+﻿using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using System;
@@ -71,7 +71,7 @@ namespace XafApiConverter.Converter {
                             problems.Add(new TypeProblem {
                                 TypeName = typeName,
                                 FullTypeName = $"{typeNamespace}.{typeName}",
-                                Reason = $"Base class '{typeName}' has no Blazor equivalent",
+                                Reason = $"Base class '{typeName}' has no .NET equivalent",
                                 Severity = ProblemSeverity.Critical,
                                 RequiresCommentOut = true
                             });
@@ -90,10 +90,11 @@ namespace XafApiConverter.Converter {
                     problems.Add(new TypeProblem {
                         TypeName = "TemplateType",
                         FullTypeName = "DevExpress.ExpressApp.Web.Templates.TemplateType",
-                        Reason = "Uses TemplateType enum which has no Blazor equivalent",
+                        Reason = "Uses TemplateType enum which has no .NET equivalent",
                         Severity = ProblemSeverity.Critical,
                         RequiresCommentOut = true
                     });
+                    break; // Only add once
                 }
             }
 
@@ -109,7 +110,7 @@ namespace XafApiConverter.Converter {
                         problems.Add(new TypeProblem {
                             TypeName = typeName,
                             FullTypeName = $"{typeNamespace}.{typeName}",
-                            Reason = $"Type '{typeName}' has no Blazor equivalent",
+                            Reason = $"Type '{typeName}' has no .NET equivalent",
                             Severity = ProblemSeverity.High,
                             RequiresCommentOut = true
                         });
@@ -117,7 +118,13 @@ namespace XafApiConverter.Converter {
                 }
             }
 
-            return problems;
+            // Deduplicate problems by FullTypeName
+            var uniqueProblems = problems
+                .GroupBy(p => p.FullTypeName)
+                .Select(g => g.First())
+                .ToList();
+
+            return uniqueProblems;
         }
 
         private bool IsNoEquivalentType(string typeName, string typeNamespace) {
@@ -207,6 +214,54 @@ namespace XafApiConverter.Converter {
             return (fixableErrors, unfixableErrors);
         }
 
+        /// <summary>
+        /// Check if error is related to NO_EQUIVALENT types
+        /// </summary>
+        public bool IsNoEquivalentError(BuildError error) {
+            // Check error message for NO_EQUIVALENT type names
+            foreach (var typeEntry in TypeReplacementMap.NoEquivalentTypes) {
+                var typeName = typeEntry.Key;
+                if (error.Message.Contains(typeName)) {
+                    return true;
+                }
+            }
+
+            // Check for NO_EQUIVALENT namespace references
+            foreach (var nsEntry in TypeReplacementMap.NoEquivalentNamespaces) {
+                var ns = nsEntry.Value.OldNamespace;
+                if (error.Message.Contains(ns)) {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        /// <summary>
+        /// Suggest a fix for the error
+        /// </summary>
+        public string SuggestFix(BuildError error) {
+            var fix = GetSuggestedFix(error);
+            if (fix != "Unknown") {
+                return fix;
+            }
+
+            // Try to find more specific fixes based on message content
+            if (error.Message.Contains("does not contain a definition")) {
+                return "Member may have been renamed or removed in Blazor version";
+            }
+
+            if (error.Message.Contains("obsolete")) {
+                return "Replace with recommended alternative shown in warning";
+            }
+
+            if (error.Message.Contains("ambiguous")) {
+                return "Add explicit namespace or type qualifier";
+            }
+
+            return null;
+        }
+
         private bool IsFixableError(BuildError error) {
             // CS0246: Type or namespace not found (might be fixable with using)
             if (error.Code == "CS0246") {
@@ -233,7 +288,7 @@ namespace XafApiConverter.Converter {
             }
 
             if (error.Code == "CS0234") {
-                return "Migrate namespace from Web to Blazor";
+                return "Migrate namespace from Web to .NET";
             }
 
             return "Unknown";
@@ -241,11 +296,11 @@ namespace XafApiConverter.Converter {
 
         private string GetUnfixableReason(BuildError error) {
             if (error.Code == "CS1061") {
-                return "API member not available in Blazor";
+                return "API member not available in .NET";
             }
 
             if (error.Message.Contains("no Blazor equivalent")) {
-                return "Type has no Blazor equivalent";
+                return "Type has no .NET equivalent";
             }
 
             return "Requires manual review";
@@ -323,6 +378,7 @@ namespace XafApiConverter.Converter {
         public string FilePath { get; set; }
         public int Line { get; set; }
         public int Column { get; set; }
+        public string Severity { get; set; }  // "error" or "warning"
     }
 
     /// <summary>

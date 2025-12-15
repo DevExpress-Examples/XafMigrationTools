@@ -243,14 +243,14 @@ namespace XafApiConverter.Converter {
             sb.AppendLine();
             sb.AppendLine("**For C# files:**");
             sb.AppendLine("```csharp");
-            sb.AppendLine("// NOTE: [Type/Feature] has no Blazor equivalent");
+            sb.AppendLine("// NOTE: [Type/Feature] has no .NET equivalent");
             sb.AppendLine("// TODO: Application behavior verification required and new solution if necessary");
             sb.AppendLine("// [commented out code]");
             sb.AppendLine("```");
             sb.AppendLine();
             sb.AppendLine("**For XAFML files:**");
             sb.AppendLine("```xml");
-            sb.AppendLine("<!-- NOTE: [Type/Feature] has no Blazor equivalent -->");
+            sb.AppendLine("<!-- NOTE: [Type/Feature] has no .NET equivalent -->");
             sb.AppendLine("<!-- TODO: Application behavior verification required and new solution if necessary -->");
             sb.AppendLine("<!-- [commented out code] -->");
             sb.AppendLine("```");

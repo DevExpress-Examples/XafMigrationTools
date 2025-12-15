@@ -1,4 +1,4 @@
-using Microsoft.CodeAnalysis;
+﻿using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.MSBuild;
@@ -18,7 +18,6 @@ namespace XafApiConverter.Converter {
         private readonly string _solutionPath;
         private Solution _solution;
         private MigrationReport _report;
-
 
         public TypeMigrationTool(string solutionPath) {
             _solutionPath = solutionPath;
@@ -54,13 +53,13 @@ namespace XafApiConverter.Converter {
                 SaveReport();
 
                 Console.WriteLine();
-                Console.WriteLine("? Migration analysis complete!");
+                Console.WriteLine("[OK] Migration analysis complete!");
                 _report.PrintSummary();
 
                 return _report;
             }
             catch (Exception ex) {
-                Console.WriteLine($"? Migration failed: {ex.Message}");
+                Console.WriteLine($"[ERROR] Migration failed: {ex.Message}");
                 throw;
             }
         }
@@ -255,23 +254,138 @@ namespace XafApiConverter.Converter {
         /// Phase 4: Build project and categorize errors
         /// </summary>
         private void BuildAndAnalyzeErrors() {
-            // Note: This is a simplified version
-            // In real implementation, you would use:
-            // - upgrade_build_project() from upgrade tools
-            // - upgrade_get_current_dotnet_build_errors() to get errors
+            Console.WriteLine("  Building solution...");
             
-            // For now, just mark as not built yet
-            _report.BuildSuccessful = false;
-            
-            // Placeholder for build errors
-            // In real implementation:
-            // var buildResult = BuildProject(_solutionPath);
-            // var errors = GetBuildErrors(buildResult);
-            // var (fixable, unfixable) = detector.CategorizeErrors(errors);
-            // _report.FixableErrors = fixable;
-            // _report.UnfixableErrors = unfixable;
+            try {
+                var buildResult = BuildSolution(_solutionPath);
+                
+                if (buildResult.Success) {
+                    _report.BuildSuccessful = true;
+                    Console.WriteLine("  Build succeeded!");
+                }
+                else {
+                    _report.BuildSuccessful = false;
+                    Console.WriteLine($"  Build failed with {buildResult.Errors.Count} error(s)");
+                    
+                    // Categorize errors
+                    CategorizeErrors(buildResult.Errors);
+                }
+            }
+            catch (Exception ex) {
+                Console.WriteLine($"  Build analysis failed: {ex.Message}");
+                _report.BuildSuccessful = false;
+            }
+        }
 
-            Console.WriteLine("  Build analysis skipped (requires integration with upgrade tools)");
+        /// <summary>
+        /// Build solution using dotnet CLI
+        /// </summary>
+        private BuildResult BuildSolution(string solutionPath) {
+            var result = new BuildResult();
+            
+            var processInfo = new System.Diagnostics.ProcessStartInfo {
+                FileName = "dotnet",
+                Arguments = $"build \"{solutionPath}\" --no-restore",
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
+                UseShellExecute = false,
+                CreateNoWindow = true,
+                WorkingDirectory = Path.GetDirectoryName(solutionPath)
+            };
+
+            using (var process = System.Diagnostics.Process.Start(processInfo)) {
+                var output = process.StandardOutput.ReadToEnd();
+                var errors = process.StandardError.ReadToEnd();
+                
+                process.WaitForExit();
+                
+                result.Success = process.ExitCode == 0;
+                result.ExitCode = process.ExitCode;
+                
+                // Parse errors from output
+                if (!result.Success) {
+                    result.Errors = ParseBuildErrors(output + errors);
+                }
+            }
+            
+            return result;
+        }
+
+        /// <summary>
+        /// Parse build errors from dotnet build output
+        /// </summary>
+        private List<BuildError> ParseBuildErrors(string buildOutput) {
+            var errors = new List<BuildError>();
+            
+            // Pattern: FilePath(Line,Col): error CS0000: Message
+            var errorPattern = @"(.+?)\((\d+),(\d+)\):\s+(error|warning)\s+(\w+):\s+(.+)";
+            var matches = Regex.Matches(buildOutput, errorPattern);
+            
+            foreach (Match match in matches) {
+                if (match.Groups.Count >= 7) {
+                    var error = new BuildError {
+                        FilePath = match.Groups[1].Value.Trim(),
+                        Line = int.Parse(match.Groups[2].Value),
+                        Column = int.Parse(match.Groups[3].Value),
+                        Severity = match.Groups[4].Value,
+                        Code = match.Groups[5].Value,
+                        Message = match.Groups[6].Value.Trim()
+                    };
+                    
+                    errors.Add(error);
+                }
+            }
+            
+            return errors;
+        }
+
+        /// <summary>
+        /// Categorize errors into fixable and unfixable
+        /// </summary>
+        private void CategorizeErrors(List<BuildError> errors) {
+            var detector = new ProblemDetector(_solution);
+            
+            foreach (var error in errors.Where(e => e.Severity == "error")) {
+                // Check if error is related to NO_EQUIVALENT types
+                var isNoEquivalent = detector.IsNoEquivalentError(error);
+                
+                if (isNoEquivalent) {
+                    // Unfixable - requires commenting out
+                    _report.UnfixableErrors.Add(new UnfixableError {
+                        Code = error.Code,
+                        Message = error.Message,
+                        FilePath = error.FilePath,
+                        Line = error.Line,
+                        Column = error.Column,
+                        Reason = "Type has no .NET equivalent - requires commenting out or manual replacement"
+                    });
+                }
+                else {
+                    // Potentially fixable
+                    var suggestedFix = detector.SuggestFix(error);
+                    
+                    if (!string.IsNullOrEmpty(suggestedFix)) {
+                        _report.FixableErrors.Add(new FixableError {
+                            Code = error.Code,
+                            Message = error.Message,
+                            FilePath = error.FilePath,
+                            Line = error.Line,
+                            Column = error.Column,
+                            SuggestedFix = suggestedFix
+                        });
+                    }
+                    else {
+                        _report.UnfixableErrors.Add(new UnfixableError {
+                            Code = error.Code,
+                            Message = error.Message,
+                            FilePath = error.FilePath,
+                            Line = error.Line,
+                            Column = error.Column,
+                            Reason = "Requires manual review"
+                        });
+                    }
+                }
+            }
         }
 
         /// <summary>
@@ -290,6 +404,15 @@ namespace XafApiConverter.Converter {
         /// Get migration statistics
         /// </summary>
         public MigrationReport GetReport() => _report;
+    }
+
+    /// <summary>
+    /// Build result container
+    /// </summary>
+    internal class BuildResult {
+        public bool Success { get; set; }
+        public int ExitCode { get; set; }
+        public List<BuildError> Errors { get; set; } = new();
     }
 
     /// <summary>
