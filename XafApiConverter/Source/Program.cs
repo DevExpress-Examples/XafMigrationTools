@@ -9,21 +9,29 @@ namespace XafApiConverter {
     static class Program {
         static void Main(string[] args) {
             // Check if user wants to run conversion CLI
-            //if (args.Length > 0 && args[0].Equals("convert", StringComparison.OrdinalIgnoreCase)) {
-            //    // Remove "convert" from args and run CLI
-            //    var cliArgs = args.Skip(1).ToArray();
-            //    Environment.Exit(ConversionCli.Run(cliArgs));
-            //    return;
-            //}
+            if (args.Length > 0 && args[0].Equals("convert", StringComparison.OrdinalIgnoreCase)) {
+                // Remove "convert" from args and run CLI
+                var cliArgs = args.Skip(1).ToArray();
+                Environment.Exit(ConversionCli.Run(cliArgs));
+                return;
+            }
 
-            string solutionPath = "d:\\Work\\Temp_Convert_NET\\FeatureCenter.NETFramework.XPO.sln";
-            //if (args.Length == 0) {
-            //    Console.WriteLine($"Usage: {typeof(Program).Assembly.GetName().Name}.exe <PathToSolution | PathToDirectory>");
-            //    return;
-            //}
-            //else {
-            //    solutionPath = args[0];
-            //}
+            // Check if user wants to run type migration
+            if (args.Length > 0 && args[0].Equals("migrate-types", StringComparison.OrdinalIgnoreCase)) {
+                // Remove "migrate-types" from args and run type migration CLI
+                var cliArgs = args.Skip(1).ToArray();
+                Environment.Exit(TypeMigrationCli.Run(cliArgs));
+                return;
+            }
+
+            string solutionPath;
+            if (args.Length == 0) {
+                Console.WriteLine($"Usage: {typeof(Program).Assembly.GetName().Name}.exe <PathToSolution | PathToDirectory>");
+                return;
+            }
+            else {
+                solutionPath = args[0];
+            }
 
             var solutions = new List<string>();
             if (File.Exists(solutionPath)) {
@@ -54,7 +62,7 @@ namespace XafApiConverter {
                     
                     // Convert project to SDK-style if needed
                     // Uncomment the line below to enable automatic conversion
-                     CSprojConverter.Convert(project);
+                    // CSprojConverter.Convert(project);
                     
                     foreach (var document in project.Documents) {
                         if (!document.FilePath.EndsWith(".cs")) {
