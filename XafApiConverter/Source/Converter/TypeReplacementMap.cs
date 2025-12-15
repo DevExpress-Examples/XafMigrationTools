@@ -404,6 +404,43 @@ namespace XafApiConverter.Converter {
         };
 
         /// <summary>
+        /// Protected base classes - classes that inherit from these should NOT be automatically commented out
+        /// These are critical XAF base classes that must be preserved for manual refactoring
+        /// </summary>
+        public static readonly HashSet<string> ProtectedBaseClasses = new(StringComparer.OrdinalIgnoreCase) {
+            // XAF Module base classes
+            "ModuleBase",
+            "ModuleUpdater",
+            
+            // XAF Controller base classes
+            //"ViewController",
+            //"ViewController<TViewType>",
+            //"ObjectViewController",
+            //"ObjectViewController<TViewType, TObjectType>",
+            //"ListViewController",
+            //"DetailViewController",
+            //"WindowController",
+            //"DialogController",
+            
+            // XAF Editor base classes
+            //"PropertyEditor",
+            //"ListEditor",
+            //"BlazorPropertyEditorBase",
+            
+            // XAF Application classes
+            //"XafApplication",
+            //"BlazorApplication",
+            
+            // Other critical base classes
+            //"Controller",
+            //"ViewControllerBase",
+            //"ActionBase",
+            //"SimpleAction",
+            //"SingleChoiceAction",
+            //"ParametrizedAction"
+        };
+
+        /// <summary>
         /// Get all namespace replacements (both normal and NO_EQUIVALENT)
         /// </summary>
         public static IEnumerable<NamespaceReplacement> GetAllNamespaceReplacements() {

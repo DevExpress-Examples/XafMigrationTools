@@ -112,7 +112,16 @@ namespace XafApiConverter.Converter {
                 // If multiple classes with same name found (shouldn't happen in valid C#), take the first
                 var classDecl = allClasses.First();
                 
-                // STEP 4.5: Check if this is a partial class and find all its parts
+                // STEP 4.5: CRITICAL CHECK - Verify class doesn't inherit from protected base class
+                // Do this BEFORE checking for partial classes to prevent any parts from being commented
+                if (IsProtectedClass(classDecl, content)) {
+                    Console.WriteLine($"      [CRITICAL] Class {className} inherits from protected base class (e.g., ModuleBase)");
+                    Console.WriteLine($"      [CRITICAL] This class MUST be preserved for manual refactoring!");
+                    Console.WriteLine($"      [CRITICAL] Skipping automatic commenting - please review manually");
+                    return false;
+                }
+                
+                // STEP 4.6: Check if this is a partial class and find all its parts
                 bool isPartial = classDecl.Modifiers.Any(m => m.IsKind(SyntaxKind.PartialKeyword));
                 if (isPartial) {
                     var partialParts = FindPartialClassParts(className, filePath);
@@ -217,6 +226,14 @@ namespace XafApiConverter.Converter {
                 if (classDecl == null) {
                     Console.WriteLine($"         - {Path.GetFileName(filePath)}: class not found, skipping");
                     return true;
+                }
+                
+                // CRITICAL CHECK: Verify this partial class part doesn't inherit from protected base class
+                if (IsProtectedClass(classDecl, content)) {
+                    Console.WriteLine($"         - {Path.GetFileName(filePath)}: [CRITICAL] inherits from protected base class");
+                    Console.WriteLine($"         - {Path.GetFileName(filePath)}: MUST be preserved for manual refactoring!");
+                    Console.WriteLine($"         - {Path.GetFileName(filePath)}: Skipping automatic commenting");
+                    return false;  // Stop the whole partial class commenting process
                 }
                 
                 var comment = BuildClassComment(problematicClass);
@@ -388,6 +405,31 @@ namespace XafApiConverter.Converter {
             }
             
             return parts;
+        }
+        
+        /// <summary>
+        /// Check if a class inherits from a protected base class
+        /// Protected classes (like ModuleBase, ViewController) should NOT be automatically commented out
+        /// </summary>
+        private bool IsProtectedClass(ClassDeclarationSyntax classDecl, string fileContent) {
+            if (classDecl.BaseList == null) {
+                return false;
+            }
+            
+            // Simple text-based check for protected base class names
+            var baseListText = classDecl.BaseList.ToString();
+            
+            foreach (var protectedBase in TypeReplacementMap.ProtectedBaseClasses) {
+                // Check if base list contains the protected class name
+                // Handle both simple names (ModuleBase) and generic names (ViewController<T>)
+                var simpleName = protectedBase.Split('<')[0]; // Get name without generic part
+                
+                if (baseListText.Contains(simpleName, StringComparison.OrdinalIgnoreCase)) {
+                    return true;
+                }
+            }
+            
+            return false;
         }
         
         /// <summary>

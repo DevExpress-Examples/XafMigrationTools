@@ -37,6 +37,12 @@ namespace XafApiConverter.Converter {
                 var classes = root.DescendantNodes().OfType<ClassDeclarationSyntax>();
 
                 foreach (var classDecl in classes) {
+                    // Check if class inherits from a protected base class
+                    if (IsProtectedClass(classDecl, semanticModel)) {
+                        Console.WriteLine($"      [INFO] Skipping class {classDecl.Identifier.Text} - inherits from protected base class");
+                        continue;
+                    }
+                    
                     var problems = AnalyzeClass(classDecl, semanticModel, document.FilePath);
                     if (problems.Any()) {
                         problematicClasses.Add(new ProblematicClass {
@@ -51,7 +57,35 @@ namespace XafApiConverter.Converter {
 
             return problematicClasses;
         }
-
+        
+        /// <summary>
+        /// Check if a class inherits from a protected base class
+        /// </summary>
+        private bool IsProtectedClass(ClassDeclarationSyntax classDecl, SemanticModel semanticModel) {
+            if (classDecl.BaseList == null) {
+                return false;
+            }
+            
+            foreach (var baseType in classDecl.BaseList.Types) {
+                var typeInfo = semanticModel.GetTypeInfo(baseType.Type);
+                if (typeInfo.Type != null) {
+                    var baseTypeName = typeInfo.Type.Name;
+                    
+                    // Check against protected base classes list
+                    if (TypeReplacementMap.ProtectedBaseClasses.Contains(baseTypeName)) {
+                        return true;
+                    }
+                    
+                    // Also check the full type name for generic types
+                    var fullTypeName = typeInfo.Type.ToDisplayString();
+                    if (TypeReplacementMap.ProtectedBaseClasses.Any(p => fullTypeName.Contains(p))) {
+                        return true;
+                    }
+                }
+            }
+            
+            return false;
+        }
 
         private List<TypeProblem> AnalyzeClass(
             ClassDeclarationSyntax classDecl,
