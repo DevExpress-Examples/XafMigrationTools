@@ -30,6 +30,10 @@ namespace XafApiConverter.Converter {
         // Dependency analysis
         public Dictionary<string, List<string>> ClassDependencies { get; set; } = new();
 
+        // NEW: Automatic commenting results
+        public int ClassesCommented { get; set; }
+        public List<string> CommentedClassNames { get; set; } = new();
+
         /// <summary>
         /// Generate markdown report for LLM
         /// </summary>
@@ -57,6 +61,7 @@ namespace XafApiConverter.Converter {
             sb.AppendLine($"| XAFML Problems | {XafmlProblems.Count} |");
             sb.AppendLine($"| Fixable Errors | {FixableErrors.Count} |");
             sb.AppendLine($"| Unfixable Errors | {UnfixableErrors.Count} |");
+            sb.AppendLine($"| Classes Commented Out | {ClassesCommented} |");
             sb.AppendLine();
 
             // Automatic Changes
@@ -76,53 +81,129 @@ namespace XafApiConverter.Converter {
             sb.AppendLine("- `*AspNetModule` → `*BlazorModule`");
             sb.AppendLine();
 
+            // NEW: Automatic Commenting
+            if (ClassesCommented > 0) {
+                sb.AppendLine("## 🤖 Automatic Actions Taken");
+                sb.AppendLine();
+                sb.AppendLine($"The tool automatically commented out **{ClassesCommented} classes** that use types ");
+                sb.AppendLine("with no XAF .NET equivalents (TRANS-010 lightweight implementation).");
+                sb.AppendLine();
+                sb.AppendLine("**Commented Classes:**");
+                foreach (var className in CommentedClassNames.OrderBy(c => c)) {
+                    sb.AppendLine($"- `{className}`");
+                }
+                sb.AppendLine();
+                sb.AppendLine("**Format Used:**");
+                sb.AppendLine("```csharp");
+                sb.AppendLine("// NOTE: Class commented out due to types having no XAF .NET equivalent");
+                sb.AppendLine("//   - [Reason for each problematic type]");
+                sb.AppendLine("// TODO: Application behavior verification required and new solution if necessary");
+                sb.AppendLine("/*");
+                sb.AppendLine("public class ClassName { ... }");
+                sb.AppendLine("*/");
+                sb.AppendLine("```");
+                sb.AppendLine();
+                sb.AppendLine("**Next Steps:**");
+                sb.AppendLine("1. Review each commented class");
+                sb.AppendLine("2. Determine if functionality is critical");
+                sb.AppendLine("3. Options:");
+                sb.AppendLine("   - Remove commented code if not needed");
+                sb.AppendLine("   - Find alternative Blazor implementation");
+                sb.AppendLine("   - Implement custom solution");
+                sb.AppendLine();
+            }
+
             // Problematic Classes
             if (ProblematicClasses.Any()) {
-                sb.AppendLine("## ⚠️ Classes Requiring LLM Analysis");
-                sb.AppendLine();
-                sb.AppendLine($"Found **{ProblematicClasses.Count} classes** that use types with NO Blazor equivalent.");
-                sb.AppendLine("These require manual review and decision-making:");
-                sb.AppendLine();
+                var noEquivalentClasses = ProblematicClasses
+                    .Where(c => c.Problems.Any(p => p.RequiresCommentOut))
+                    .ToList();
 
-                foreach (var problematicClass in ProblematicClasses.OrderByDescending(c => c.Problems.Count)) {
-                    sb.AppendLine($"### Class: `{problematicClass.ClassName}`");
+                var manualConversionClasses = ProblematicClasses
+                    .Where(c => c.Problems.Any(p => !p.RequiresCommentOut))
+                    .ToList();
+
+                if (noEquivalentClasses.Any()) {
+                    sb.AppendLine("## ⚠️ Classes with Types Having No XAF .NET Equivalent");
                     sb.AppendLine();
-                    sb.AppendLine($"**File:** `{Path.GetFileName(problematicClass.FilePath)}`");
+                    sb.AppendLine($"Found **{noEquivalentClasses.Count} classes** that use types with NO XAF .NET equivalent.");
+                    sb.AppendLine("These require commenting out or complete refactoring:");
                     sb.AppendLine();
-                    sb.AppendLine("**Problems:**");
-                    foreach (var problem in problematicClass.Problems) {
-                        var severity = problem.Severity switch {
-                            ProblemSeverity.Critical => "🔴 CRITICAL",
-                            ProblemSeverity.High => "🟠 HIGH",
-                            ProblemSeverity.Medium => "🟡 MEDIUM",
-                            _ => "🟢 LOW"
-                        };
-                        sb.AppendLine($"- {severity}: {problem.Reason}");
-                        sb.AppendLine($"  - Type: `{problem.FullTypeName}`");
-                        if (problem.RequiresCommentOut) {
+
+                    foreach (var problematicClass in noEquivalentClasses.OrderByDescending(c => c.Problems.Count(p => p.RequiresCommentOut))) {
+                        sb.AppendLine($"### Class: `{problematicClass.ClassName}`");
+                        sb.AppendLine();
+                        sb.AppendLine($"**File:** `{Path.GetFileName(problematicClass.FilePath)}`");
+                        sb.AppendLine();
+                        sb.AppendLine("**Problems:**");
+                        foreach (var problem in problematicClass.Problems.Where(p => p.RequiresCommentOut)) {
+                            var severity = problem.Severity switch {
+                                ProblemSeverity.Critical => "🔴 CRITICAL",
+                                ProblemSeverity.High => "🟠 HIGH",
+                                ProblemSeverity.Medium => "🟡 MEDIUM",
+                                _ => "🟢 LOW"
+                            };
+                            sb.AppendLine($"- {severity}: {problem.Reason}");
+                            sb.AppendLine($"  - Type: `{problem.FullTypeName}`");
                             sb.AppendLine($"  - **Action Required:** Comment out entire class");
                         }
-                    }
-                    sb.AppendLine();
+                        sb.AppendLine();
 
-                    if (problematicClass.DependentClasses.Any()) {
-                        sb.AppendLine("**⚠️ Dependent Classes (will also need to be commented out):**");
-                        foreach (var dependent in problematicClass.DependentClasses) {
-                            sb.AppendLine($"- `{dependent}`");
+                        if (problematicClass.DependentClasses.Any()) {
+                            sb.AppendLine("**⚠️ Dependent Classes (will also need to be commented out):**");
+                            foreach (var dependent in problematicClass.DependentClasses) {
+                                sb.AppendLine($"- `{dependent}`");
+                            }
+                            sb.AppendLine();
                         }
+
+                        sb.AppendLine("**Suggested Actions:**");
+                        sb.AppendLine("1. Review class functionality and business logic");
+                        sb.AppendLine("2. Determine if functionality is critical or optional");
+                        sb.AppendLine("3. Options:");
+                        sb.AppendLine("   - Comment out class if functionality is optional");
+                        sb.AppendLine("   - Find alternative Blazor implementation if critical");
+                        sb.AppendLine("   - Consult XAF Blazor documentation for equivalents");
+                        sb.AppendLine();
+                        sb.AppendLine("---");
                         sb.AppendLine();
                     }
+                }
 
-                    sb.AppendLine("**Suggested Actions:**");
-                    sb.AppendLine("1. Review class functionality and business logic");
-                    sb.AppendLine("2. Determine if functionality is critical or optional");
-                    sb.AppendLine("3. Options:");
-                    sb.AppendLine("   - Comment out class if functionality is optional");
-                    sb.AppendLine("   - Find alternative Blazor implementation if critical");
-                    sb.AppendLine("   - Consult XAF Blazor documentation for equivalents");
+                if (manualConversionClasses.Any()) {
+                    sb.AppendLine("## 🔧 Classes with Types Having XAF .NET Equivalents (Manual Conversion Required)");
                     sb.AppendLine();
-                    sb.AppendLine("---");
+                    sb.AppendLine($"Found **{manualConversionClasses.Count} classes** that use types with XAF .NET equivalents ");
+                    sb.AppendLine("but automatic conversion is not possible. These require manual refactoring:");
                     sb.AppendLine();
+
+                    foreach (var problematicClass in manualConversionClasses.OrderByDescending(c => c.Problems.Count(p => !p.RequiresCommentOut))) {
+                        sb.AppendLine($"### Class: `{problematicClass.ClassName}`");
+                        sb.AppendLine();
+                        sb.AppendLine($"**File:** `{Path.GetFileName(problematicClass.FilePath)}`");
+                        sb.AppendLine();
+                        sb.AppendLine("**Manual Conversion Required:**");
+                        foreach (var problem in problematicClass.Problems.Where(p => !p.RequiresCommentOut)) {
+                            var severity = problem.Severity switch {
+                                ProblemSeverity.Critical => "🔴 CRITICAL",
+                                ProblemSeverity.High => "🟠 HIGH",
+                                ProblemSeverity.Medium => "🟡 MEDIUM",
+                                _ => "🟢 LOW"
+                            };
+                            sb.AppendLine($"- {severity}: {problem.Reason}");
+                            sb.AppendLine($"  - Old Type: `{problem.FullTypeName}`");
+                        }
+                        sb.AppendLine();
+
+                        sb.AppendLine("**Suggested Actions:**");
+                        sb.AppendLine("1. Review the Blazor equivalent type documentation");
+                        sb.AppendLine("2. Manually refactor class to use the new Blazor type");
+                        sb.AppendLine("3. Test thoroughly after conversion");
+                        sb.AppendLine("4. Consider commenting out temporarily if conversion is complex");
+                        sb.AppendLine();
+                        sb.AppendLine("---");
+                        sb.AppendLine();
+                    }
                 }
             }
 

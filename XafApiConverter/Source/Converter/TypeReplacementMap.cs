@@ -114,7 +114,32 @@ namespace XafApiConverter.Converter {
                 "DevExpress.ExpressApp.ScriptRecorder",
                 null,
                 "ScriptRecorder has no .NET equivalent",
-                new[] { ".cs", ".xafml" }) }
+                new[] { ".cs", ".xafml" }) },
+
+            // NEW: Additional no-equivalent namespaces
+            { "System.Web.UI.WebControls", new NamespaceReplacement(
+                "System.Web.UI.WebControls",
+                null,
+                "System.Web.UI.WebControls has no equivalent in .NET (Web Forms specific)",
+                new[] { ".cs" }) },
+
+            { "DevExpress.ExpressApp.Web.TestScripts", new NamespaceReplacement(
+                "DevExpress.ExpressApp.Web.TestScripts",
+                null,
+                "DevExpress.ExpressApp.Web.TestScripts has no Blazor equivalent",
+                new[] { ".cs" }) },
+
+            { "DevExpress.ExpressApp.Web.Templates.ActionContainers", new NamespaceReplacement(
+                "DevExpress.ExpressApp.Web.Templates.ActionContainers",
+                null,
+                "DevExpress.ExpressApp.Web.Templates.ActionContainers has no Blazor equivalent",
+                new[] { ".cs" }) },
+
+            { "DevExpress.ExpressApp.Web.Templates.ActionContainers.Menu", new NamespaceReplacement(
+                "DevExpress.ExpressApp.Web.Templates.ActionContainers.Menu",
+                null,
+                "DevExpress.ExpressApp.Web.Templates.ActionContainers.Menu has no Blazor equivalent",
+                new[] { ".cs" }) }
         };
 
         /// <summary>
@@ -150,7 +175,15 @@ namespace XafApiConverter.Converter {
                 "BlazorModificationsController",
                 "DevExpress.ExpressApp.Web.SystemModule",
                 "DevExpress.ExpressApp.Blazor.SystemModule",
-                "ASPx grid to Dx grid") },
+                "Web modifications controller to Blazor") },
+
+            // NEW: ListView Controller replacement
+            { "ListViewController", new TypeReplacement(
+                "ListViewController",
+                "ListViewControllerBase",
+                "DevExpress.ExpressApp.Web.SystemModule",
+                "DevExpress.ExpressApp.SystemModule",
+                "Web ListViewController to base ListViewControllerBase") },
 
             // Module Types
             { "SystemAspNetModule", new TypeReplacement(
@@ -195,8 +228,8 @@ namespace XafApiConverter.Converter {
         };
 
         /// <summary>
-        /// Types with NO Blazor equivalent (TRANS-008, TRANS-009)
-        /// These require commenting out entire classes
+        /// Types with NO XAF .NET equivalent (TRANS-009)
+        /// These types have no equivalents in XAF .NET and require commenting out entire classes
         /// </summary>
         public static readonly Dictionary<string, TypeReplacement> NoEquivalentTypes = new() {
             { "AnalysisControlWeb", new TypeReplacement(
@@ -248,12 +281,62 @@ namespace XafApiConverter.Converter {
                 null,
                 "WebMapsListEditor has no Blazor equivalent") },
 
+            { "WebVectorMapsListEditor", new TypeReplacement(
+                "WebVectorMapsListEditor",
+                null,
+                "DevExpress.ExpressApp.Maps.Web",
+                null,
+                "WebVectorMapsListEditor has no Blazor equivalent") },
+
             { "ASPxRichTextPropertyEditor", new TypeReplacement(
                 "ASPxRichTextPropertyEditor",
                 null,
                 "DevExpress.ExpressApp.Office.Web",
                 null,
                 "ASPxRichTextPropertyEditor has no direct Blazor equivalent") },
+
+            // NEW: Additional no-equivalent types
+            { "ImageResourceHttpHandler", new TypeReplacement(
+                "ImageResourceHttpHandler",
+                null,
+                "DevExpress.ExpressApp.Web",
+                null,
+                "ImageResourceHttpHandler has no Blazor equivalent (Web Forms specific HTTP handler)") },
+
+            { "IXafHttpHandler", new TypeReplacement(
+                "IXafHttpHandler",
+                null,
+                "DevExpress.ExpressApp.Web",
+                null,
+                "IXafHttpHandler has no Blazor equivalent (Web Forms specific interface)") },
+
+            { "IJScriptTestControl", new TypeReplacement(
+                "IJScriptTestControl",
+                null,
+                "DevExpress.ExpressApp.Web.TestScripts",
+                null,
+                "IJScriptTestControl has no Blazor equivalent (Test framework specific)") },
+
+            { "LayoutItemTemplate", new TypeReplacement(
+                "LayoutItemTemplate",
+                null,
+                "DevExpress.ExpressApp.Web.Layout",
+                null,
+                "LayoutItemTemplate has no Blazor equivalent (Web Forms layout specific)") },
+
+            { "LayoutGroupTemplate", new TypeReplacement(
+                "LayoutGroupTemplate",
+                null,
+                "DevExpress.ExpressApp.Web.Layout",
+                null,
+                "LayoutGroupTemplate has no Blazor equivalent (Web Forms layout specific)") },
+
+            { "TabbedGroupTemplate", new TypeReplacement(
+                "TabbedGroupTemplate",
+                null,
+                "DevExpress.ExpressApp.Web.Layout",
+                null,
+                "TabbedGroupTemplate has no Blazor equivalent (Web Forms layout specific)") },
 
             // Web Forms specific types (TRANS-009)
             { "Page", new TypeReplacement(
@@ -276,6 +359,39 @@ namespace XafApiConverter.Converter {
         };
 
         /// <summary>
+        /// Types that have XAF .NET equivalents but require manual conversion (TRANS-010)
+        /// These types cannot be automatically converted and require LLM analysis
+        /// </summary>
+        public static readonly Dictionary<string, TypeReplacement> ManualConversionRequiredTypes = new() {
+            { "WebPropertyEditor", new TypeReplacement(
+                "WebPropertyEditor",
+                "BlazorPropertyEditorBase",
+                "DevExpress.ExpressApp.Web.Editors",
+                "DevExpress.ExpressApp.Blazor.Editors",
+                "WebPropertyEditor has Blazor equivalent (BlazorPropertyEditorBase) but automatic conversion is not possible. Manual refactoring required.",
+                new[] { ".cs" },
+                commentOutEntireClass: false) },
+
+            { "ASPxPropertyEditor", new TypeReplacement(
+                "ASPxPropertyEditor",
+                "BlazorPropertyEditorBase",
+                "DevExpress.ExpressApp.Web.Editors",
+                "DevExpress.ExpressApp.Blazor.Editors",
+                "ASPxPropertyEditor has Blazor equivalent (BlazorPropertyEditorBase) but automatic conversion is not possible. Manual refactoring required.",
+                new[] { ".cs" },
+                commentOutEntireClass: false) },
+
+            { "ASPxDateTimePropertyEditor", new TypeReplacement(
+                "ASPxDateTimePropertyEditor",
+                "DateTimePropertyEditor",
+                "DevExpress.ExpressApp.Web.Editors",
+                "DevExpress.ExpressApp.Blazor.Editors",
+                "ASPxDateTimePropertyEditor has Blazor equivalent (DateTimePropertyEditor) but automatic conversion is not possible. Manual refactoring required.",
+                new[] { ".cs" },
+                commentOutEntireClass: false) }
+        };
+
+        /// <summary>
         /// Enum types that require commenting out entire class (TRANS-009)
         /// </summary>
         public static readonly Dictionary<string, EnumReplacement> ProblematicEnums = new() {
@@ -294,10 +410,12 @@ namespace XafApiConverter.Converter {
         }
 
         /// <summary>
-        /// Get all type replacements (both normal and NO_EQUIVALENT)
+        /// Get all type replacements (normal, NO_EQUIVALENT, and MANUAL_CONVERSION_REQUIRED)
         /// </summary>
         public static IEnumerable<TypeReplacement> GetAllTypeReplacements() {
-            return TypeReplacements.Values.Concat(NoEquivalentTypes.Values);
+            return TypeReplacements.Values
+                .Concat(NoEquivalentTypes.Values)
+                .Concat(ManualConversionRequiredTypes.Values);
         }
 
         /// <summary>
@@ -306,6 +424,13 @@ namespace XafApiConverter.Converter {
         public static bool RequiresCommentOutClass(string typeName) {
             return NoEquivalentTypes.TryGetValue(typeName, out var replacement) && 
                    replacement.CommentOutEntireClass;
+        }
+
+        /// <summary>
+        /// Check if a type requires manual conversion
+        /// </summary>
+        public static bool RequiresManualConversion(string typeName) {
+            return ManualConversionRequiredTypes.ContainsKey(typeName);
         }
 
         /// <summary>

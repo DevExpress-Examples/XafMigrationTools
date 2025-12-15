@@ -52,6 +52,10 @@ namespace XafApiConverter.Converter {
                 Console.WriteLine("Phase 5: Generating report...");
                 SaveReport();
 
+                // Phase 6: Comment out problematic classes (NEW)
+                Console.WriteLine("Phase 6: Commenting out problematic classes...");
+                CommentOutProblematicClasses();
+
                 Console.WriteLine();
                 Console.WriteLine("[OK] Migration analysis complete!");
                 _report.PrintSummary();
@@ -129,6 +133,17 @@ namespace XafApiConverter.Converter {
                 }
             }
 
+            // NEW: Remove using directives for NO_EQUIVALENT namespaces
+            foreach (var nsReplacement in TypeReplacementMap.NoEquivalentNamespaces.Values) {
+                if (!nsReplacement.AppliesToFileType(".cs")) continue;
+
+                var oldRoot = root;
+                root = RemoveUsingNamespace(root, nsReplacement.OldNamespace);
+                if (root != oldRoot) {
+                    _report.NamespacesReplaced++;
+                }
+            }
+
             // TRANS-008: Type replacements
             foreach (var typeReplacement in TypeReplacementMap.TypeReplacements.Values) {
                 if (!typeReplacement.AppliesToFileType(".cs")) continue;
@@ -179,6 +194,37 @@ namespace XafApiConverter.Converter {
             }
 
             if (replaced) {
+                return compilationUnit.WithUsings(SyntaxFactory.List(newUsings));
+            }
+
+            return root;
+        }
+
+        /// <summary>
+        /// Remove using namespace directive for NO_EQUIVALENT namespaces
+        /// </summary>
+        private SyntaxNode RemoveUsingNamespace(SyntaxNode root, string namespaceToRemove) {
+            var compilationUnit = root as CompilationUnitSyntax;
+            if (compilationUnit == null) return root;
+
+            var newUsings = new List<UsingDirectiveSyntax>();
+            bool removed = false;
+
+            foreach (var usingDirective in compilationUnit.Usings) {
+                var namespaceName = usingDirective.Name.ToString();
+                
+                // Check for exact match or if it starts with the namespace
+                if (namespaceName == namespaceToRemove || 
+                    namespaceName.StartsWith(namespaceToRemove + ".")) {
+                    // Skip this using directive (remove it)
+                    removed = true;
+                }
+                else {
+                    newUsings.Add(usingDirective);
+                }
+            }
+
+            if (removed) {
                 return compilationUnit.WithUsings(SyntaxFactory.List(newUsings));
             }
 
@@ -398,6 +444,26 @@ namespace XafApiConverter.Converter {
 
             _report.SaveToFile(reportPath);
             Console.WriteLine($"  Report saved to: {reportPath}");
+        }
+
+        /// <summary>
+        /// Phase 6: Comment out problematic classes automatically
+        /// Implements TRANS-010 lightweight version
+        /// </summary>
+        private void CommentOutProblematicClasses() {
+            var commenter = new ClassCommenter(_report);
+            var commentedCount = commenter.CommentOutProblematicClasses();
+
+            if (commentedCount > 0) {
+                Console.WriteLine($"  Commented out {commentedCount} classes");
+                
+                // Update report with commented classes
+                _report.ClassesCommented = commentedCount;
+                _report.CommentedClassNames = commenter.GetCommentedClasses().ToList();
+            }
+            else {
+                Console.WriteLine("  No classes needed commenting");
+            }
         }
 
         /// <summary>

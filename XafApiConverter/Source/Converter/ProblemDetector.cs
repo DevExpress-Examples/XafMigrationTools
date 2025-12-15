@@ -67,13 +67,23 @@ namespace XafApiConverter.Converter {
                         var typeName = typeInfo.Type.Name;
                         var typeNamespace = typeInfo.Type.ContainingNamespace?.ToDisplayString();
 
-                        if (IsNoEquivalentType(typeName, typeNamespace)) {
+                        if (TypeReplacementMap.NoEquivalentTypes.ContainsKey(typeName)) {
                             problems.Add(new TypeProblem {
                                 TypeName = typeName,
                                 FullTypeName = $"{typeNamespace}.{typeName}",
-                                Reason = $"Base class '{typeName}' has no .NET equivalent",
+                                Reason = $"Base class '{typeName}' has no equivalent in XAF .NET",
                                 Severity = ProblemSeverity.Critical,
                                 RequiresCommentOut = true
+                            });
+                        }
+                        else if (TypeReplacementMap.ManualConversionRequiredTypes.ContainsKey(typeName)) {
+                            var replacement = TypeReplacementMap.ManualConversionRequiredTypes[typeName];
+                            problems.Add(new TypeProblem {
+                                TypeName = typeName,
+                                FullTypeName = $"{typeNamespace}.{typeName}",
+                                Reason = $"Base class '{typeName}' has equivalent in XAF .NET ({replacement.NewType}) but automatic conversion is not possible. See: {replacement.GetFullNewTypeName()}",
+                                Severity = ProblemSeverity.High,
+                                RequiresCommentOut = false
                             });
                         }
                     }
@@ -90,7 +100,7 @@ namespace XafApiConverter.Converter {
                     problems.Add(new TypeProblem {
                         TypeName = "TemplateType",
                         FullTypeName = "DevExpress.ExpressApp.Web.Templates.TemplateType",
-                        Reason = "Uses TemplateType enum which has no .NET equivalent",
+                        Reason = "Uses TemplateType enum which has no Blazor equivalent",
                         Severity = ProblemSeverity.Critical,
                         RequiresCommentOut = true
                     });
@@ -98,7 +108,7 @@ namespace XafApiConverter.Converter {
                 }
             }
 
-            // Check for NO_EQUIVALENT types in code
+            // Check for NO_EQUIVALENT and MANUAL_CONVERSION_REQUIRED types in code
             var identifiers = classDecl.DescendantNodes().OfType<IdentifierNameSyntax>();
             foreach (var identifier in identifiers) {
                 var typeInfo = semanticModel.GetTypeInfo(identifier);
@@ -106,13 +116,23 @@ namespace XafApiConverter.Converter {
                     var typeName = typeInfo.Type.Name;
                     var typeNamespace = typeInfo.Type.ContainingNamespace?.ToDisplayString();
 
-                    if (IsNoEquivalentType(typeName, typeNamespace)) {
+                    if (TypeReplacementMap.NoEquivalentTypes.ContainsKey(typeName)) {
                         problems.Add(new TypeProblem {
                             TypeName = typeName,
                             FullTypeName = $"{typeNamespace}.{typeName}",
-                            Reason = $"Type '{typeName}' has no .NET equivalent",
+                            Reason = $"Type '{typeName}' has no equivalent in XAF .NET",
                             Severity = ProblemSeverity.High,
                             RequiresCommentOut = true
+                        });
+                    }
+                    else if (TypeReplacementMap.ManualConversionRequiredTypes.ContainsKey(typeName)) {
+                        var replacement = TypeReplacementMap.ManualConversionRequiredTypes[typeName];
+                        problems.Add(new TypeProblem {
+                            TypeName = typeName,
+                            FullTypeName = $"{typeNamespace}.{typeName}",
+                            Reason = $"Type '{typeName}' has equivalent in XAF .NET ({replacement.NewType}) but automatic conversion is not possible. See: {replacement.GetFullNewTypeName()}",
+                            Severity = ProblemSeverity.Medium,
+                            RequiresCommentOut = false
                         });
                     }
                 }
@@ -130,6 +150,11 @@ namespace XafApiConverter.Converter {
         private bool IsNoEquivalentType(string typeName, string typeNamespace) {
             // Check NO_EQUIVALENT types
             if (TypeReplacementMap.NoEquivalentTypes.ContainsKey(typeName)) {
+                return true;
+            }
+
+            // Check MANUAL_CONVERSION_REQUIRED types
+            if (TypeReplacementMap.ManualConversionRequiredTypes.ContainsKey(typeName)) {
                 return true;
             }
 

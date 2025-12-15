@@ -80,7 +80,7 @@ namespace XafApiConverter.Converter {
                 new PackageReference("DevExpress.ExpressApp.StateMachine", dx),
                 new PackageReference("DevExpress.ExpressApp.Dashboards", dx),
                 new PackageReference("DevExpress.ExpressApp.Chart", dx),
-                new PackageReference("DevExpress.ExpressApp.PivotGrid.Win", dx)
+                new PackageReference("DevExpress.ExpressApp.PivotGrid", dx)
             });
 
             // ORM-specific base packages
