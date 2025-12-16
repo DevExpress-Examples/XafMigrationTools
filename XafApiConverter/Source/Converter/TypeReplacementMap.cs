@@ -79,7 +79,13 @@ namespace XafApiConverter.Converter {
                 "DevExpress.ExpressApp.ReportsV2.Web",
                 "DevExpress.ExpressApp.ReportsV2.Blazor",
                 "Reports Web to Blazor",
-                new[] { ".cs", ".xafml" }) }
+                new[] { ".cs", ".xafml" }) },
+
+            { "DevExpress.ExpressApp.Dashboards.Web", new NamespaceReplacement(
+                "DevExpress.ExpressApp.Dashboards.Web",
+                "DevExpress.ExpressApp.Dashboards.Blazor",
+                "Dashboards ASP.NET to Blazor",
+                new[] { ".cs" }) }
         };
 
         /// <summary>
@@ -140,6 +146,12 @@ namespace XafApiConverter.Converter {
                 "DevExpress.ExpressApp.Web.Templates.ActionContainers.Menu",
                 null,
                 "DevExpress.ExpressApp.Web.Templates.ActionContainers.Menu has no Blazor equivalent",
+                new[] { ".cs" }) },
+
+            { "DevExpress.ExpressApp.PivotGrid.Web", new NamespaceReplacement(
+                "DevExpress.ExpressApp.PivotGrid.Web",
+                null,
+                "DevExpress.ExpressApp.PivotGrid.Web has no Blazor equivalent",
                 new[] { ".cs" }) }
         };
 
@@ -225,6 +237,14 @@ namespace XafApiConverter.Converter {
                 "DevExpress.ExpressApp.ReportsV2.Web",
                 "DevExpress.ExpressApp.ReportsV2.Blazor",
                 "Reports ASP.NET to Blazor",
+                new[] { ".cs" }) },
+
+            { "DashboardsAspNetModule", new TypeReplacement(
+                "DashboardsAspNetModule",
+                "DashboardsBlazorModule",
+                "DevExpress.ExpressApp.Dashboards.Web",
+                "DevExpress.ExpressApp.Dashboards.Blazor",
+                "Dashboards ASP.NET to Blazor",
                 new[] { ".cs" }) }
         };
 
