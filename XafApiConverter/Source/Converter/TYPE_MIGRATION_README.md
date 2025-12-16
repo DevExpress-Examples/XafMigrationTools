@@ -1,4 +1,4 @@
-# TypeMigrationTool - Hybrid Approach for XAF Web ? Blazor Migration
+ï»¿# TypeMigrationTool - Hybrid Approach for XAF Web ? Blazor Migration
 
 ## Overview
 
@@ -247,15 +247,15 @@ Phase 5: Generating report...
 ???????????????????????????????????????????????
 
 ? Automatic Changes:
-   • Namespaces replaced: 45
-   • Types replaced: 18
-   • Files processed: 23
-   • XAFML files: 3
+   â€¢ Namespaces replaced: 45
+   â€¢ Types replaced: 18
+   â€¢ Files processed: 23
+   â€¢ XAFML files: 3
 
 ??  Requires LLM Analysis:
-   • Problematic classes: 3
-   • Dependent classes: 5
-   • XAFML problems: 2
+   â€¢ Problematic classes: 3
+   â€¢ Dependent classes: 5
+   â€¢ XAFML problems: 2
 ```
 
 ### Step 2: Review Generated Report
@@ -509,7 +509,7 @@ public class Default : Page {
 **After (LLM applies fix):**
 ```csharp
 // NOTE: System.Web.UI.Page is Web Forms specific, no Blazor equivalent
-// TODO: Application behavior verification required and new solution if necessary
+// TODO: It is necessary to test the application's behavior and, if necessary, develop a new solution.
 /*
 using System.Web.UI;
 

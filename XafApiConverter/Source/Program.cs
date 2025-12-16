@@ -12,21 +12,21 @@ namespace XafApiConverter {
             if (args.Length > 0) {
                 var command = args[0].ToLowerInvariant();
 
-                // Legacy support: explicit "convert" command
+                // explicit "convert" command
                 if (command == "convert") {
                     var cliArgs = args.Skip(1).ToArray();
                     Environment.Exit(ConversionCli.Run(cliArgs));
                     return;
                 }
 
-                // Legacy support: explicit "migrate-types" command
+                // explicit "migrate-types" command
                 if (command == "migrate-types") {
                     var cliArgs = args.Skip(1).ToArray();
                     Environment.Exit(TypeMigrationCli.Run(cliArgs));
                     return;
                 }
 
-                // Legacy support: explicit "security-update" command
+                // explicit "security-update" command
                 if (command == "security-update") {
                     var cliArgs = args.Skip(1).ToArray();
                     Environment.Exit(SecurityUpdateCli.Run(cliArgs));

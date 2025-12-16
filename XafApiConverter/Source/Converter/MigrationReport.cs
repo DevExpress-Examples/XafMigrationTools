@@ -97,7 +97,7 @@ namespace XafApiConverter.Converter {
                 sb.AppendLine("```csharp");
                 sb.AppendLine("// NOTE: Class commented out due to types having no XAF .NET equivalent");
                 sb.AppendLine("//   - [Reason for each problematic type]");
-                sb.AppendLine("// TODO: Application behavior verification required and new solution if necessary");
+                sb.AppendLine("// TODO: It is necessary to test the application's behavior and, if necessary, develop a new solution.");
                 sb.AppendLine("/*");
                 sb.AppendLine("public class ClassName { ... }");
                 sb.AppendLine("*/");
@@ -325,14 +325,14 @@ namespace XafApiConverter.Converter {
             sb.AppendLine("**For C# files:**");
             sb.AppendLine("```csharp");
             sb.AppendLine("// NOTE: [Type/Feature] has no .NET equivalent");
-            sb.AppendLine("// TODO: Application behavior verification required and new solution if necessary");
+            sb.AppendLine("// TODO: It is necessary to test the application's behavior and, if necessary, develop a new solution.");
             sb.AppendLine("// [commented out code]");
             sb.AppendLine("```");
             sb.AppendLine();
             sb.AppendLine("**For XAFML files:**");
             sb.AppendLine("```xml");
             sb.AppendLine("<!-- NOTE: [Type/Feature] has no .NET equivalent -->");
-            sb.AppendLine("<!-- TODO: Application behavior verification required and new solution if necessary -->");
+            sb.AppendLine("<!-- TODO: It is necessary to test the application's behavior and, if necessary, develop a new solution. -->");
             sb.AppendLine("<!-- [commented out code] -->");
             sb.AppendLine("```");
             sb.AppendLine();

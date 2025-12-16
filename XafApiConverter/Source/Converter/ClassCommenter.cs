@@ -15,6 +15,7 @@ namespace XafApiConverter.Converter {
     internal class ClassCommenter {
         private readonly MigrationReport _report;
         private readonly HashSet<string> _commentedClasses = new();
+        private readonly HashSet<string> _warningAddedClasses = new();
 
         public ClassCommenter(MigrationReport report) {
             _report = report;
@@ -36,12 +37,25 @@ namespace XafApiConverter.Converter {
                 return 0;
             }
 
-            Console.WriteLine($"  Found {classesToComment.Count} classes to comment out...");
+            Console.WriteLine($"  Found {classesToComment.Count} classes to comment out or warn about...");
 
             // Process each class individually with full reload after each change
             foreach (var problematicClass in classesToComment) {
-                // Skip if already commented
-                if (_commentedClasses.Contains(problematicClass.ClassName)) {
+                // Skip if already processed (commented or warning added)
+                if (_commentedClasses.Contains(problematicClass.ClassName) || 
+                    _warningAddedClasses.Contains(problematicClass.ClassName)) {
+                    continue;
+                }
+
+                // Check if this is a protected class first
+                bool isProtected = CheckIfProtectedClass(problematicClass.FilePath, problematicClass.ClassName);
+                
+                if (isProtected) {
+                    // Add warning comment but keep class active
+                    if (AddWarningCommentToProtectedClass(problematicClass.FilePath, problematicClass.ClassName, problematicClass)) {
+                        _warningAddedClasses.Add(problematicClass.ClassName);
+                        Console.WriteLine($"    [WARNING ADDED] {problematicClass.ClassName} in {Path.GetFileName(problematicClass.FilePath)} (protected class)");
+                    }
                     continue;
                 }
 
@@ -53,7 +67,7 @@ namespace XafApiConverter.Converter {
 
                     // Comment out dependent classes
                     foreach (var dependent in problematicClass.DependentClasses) {
-                        if (_commentedClasses.Contains(dependent)) {
+                        if (_commentedClasses.Contains(dependent) || _warningAddedClasses.Contains(dependent)) {
                             continue;
                         }
 
@@ -67,6 +81,235 @@ namespace XafApiConverter.Converter {
             }
 
             return totalCommented;
+        }
+
+        /// <summary>
+        /// Check if a class is protected (inherits from ModuleBase, etc.) without modifying it
+        /// </summary>
+        private bool CheckIfProtectedClass(string filePath, string className) {
+            try {
+                if (!File.Exists(filePath)) {
+                    return false;
+                }
+
+                var content = File.ReadAllText(filePath);
+                var syntaxTree = CSharpSyntaxTree.ParseText(content);
+                var root = syntaxTree.GetRoot() as CompilationUnitSyntax;
+
+                if (root == null) {
+                    return false;
+                }
+
+                var classDecl = root.DescendantNodes()
+                    .OfType<ClassDeclarationSyntax>()
+                    .Where(c => c.Identifier.Text == className)
+                    .Where(c => !IsClassInsideComment(c, content))
+                    .FirstOrDefault();
+
+                if (classDecl == null) {
+                    return false;
+                }
+
+                return IsProtectedClass(classDecl, content);
+            }
+            catch {
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Add warning comment above a protected class without commenting it out
+        /// </summary>
+        private bool AddWarningCommentToProtectedClass(string filePath, string className, ProblematicClass problematicClass) {
+            try {
+                if (!File.Exists(filePath)) {
+                    Console.WriteLine($"      [ERROR] File not found: {filePath}");
+                    return false;
+                }
+
+                // Load content
+                var content = File.ReadAllText(filePath);
+                
+                // Check if warning already exists
+                if (HasWarningComment(content, className)) {
+                    Console.WriteLine($"      [WARNING] Class {className} already has warning comment, skipping");
+                    return false;
+                }
+                
+                // Parse syntax tree
+                var syntaxTree = CSharpSyntaxTree.ParseText(content);
+                var root = syntaxTree.GetRoot() as CompilationUnitSyntax;
+
+                if (root == null) {
+                    Console.WriteLine($"      [ERROR] Could not parse file: {filePath}");
+                    return false;
+                }
+
+                // Find the class
+                var classDecl = root.DescendantNodes()
+                    .OfType<ClassDeclarationSyntax>()
+                    .Where(c => c.Identifier.Text == className)
+                    .Where(c => !IsClassInsideComment(c, content))
+                    .FirstOrDefault();
+                
+                if (classDecl == null) {
+                    Console.WriteLine($"      [WARNING] Class {className} not found in file: {filePath}");
+                    return false;
+                }
+
+                // Check if partial class
+                bool isPartial = classDecl.Modifiers.Any(m => m.IsKind(SyntaxKind.PartialKeyword));
+                
+                // Build warning comment
+                var warningComment = BuildProtectedClassWarningComment(problematicClass, isPartial);
+
+                // Get position to insert comment (before any attributes or the class itself)
+                var insertPosition = GetCommentInsertPosition(classDecl, content);
+
+                // Extract base indentation
+                var baseIndent = ExtractIndentation(classDecl);
+
+                // Build the formatted comment
+                var formattedComment = FormatWarningComment(warningComment, baseIndent);
+
+                // Insert the comment
+                var beforeComment = content.Substring(0, insertPosition);
+                var afterComment = content.Substring(insertPosition);
+                var newContent = beforeComment + formattedComment + afterComment;
+
+                // Save file
+                File.WriteAllText(filePath, newContent, Encoding.UTF8);
+                
+                Console.WriteLine($"      [SUCCESS] Warning comment added to protected class {className}");
+                
+                // If partial class, add warnings to other parts too
+                if (isPartial) {
+                    var partialParts = FindPartialClassParts(className, filePath);
+                    foreach (var part in partialParts) {
+                        AddWarningCommentToProtectedClass(part.FilePath, className, problematicClass);
+                    }
+                }
+                
+                return true;
+            }
+            catch (Exception ex) {
+                Console.WriteLine($"      [ERROR] Failed to add warning comment to class {className}: {ex.Message}");
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Check if a class already has a warning comment
+        /// </summary>
+        private bool HasWarningComment(string content, string className) {
+            var patterns = new[] {
+                "// NOTE: Partial class commented out due to types having no XAF .NET equivalent",
+                "// NOTE: Class commented out due to types having no XAF .NET equivalent",
+                "// NOTE: Class has no XAF .NET equivalent",
+                "// NOTE: Partial class has no XAF .NET equivalent",
+                "// NOTE: This class inherits from protected base class",
+                "// WARNING: This class uses types with no XAF .NET equivalent"
+            };
+
+            // Search in the area before where class might be
+            foreach (var pattern in patterns) {
+                var index = content.IndexOf(pattern, StringComparison.Ordinal);
+                if (index >= 0) {
+                    // Check if class name appears within next 500 characters
+                    var searchEnd = Math.Min(index + 500, content.Length);
+                    var searchRegion = content.Substring(index, searchEnd - index);
+                    if (searchRegion.Contains(className, StringComparison.Ordinal)) {
+                        return true;
+                    }
+                }
+            }
+
+            return false;
+        }
+
+        /// <summary>
+        /// Build warning comment for protected classes
+        /// </summary>
+        private string BuildProtectedClassWarningComment(ProblematicClass problematicClass, bool isPartial) {
+            var sb = new StringBuilder();
+            
+            var prefix = isPartial ? "Partial class" : "Class";
+            sb.AppendLine($"// NOTE: {prefix} has no XAF .NET equivalent");
+            
+            var reasons = problematicClass.Problems
+                .Where(p => p.RequiresCommentOut)
+                .Distinct();
+            
+            foreach (var problem in reasons) {
+                // Add the main reason
+                sb.AppendLine($"//   - {problem.Reason}");
+                
+                // NEW: Add detailed description if available
+                if (!string.IsNullOrEmpty(problem.Description)) {
+                    sb.AppendLine($"//     {problem.Description}");
+                }
+            }
+            
+            sb.AppendLine("// TODO: It is necessary to test the application's behavior and, if necessary, develop a new solution.");
+            
+            return sb.ToString();
+        }
+
+        /// <summary>
+        /// Get the position where comment should be inserted (before attributes or class)
+        /// </summary>
+        private int GetCommentInsertPosition(ClassDeclarationSyntax classDecl, string content) {
+            // If class has attributes, insert before first attribute
+            if (classDecl.AttributeLists.Count > 0) {
+                var firstAttribute = classDecl.AttributeLists[0];
+                return firstAttribute.SpanStart;
+            }
+
+            // Otherwise, insert before the class declaration
+            // But after any leading trivia (to preserve indentation)
+            var leadingTrivia = classDecl.GetLeadingTrivia();
+            var lastNewLineTrivia = leadingTrivia.LastOrDefault(t => 
+                t.IsKind(SyntaxKind.EndOfLineTrivia));
+
+            if (lastNewLineTrivia != default(SyntaxTrivia)) {
+                return lastNewLineTrivia.Span.End;
+            }
+
+            return classDecl.SpanStart;
+        }
+
+        /// <summary>
+        /// Extract indentation from class declaration
+        /// </summary>
+        private string ExtractIndentation(ClassDeclarationSyntax classDecl) {
+            var leadingTrivia = classDecl.GetLeadingTrivia();
+            var lastWhitespace = leadingTrivia.LastOrDefault(t => t.IsKind(SyntaxKind.WhitespaceTrivia));
+            
+            if (lastWhitespace != default(SyntaxTrivia)) {
+                return lastWhitespace.ToString();
+            }
+
+            return string.Empty;
+        }
+
+        /// <summary>
+        /// Format warning comment with proper indentation
+        /// </summary>
+        private string FormatWarningComment(string comment, string baseIndent) {
+            var sb = new StringBuilder();
+            
+            var lines = comment.Split(new[] { "\r\n", "\r", "\n" }, StringSplitOptions.RemoveEmptyEntries);
+
+            bool isFirstLine = true;
+            foreach (var line in lines) {
+                if(!isFirstLine) {
+                    sb.Append(baseIndent);
+                }
+                isFirstLine = false;
+                sb.AppendLine(line);
+            }
+            
+            return sb.ToString();
         }
 
         /// <summary>
@@ -127,11 +370,74 @@ namespace XafApiConverter.Converter {
                     var partialParts = FindPartialClassParts(className, filePath);
                     if (partialParts.Any()) {
                         Console.WriteLine($"      [INFO] Class {className} is partial with {partialParts.Count} additional part(s)");
-                        Console.WriteLine($"      [WARNING] Partial class detected. All parts must be commented out together:");
+                        Console.WriteLine($"      [WARNING] Partial class detected. All parts must be processed together:");
                         Console.WriteLine($"         - {Path.GetFileName(filePath)} (current)");
                         foreach (var part in partialParts) {
                             Console.WriteLine($"         - {Path.GetFileName(part.FilePath)}");
                         }
+                        
+                        // Check if ANY part is protected - if so, ALL parts should get warnings
+                        bool anyPartProtected = false;
+                        foreach (var part in partialParts) {
+                            if (CheckIfProtectedClass(part.FilePath, className)) {
+                                anyPartProtected = true;
+                                break;
+                            }
+                        }
+                        
+                        if (anyPartProtected) {
+                            Console.WriteLine($"      [CRITICAL] One or more partial class parts inherit from protected base class");
+                            Console.WriteLine($"      [CRITICAL] ALL parts of this partial class will receive warning comments only");
+                            
+                            // Process all parts with warnings
+                            foreach (var part in partialParts) {
+                                var partContent = File.ReadAllText(part.FilePath);
+                                if (!HasWarningComment(partContent, className)) {
+                                    var partTree = CSharpSyntaxTree.ParseText(partContent);
+                                    var partRoot = partTree.GetRoot() as CompilationUnitSyntax;
+                                    if (partRoot != null) {
+                                        var partClassDecl = partRoot.DescendantNodes()
+                                            .OfType<ClassDeclarationSyntax>()
+                                            .Where(c => c.Identifier.Text == className)
+                                            .Where(c => !IsClassInsideComment(c, partContent))
+                                            .FirstOrDefault();
+                                        
+                                        if (partClassDecl != null) {
+                                            var warningComment = BuildProtectedClassWarningComment(problematicClass, isPartial: true);
+                                            var insertPosition = GetCommentInsertPosition(partClassDecl, partContent);
+                                            var baseIndent = ExtractIndentation(partClassDecl);
+                                            var formattedComment = FormatWarningComment(warningComment, baseIndent);
+                                            
+                                            var beforeComment = partContent.Substring(0, insertPosition);
+                                            var afterComment = partContent.Substring(insertPosition);
+                                            var newPartContent = beforeComment + formattedComment + afterComment;
+                                            
+                                            File.WriteAllText(part.FilePath, newPartContent, Encoding.UTF8);
+                                            Console.WriteLine($"         - {Path.GetFileName(part.FilePath)}: warning comment added");
+                                        }
+                                    }
+                                }
+                            }
+                            
+                            // Add warning to current part too
+                            var currentWarningComment = BuildProtectedClassWarningComment(problematicClass, isPartial: true);
+                            var currentInsertPosition = GetCommentInsertPosition(classDecl, content);
+                            var currentBaseIndent = ExtractIndentation(classDecl);
+                            var currentFormattedComment = FormatWarningComment(currentWarningComment, currentBaseIndent);
+                            
+                            var beforeCurrentComment = content.Substring(0, currentInsertPosition);
+                            var afterCurrentComment = content.Substring(currentInsertPosition);
+                            var newCurrentContent = beforeCurrentComment + currentFormattedComment + afterCurrentComment;
+                            
+                            File.WriteAllText(filePath, newCurrentContent, Encoding.UTF8);
+                            Console.WriteLine($"         - {Path.GetFileName(filePath)}: warning comment added (current part)");
+                            
+
+                            // Register in _warningAddedClasses
+                            _warningAddedClasses.Add(className);
+                            return false; // Don't comment out, just return false to indicate no commenting happened
+                        }
+                        
                         Console.WriteLine($"      [ACTION] Commenting out all parts of partial class {className}...");
                         
                         // Comment out all other parts first
@@ -212,6 +518,12 @@ namespace XafApiConverter.Converter {
                     return true;
                 }
                 
+                // Check if already has warning comment
+                if (HasWarningComment(content, className)) {
+                    Console.WriteLine($"         - {Path.GetFileName(filePath)}: already has warning comment, skipping");
+                    return true;
+                }
+                
                 var syntaxTree = CSharpSyntaxTree.ParseText(content);
                 var root = syntaxTree.GetRoot() as CompilationUnitSyntax;
                 
@@ -230,10 +542,22 @@ namespace XafApiConverter.Converter {
                 
                 // CRITICAL CHECK: Verify this partial class part doesn't inherit from protected base class
                 if (IsProtectedClass(classDecl, content)) {
-                    Console.WriteLine($"         - {Path.GetFileName(filePath)}: [CRITICAL] inherits from protected base class");
-                    Console.WriteLine($"         - {Path.GetFileName(filePath)}: MUST be preserved for manual refactoring!");
-                    Console.WriteLine($"         - {Path.GetFileName(filePath)}: Skipping automatic commenting");
-                    return false;  // Stop the whole partial class commenting process
+                    Console.WriteLine($"         - {Path.GetFileName(filePath)}: [PROTECTED] inherits from protected base class");
+                    Console.WriteLine($"         - {Path.GetFileName(filePath)}: Adding warning comment instead of commenting out");
+                    
+                    // Add warning comment instead of commenting out
+                    var warningComment = BuildProtectedClassWarningComment(problematicClass, isPartial: true);
+                    var insertPosition = GetCommentInsertPosition(classDecl, content);
+                    var baseIndent = ExtractIndentation(classDecl);
+                    var formattedComment = FormatWarningComment(warningComment, baseIndent);
+                    
+                    var beforeComment = content.Substring(0, insertPosition);
+                    var afterComment = content.Substring(insertPosition);
+                    var newContentWithWarning = beforeComment + formattedComment + afterComment;
+                    
+                    File.WriteAllText(filePath, newContentWithWarning, Encoding.UTF8);
+                    Console.WriteLine($"         - {Path.GetFileName(filePath)}: warning comment added successfully");
+                    return true;
                 }
                 
                 var comment = BuildClassComment(problematicClass);
@@ -441,14 +765,19 @@ namespace XafApiConverter.Converter {
             
             var reasons = problematicClass.Problems
                 .Where(p => p.RequiresCommentOut)
-                .Select(p => $"//   - {p.Reason}")
                 .Distinct();
             
-            foreach (var reason in reasons) {
-                sb.AppendLine(reason);
+            foreach (var problem in reasons) {
+                // Add the main reason
+                sb.AppendLine($"//   - {problem.Reason}");
+                
+                // NEW: Add detailed description if available
+                if (!string.IsNullOrEmpty(problem.Description)) {
+                    sb.AppendLine($"//     {problem.Description}");
+                }
             }
             
-            sb.AppendLine("// TODO: Application behavior verification required and new solution if necessary");
+            sb.AppendLine("// TODO: It is necessary to test the application's behavior and, if necessary, develop a new solution.");
             
             return sb.ToString();
         }
@@ -572,7 +901,7 @@ namespace XafApiConverter.Converter {
 
                 // STEP 6: Build comment
                 var comment = $@"// NOTE: Class commented out because it depends on '{dependencyName}' which has no XAF .NET equivalent
-// TODO: Application behavior verification required and new solution if necessary
+// TODO: It is necessary to test the application's behavior and, if necessary, develop a new solution.
 ";
 
                 // STEP 7: Get ONLY the class code directly from file content

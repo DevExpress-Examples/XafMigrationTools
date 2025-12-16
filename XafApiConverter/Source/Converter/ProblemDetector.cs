@@ -38,10 +38,10 @@ namespace XafApiConverter.Converter {
 
                 foreach (var classDecl in classes) {
                     // Check if class inherits from a protected base class
-                    if (IsProtectedClass(classDecl, semanticModel)) {
-                        Console.WriteLine($"      [INFO] Skipping class {classDecl.Identifier.Text} - inherits from protected base class");
-                        continue;
-                    }
+                    //if (IsProtectedClass(classDecl, semanticModel)) {
+                    //    Console.WriteLine($"      [INFO] Skipping class {classDecl.Identifier.Text} - inherits from protected base class");
+                    //    continue;
+                    //}
                     
                     var problems = AnalyzeClass(classDecl, semanticModel, document.FilePath);
                     if (problems.Any()) {
@@ -102,12 +102,14 @@ namespace XafApiConverter.Converter {
                         var typeNamespace = typeInfo.Type.ContainingNamespace?.ToDisplayString();
 
                         if (TypeReplacementMap.NoEquivalentTypes.ContainsKey(typeName)) {
+                            var noEquivReplacement = TypeReplacementMap.NoEquivalentTypes[typeName];
                             problems.Add(new TypeProblem {
                                 TypeName = typeName,
                                 FullTypeName = $"{typeNamespace}.{typeName}",
                                 Reason = $"Base class '{typeName}' has no equivalent in XAF .NET",
+                                Description = noEquivReplacement.Description,  // NEW: Add description
                                 Severity = ProblemSeverity.Critical,
-                                RequiresCommentOut = true
+                                RequiresCommentOut = noEquivReplacement.CommentOutEntireClass
                             });
                         }
                         else if (TypeReplacementMap.ManualConversionRequiredTypes.ContainsKey(typeName)) {
@@ -116,8 +118,9 @@ namespace XafApiConverter.Converter {
                                 TypeName = typeName,
                                 FullTypeName = $"{typeNamespace}.{typeName}",
                                 Reason = $"Base class '{typeName}' has equivalent in XAF .NET ({replacement.NewType}) but automatic conversion is not possible. See: {replacement.GetFullNewTypeName()}",
+                                Description = replacement.Description,  // NEW: Add description
                                 Severity = ProblemSeverity.High,
-                                RequiresCommentOut = false
+                                RequiresCommentOut = replacement.CommentOutEntireClass  // Use flag from TypeReplacement
                             });
                         }
                     }
@@ -135,6 +138,7 @@ namespace XafApiConverter.Converter {
                         TypeName = "TemplateType",
                         FullTypeName = "DevExpress.ExpressApp.Web.Templates.TemplateType",
                         Reason = "Uses TemplateType enum which has no Blazor equivalent",
+                        Description = "TemplateType enum has no Blazor equivalent",  // NEW: Add description
                         Severity = ProblemSeverity.Critical,
                         RequiresCommentOut = true
                     });
@@ -151,12 +155,14 @@ namespace XafApiConverter.Converter {
                     var typeNamespace = typeInfo.Type.ContainingNamespace?.ToDisplayString();
 
                     if (TypeReplacementMap.NoEquivalentTypes.ContainsKey(typeName)) {
+                        var noEquivReplacement = TypeReplacementMap.NoEquivalentTypes[typeName];
                         problems.Add(new TypeProblem {
                             TypeName = typeName,
                             FullTypeName = $"{typeNamespace}.{typeName}",
                             Reason = $"Type '{typeName}' has no equivalent in XAF .NET",
+                            Description = noEquivReplacement.Description,  // NEW: Add description
                             Severity = ProblemSeverity.High,
-                            RequiresCommentOut = true
+                            RequiresCommentOut = noEquivReplacement.CommentOutEntireClass
                         });
                     }
                     else if (TypeReplacementMap.ManualConversionRequiredTypes.ContainsKey(typeName)) {
@@ -165,8 +171,9 @@ namespace XafApiConverter.Converter {
                             TypeName = typeName,
                             FullTypeName = $"{typeNamespace}.{typeName}",
                             Reason = $"Type '{typeName}' has equivalent in XAF .NET ({replacement.NewType}) but automatic conversion is not possible. See: {replacement.GetFullNewTypeName()}",
+                            Description = replacement.Description,  // NEW: Add description
                             Severity = ProblemSeverity.Medium,
-                            RequiresCommentOut = false
+                            RequiresCommentOut = replacement.CommentOutEntireClass  // Use flag from TypeReplacement
                         });
                     }
                 }
@@ -416,6 +423,7 @@ namespace XafApiConverter.Converter {
         public string TypeName { get; set; }
         public string FullTypeName { get; set; }
         public string Reason { get; set; }
+        public string Description { get; set; }  // NEW: Detailed description from TypeReplacement
         public ProblemSeverity Severity { get; set; }
         public bool RequiresCommentOut { get; set; }
     }

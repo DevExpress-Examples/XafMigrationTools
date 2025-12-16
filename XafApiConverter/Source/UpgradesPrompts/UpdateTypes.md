@@ -316,24 +316,24 @@ COMMENT_STANDARD:
   cs_files:
     format: |
       // NOTE: [Type/Feature] has no Blazor equivalent
-      // TODO: Application behavior verification required and new solution if necessary
+      // TODO: It is necessary to test the application's behavior and, if necessary, develop a new solution.
       // [commented out code]
   
   xafml_files:
     format: |
       <!-- NOTE: [Type/Feature] has no Blazor equivalent -->
-      <!-- TODO: Application behavior verification required and new solution if necessary -->
+      <!-- TODO: It is necessary to test the application's behavior and, if necessary, develop a new solution. -->
       <!-- [commented out code] -->
 
 examples:
   example_cs: |
     // NOTE: ScriptRecorderAspNetModule has no Blazor equivalent
-    // TODO: Application behavior verification required and new solution if necessary
+    // TODO: It is necessary to test the application's behavior and, if necessary, develop a new solution.
     // this.RequiredModuleTypes.Add(typeof(DevExpress.ExpressApp.ScriptRecorder.Web.ScriptRecorderAspNetModule));
   
   example_xafml: |
     <!-- NOTE: WebMapsPropertyEditor has no Blazor equivalent -->
-    <!-- TODO: Application behavior verification required and new solution if necessary -->
+    <!-- TODO: It is necessary to test the application's behavior and, if necessary, develop a new solution. -->
     <!-- <PropertyEditor Id="Location" PropertyEditorType="DevExpress.ExpressApp.Maps.Web.WebMapsPropertyEditor" /> -->
 ```
 
@@ -584,7 +584,7 @@ enum_rules:
     reason: "System.Web.UI.Page is Web Forms specific"
     note: |
       // NOTE: System.Web.UI.Page is Web Forms specific, no Blazor equivalent
-      // TODO: Application behavior verification required and new solution if necessary
+      // TODO: It is necessary to test the application's behavior and, if necessary, develop a new solution.
 
 type_rules:
   TYPE-RULE-001:
@@ -619,7 +619,7 @@ public partial class Default : Page {
 
 // NEW - Entire class commented out
 // NOTE: System.Web.UI.Page is Web Forms specific, no Blazor equivalent
-// TODO: Application behavior verification required and new solution if necessary
+// TODO: It is necessary to test the application's behavior and, if necessary, develop a new solution.
 /*
 public partial class Default : Page {
     protected void Page_Load(object sender, EventArgs e) {
@@ -679,11 +679,11 @@ comment_format:
   for_build_errors: |
     // NOTE: Class commented out due to build errors after migration
     // Original error: [error message]
-    // TODO: Application behavior verification required and new solution if necessary
+    // TODO: It is necessary to test the application's behavior and, if necessary, develop a new solution.
   
   for_dependency: |
     // NOTE: Class commented out because it depends on [DependencyClass] which has no Blazor equivalent
-    // TODO: Application behavior verification required and new solution if necessary
+    // TODO: It is necessary to test the application's behavior and, if necessary, develop a new solution.
 
 safety: SAFE-002 (verify), SAFE-008 (idempotent)
 ```
@@ -780,7 +780,7 @@ function comment_out_class_with_note(file_path, class_name, reason):
     comment = f"""
 // NOTE: {class_name} commented out due to migration issues
 // Reason: {reason}
-// TODO: Application behavior verification required and new solution if necessary
+// TODO: It is necessary to test the application's behavior and, if necessary, develop a new solution.
 /*
 {class_code}
 */

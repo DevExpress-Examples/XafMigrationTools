@@ -238,63 +238,72 @@ namespace XafApiConverter.Converter {
                 null,
                 "DevExpress.ExpressApp.PivotChart.Web",
                 null,
-                "AnalysisControlWeb has no Blazor equivalent") },
+                "AnalysisControlWeb has no Blazor equivalent",
+                commentOutEntireClass: true) },
 
             { "MapsAspNetModule", new TypeReplacement(
                 "MapsAspNetModule",
                 null,
                 "DevExpress.ExpressApp.Maps.Web",
                 null,
-                "MapsAspNetModule has no Blazor equivalent") },
+                "MapsAspNetModule has no Blazor equivalent",
+                commentOutEntireClass: true) },
 
             { "ScriptRecorderAspNetModule", new TypeReplacement(
                 "ScriptRecorderAspNetModule",
                 null,
                 "DevExpress.ExpressApp.ScriptRecorder.Web",
                 null,
-                "ScriptRecorderAspNetModule has no Blazor equivalent") },
+                "ScriptRecorderAspNetModule has no Blazor equivalent",
+                commentOutEntireClass: true) },
 
             { "ScriptRecorderModuleBase", new TypeReplacement(
                 "ScriptRecorderModuleBase",
                 null,
                 "DevExpress.ExpressApp.ScriptRecorder",
                 null,
-                "ScriptRecorderModuleBase has no .NET equivalent") },
+                "ScriptRecorderModuleBase has no .NET equivalent",
+                commentOutEntireClass: true) },
 
             { "KpiModule", new TypeReplacement(
                 "KpiModule",
                 null,
                 "DevExpress.ExpressApp.Kpi",
                 null,
-                "KpiModule has no .NET equivalent") },
+                "KpiModule has no .NET equivalent",
+                commentOutEntireClass: true) },
 
             { "WebMapsPropertyEditor", new TypeReplacement(
                 "WebMapsPropertyEditor",
                 null,
                 "DevExpress.ExpressApp.Maps.Web",
                 null,
-                "WebMapsPropertyEditor has no Blazor equivalent") },
+                "WebMapsPropertyEditor has no Blazor equivalent",
+                commentOutEntireClass: true) },
 
             { "WebMapsListEditor", new TypeReplacement(
                 "WebMapsListEditor",
                 null,
                 "DevExpress.ExpressApp.Maps.Web",
                 null,
-                "WebMapsListEditor has no Blazor equivalent") },
+                "WebMapsListEditor has no Blazor equivalent",
+                commentOutEntireClass: true) },
 
             { "WebVectorMapsListEditor", new TypeReplacement(
                 "WebVectorMapsListEditor",
                 null,
                 "DevExpress.ExpressApp.Maps.Web",
                 null,
-                "WebVectorMapsListEditor has no Blazor equivalent") },
+                "WebVectorMapsListEditor has no Blazor equivalent",
+                commentOutEntireClass: true) },
 
             { "ASPxRichTextPropertyEditor", new TypeReplacement(
                 "ASPxRichTextPropertyEditor",
                 null,
                 "DevExpress.ExpressApp.Office.Web",
                 null,
-                "ASPxRichTextPropertyEditor has no direct Blazor equivalent") },
+                "ASPxRichTextPropertyEditor has no direct Blazor equivalent",
+                commentOutEntireClass: true) },
 
             // NEW: Additional no-equivalent types
             { "ImageResourceHttpHandler", new TypeReplacement(
@@ -302,42 +311,48 @@ namespace XafApiConverter.Converter {
                 null,
                 "DevExpress.ExpressApp.Web",
                 null,
-                "ImageResourceHttpHandler has no Blazor equivalent (Web Forms specific HTTP handler)") },
+                "ImageResourceHttpHandler has no Blazor equivalent (Web Forms specific HTTP handler)",
+                commentOutEntireClass: true) },
 
             { "IXafHttpHandler", new TypeReplacement(
                 "IXafHttpHandler",
                 null,
                 "DevExpress.ExpressApp.Web",
                 null,
-                "IXafHttpHandler has no Blazor equivalent (Web Forms specific interface)") },
+                "IXafHttpHandler has no Blazor equivalent (Web Forms specific interface)",
+                commentOutEntireClass: true) },
 
             { "IJScriptTestControl", new TypeReplacement(
                 "IJScriptTestControl",
                 null,
                 "DevExpress.ExpressApp.Web.TestScripts",
                 null,
-                "IJScriptTestControl has no Blazor equivalent (Test framework specific)") },
+                "IJScriptTestControl has no Blazor equivalent (Test framework specific)",
+                commentOutEntireClass: true) },
 
             { "LayoutItemTemplate", new TypeReplacement(
                 "LayoutItemTemplate",
                 null,
                 "DevExpress.ExpressApp.Web.Layout",
                 null,
-                "LayoutItemTemplate has no Blazor equivalent (Web Forms layout specific)") },
+                "LayoutItemTemplate has no Blazor equivalent (Web Forms layout specific)",
+                commentOutEntireClass: true) },  // Added flag
 
             { "LayoutGroupTemplate", new TypeReplacement(
                 "LayoutGroupTemplate",
                 null,
                 "DevExpress.ExpressApp.Web.Layout",
                 null,
-                "LayoutGroupTemplate has no Blazor equivalent (Web Forms layout specific)") },
+                "LayoutGroupTemplate has no Blazor equivalent (Web Forms layout specific)",
+                commentOutEntireClass: true) },  // Added flag
 
             { "TabbedGroupTemplate", new TypeReplacement(
                 "TabbedGroupTemplate",
                 null,
                 "DevExpress.ExpressApp.Web.Layout",
                 null,
-                "TabbedGroupTemplate has no Blazor equivalent (Web Forms layout specific)") },
+                "TabbedGroupTemplate has no Blazor equivalent (Web Forms layout specific)",
+                commentOutEntireClass: true) },  // Added flag
 
             // Web Forms specific types (TRANS-009)
             { "Page", new TypeReplacement(
@@ -371,7 +386,7 @@ namespace XafApiConverter.Converter {
                 "DevExpress.ExpressApp.Blazor.Editors",
                 "WebPropertyEditor has Blazor equivalent (BlazorPropertyEditorBase) but automatic conversion is not possible. Manual refactoring required.",
                 new[] { ".cs" },
-                commentOutEntireClass: false) },
+                commentOutEntireClass: true) },  // Changed to true - classes inheriting from this need complete rewrite
 
             { "ASPxPropertyEditor", new TypeReplacement(
                 "ASPxPropertyEditor",
@@ -380,7 +395,7 @@ namespace XafApiConverter.Converter {
                 "DevExpress.ExpressApp.Blazor.Editors",
                 "ASPxPropertyEditor has Blazor equivalent (BlazorPropertyEditorBase) but automatic conversion is not possible. Manual refactoring required.",
                 new[] { ".cs" },
-                commentOutEntireClass: false) },
+                commentOutEntireClass: true) },  // Changed to true - classes inheriting from this need complete rewrite
 
             { "ASPxDateTimePropertyEditor", new TypeReplacement(
                 "ASPxDateTimePropertyEditor",
@@ -389,7 +404,7 @@ namespace XafApiConverter.Converter {
                 "DevExpress.ExpressApp.Blazor.Editors",
                 "ASPxDateTimePropertyEditor has Blazor equivalent (DateTimePropertyEditor) but automatic conversion is not possible. Manual refactoring required.",
                 new[] { ".cs" },
-                commentOutEntireClass: false) }
+                commentOutEntireClass: true) }  // Changed to true - classes inheriting from this need complete rewrite
         };
 
         /// <summary>
@@ -404,8 +419,17 @@ namespace XafApiConverter.Converter {
         };
 
         /// <summary>
-        /// Protected base classes - classes that inherit from these should NOT be automatically commented out
-        /// These are critical XAF base classes that must be preserved for manual refactoring
+        /// Protected base classes - classes that inherit from these receive WARNING comments but are NOT automatically commented out
+        /// These are critical XAF base classes that must be preserved for manual refactoring.
+        /// When a class inheriting from these base classes has NO_EQUIVALENT types, a warning comment is added above the class:
+        /// <code>
+        /// // NOTE: Class commented out due to types having no XAF .NET equivalent
+        /// //   - Type 'ScriptRecorderAspNetModule' has no equivalent in XAF .NET
+        /// //   - Type 'KpiModule' has no equivalent in XAF .NET
+        /// // TODO: It is necessary to test the application's behavior and, if necessary, develop a new solution.
+        /// public class MyModule : ModuleBase { ... }
+        /// </code>
+        /// This allows developers to be aware of issues while keeping the class structure intact for manual migration.
         /// </summary>
         public static readonly HashSet<string> ProtectedBaseClasses = new(StringComparer.OrdinalIgnoreCase) {
             // XAF Module base classes
@@ -428,8 +452,9 @@ namespace XafApiConverter.Converter {
             //"BlazorPropertyEditorBase",
             
             // XAF Application classes
-            //"XafApplication",
-            //"BlazorApplication",
+            "XafApplication",
+            "BlazorApplication",
+            "WinApplication"
             
             // Other critical base classes
             //"Controller",
