@@ -1,10 +1,9 @@
-﻿using DevExpress.ExpressApp;
+﻿using System;
+using DevExpress.ExpressApp;
 using DevExpress.ExpressApp.Editors;
-using DevExpress.ExpressApp.Model;
 using DevExpress.ExpressApp.Blazor.Editors;
-using DevExpress.Persistent.Base;
 using FeatureCenter.Module.PropertyEditors;
-using System;
+using DevExpress.ExpressApp.Model;
 
 namespace FeatureCenter.Module.Web.PropertyEditors {
     // NOTE: Class commented out due to types having no XAF .NET equivalent

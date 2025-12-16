@@ -7,16 +7,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Remove="Tests\ClassCommenterTests\TestFiles\CustomIntegerEditor.cs" />
-    <Compile Remove="Tests\ClassCommenterTests\TestFiles\CustomIntegerEditor_commented.cs" />
-    <Compile Remove="Tests\ClassCommenterTests\TestFiles\CustomLayoutTemplates.cs" />
-    <Compile Remove="Tests\ClassCommenterTests\TestFiles\CustomLayoutTemplates_commented.cs" />
-    <Compile Remove="Tests\ClassCommenterTests\TestFiles\CustomStringEditor.cs" />
-    <Compile Remove="Tests\ClassCommenterTests\TestFiles\CustomStringEditor_commented.cs" />
-    <Compile Remove="Tests\ClassCommenterTests\TestFiles\WebModule.cs" />
-    <Compile Remove="Tests\ClassCommenterTests\TestFiles\WebModule.Designer.cs" />
-    <Compile Remove="Tests\ClassCommenterTests\TestFiles\WebModule_commented.cs" />
-    <Compile Remove="Tests\ClassCommenterTests\TestFiles\WebModule_commented.Designer.cs" />
+    <InternalsVisibleTo Include="XafApiConverterTests" />
   </ItemGroup>
 
   <ItemGroup>
@@ -30,19 +21,6 @@
     <PackageReference Include="Microsoft.CodeAnalysis.Common" Version="5.0.0" />
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Workspaces" Version="5.0.0" />
     <PackageReference Include="Microsoft.CodeAnalysis.Workspaces.MSBuild" Version="5.0.0" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <None Include="Tests\ClassCommenterTests\TestFiles\CustomIntegerEditor.cs" />
-    <None Include="Tests\ClassCommenterTests\TestFiles\CustomIntegerEditor_commented.cs" />
-    <None Include="Tests\ClassCommenterTests\TestFiles\CustomLayoutTemplates.cs" />
-    <None Include="Tests\ClassCommenterTests\TestFiles\CustomLayoutTemplates_commented.cs" />
-    <None Include="Tests\ClassCommenterTests\TestFiles\CustomStringEditor.cs" />
-    <None Include="Tests\ClassCommenterTests\TestFiles\CustomStringEditor_commented.cs" />
-    <None Include="Tests\ClassCommenterTests\TestFiles\WebModule.cs" />
-    <None Include="Tests\ClassCommenterTests\TestFiles\WebModule.Designer.cs" />
-    <None Include="Tests\ClassCommenterTests\TestFiles\WebModule_commented.cs" />
-	  <None Include="Tests\ClassCommenterTests\TestFiles\WebModule_commented.Designer.cs" />
   </ItemGroup>
 
 </Project>
