@@ -788,6 +788,22 @@ namespace XafApiConverter.Converter {
         /// List of other class names that depend on this class
         /// </summary>
         public List<string> DependentClasses { get; set; } = new List<string>();
+        
+        /// <summary>
+        /// Indicates whether this class will be fully commented out or only receive a warning comment.
+        /// 
+        /// True:  Class is fully commented out (entire class is non-functional)
+        /// False: Class receives only a warning comment but remains active (e.g., protected base classes)
+        /// 
+        /// This flag is critical for cascade dependency detection:
+        /// - If a class is fully commented (IsFullyCommented = true), classes depending on it should also be commented
+        /// - If a class is only warned (IsFullyCommented = false), classes depending on it should NOT be cascaded
+        /// 
+        /// Example:
+        /// - TaskWithNotifications: IsFullyCommented = false (protected, only warning)
+        /// - TaskWithNotificationsController: Should NOT be cascaded because TaskWithNotifications is still active
+        /// </summary>
+        public bool IsFullyCommented { get; set; } = true;  // Default: true (will be commented out)
     }
 
     /// <summary>

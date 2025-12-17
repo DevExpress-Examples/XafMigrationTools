@@ -25,24 +25,11 @@ namespace XafApiConverter.Converter {
         /// Comment out all problematic classes and their dependencies
         /// </summary>
         public int CommentOutProblematicClasses() {
-            int totalCommented = 0;
+            int commentedCount = 0;
 
-            // Get all classes that need to be commented out
-            var classesToComment = _report.ProblematicClasses
-                .Where(c => c.Problems.Any(p => p.RequiresCommentOut))
-                .ToList();
-
-            if (!classesToComment.Any()) {
-                Console.WriteLine("  No classes require commenting out.");
-                return 0;
-            }
-
-            Console.WriteLine($"  Found {classesToComment.Count} classes to comment out or warn about...");
-
-            // Process each class individually with full reload after each change
-            foreach (var problematicClass in classesToComment) {
-                // Skip if already processed (commented or warning added)
-                if (_commentedClasses.Contains(problematicClass.ClassName) || 
+            foreach (var problematicClass in _report.ProblematicClasses) {
+                // Skip if already commented (duplicate)
+                if (_commentedClasses.Contains(problematicClass.ClassName) ||
                     _warningAddedClasses.Contains(problematicClass.ClassName)) {
                     continue;
                 }
@@ -51,36 +38,32 @@ namespace XafApiConverter.Converter {
                 bool isProtected = CheckIfProtectedClass(problematicClass.FilePath, problematicClass.ClassName);
                 
                 if (isProtected) {
-                    // Add warning comment but keep class active
+                    // Protected class: Add warning comment only, do NOT comment out
                     if (AddWarningCommentToProtectedClass(problematicClass.FilePath, problematicClass.ClassName, problematicClass)) {
                         _warningAddedClasses.Add(problematicClass.ClassName);
+                        problematicClass.IsFullyCommented = false;  // ← Class is NOT fully commented!
                         Console.WriteLine($"    [WARNING ADDED] {problematicClass.ClassName} in {Path.GetFileName(problematicClass.FilePath)} (protected class)");
                     }
                     continue;
                 }
 
-                // Comment out this single class
-                if (CommentOutSingleClass(problematicClass.FilePath, problematicClass.ClassName, problematicClass)) {
-                    totalCommented++;
-                    _commentedClasses.Add(problematicClass.FullName);
-                    Console.WriteLine($"    [COMMENTED] {problematicClass.FullName} in {Path.GetFileName(problematicClass.FilePath)}");
+                // Not protected: Comment out the entire class
+                bool success = CommentOutSingleClass(
+                    problematicClass.FilePath,
+                    problematicClass.ClassName,
+                    problematicClass);
 
-                    // Comment out dependent classes
-                    foreach (var dependent in problematicClass.DependentClasses) {
-                        if (_commentedClasses.Contains(dependent) || _warningAddedClasses.Contains(dependent)) {
-                            continue;
-                        }
+                if (success) {
+                    _commentedClasses.Add(problematicClass.ClassName);
+                    problematicClass.IsFullyCommented = true;  // ← Class IS fully commented!
+                    commentedCount++;
 
-                        if (CommentOutDependentClass(dependent, problematicClass.FullName)) {
-                            totalCommented++;
-                            _commentedClasses.Add(dependent);
-                            Console.WriteLine($"    [COMMENTED] {dependent} (dependency)");
-                        }
-                    }
+                    string status = problematicClass.DependentClasses.Count > 0 ? " (has dependents)" : "";
+                    Console.WriteLine($"    [COMMENTED] {problematicClass.FullName} in {Path.GetFileName(problematicClass.FilePath)}{status}");
                 }
             }
 
-            return totalCommented;
+            return commentedCount;
         }
 
         /// <summary>

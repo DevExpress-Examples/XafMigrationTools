@@ -457,6 +457,13 @@ namespace XafApiConverter.Converter {
                     problematicClasses.AddRange(classesInFile);
                 }
                 
+                // CRITICAL: Check if each problematic class is protected BEFORE cascading
+                // This ensures cascade logic knows which classes will be fully commented vs warned
+                foreach (var problematicClass in problematicClasses) {
+                    bool isProtected = CheckIfClassIsProtected(problematicClass.FilePath, problematicClass.ClassName);
+                    problematicClass.IsFullyCommented = !isProtected;  // Protected classes are NOT fully commented
+                }
+                
                 // Find dependencies for each problematic class using semantic analysis
                 foreach (var problematicClass in problematicClasses) {
                     // Use semantic cache and namespace for accurate dependency detection
@@ -469,7 +476,12 @@ namespace XafApiConverter.Converter {
                     problematicClass.DependentClasses = dependents;
                 }
 
-                _report.ProblematicClasses.AddRange(problematicClasses);
+                // NEW: Recursively mark dependent classes as problematic (cascade effect)
+                // If class A is problematic and class B depends on A, then B is also problematic
+                // BUT: Only cascades if A is fully commented (IsFullyCommented = true)
+                var cascadedProblematicClasses = CascadeProblematicClasses(problematicClasses, detector, project);
+                
+                _report.ProblematicClasses.AddRange(cascadedProblematicClasses);
 
                 // Detect XAFML problems
                 var xafmlProblems = detector.AnalyzeXafmlFiles(project);
@@ -478,6 +490,181 @@ namespace XafApiConverter.Converter {
 
             Console.WriteLine($"  Found {_report.ProblematicClasses.Count} problematic classes");
             Console.WriteLine($"  Found {_report.XafmlProblems.Count} XAFML problems");
+        }
+        
+        /// <summary>
+        /// Check if a class is protected (inherits from protected base classes).
+        /// Helper method to determine IsFullyCommented flag during DetectProblems phase.
+        /// </summary>
+        private bool CheckIfClassIsProtected(string filePath, string className) {
+            try {
+                if (!File.Exists(filePath)) {
+                    return false;
+                }
+                
+                var content = File.ReadAllText(filePath);
+                var syntaxTree = CSharpSyntaxTree.ParseText(content);
+                var root = syntaxTree.GetRoot();
+                
+                // Find the class declaration
+                var classDecl = root.DescendantNodes()
+                    .OfType<ClassDeclarationSyntax>()
+                    .FirstOrDefault(c => c.Identifier.Text == className);
+                
+                if (classDecl == null) {
+                    return false;
+                }
+                
+                // Check base types
+                if (classDecl.BaseList == null) {
+                    return false;
+                }
+                
+                foreach (var baseType in classDecl.BaseList.Types) {
+                    var baseTypeName = baseType.Type.ToString();
+                    
+                    // Extract simple name (e.g., "BaseObject" from "Namespace.BaseObject")
+                    var lastDot = baseTypeName.LastIndexOf('.');
+                    var simpleBaseTypeName = lastDot >= 0 
+                        ? baseTypeName.Substring(lastDot + 1) 
+                        : baseTypeName;
+                    
+                    // Check if this is a protected base class
+                    if (TypeReplacementMap.ProtectedBaseClasses.Contains(simpleBaseTypeName)) {
+                        return true;
+                    }
+                }
+                
+                return false;
+            }
+            catch {
+                return false;
+            }
+        }
+        
+        /// <summary>
+        /// Cascade problematic class detection.
+        /// If class A is problematic and class B depends on A, then B is also problematic.
+        /// This process is recursive - if B becomes problematic, then classes depending on B also become problematic.
+        /// 
+        /// IMPORTANT: Only cascades for FULLY COMMENTED classes (IsFullyCommented = true).
+        /// Protected classes with warning comments (IsFullyCommented = false) do NOT cascade,
+        /// because they remain active and functional.
+        /// </summary>
+        /// <param name="initialProblematicClasses">Initial list of problematic classes detected directly</param>
+        /// <param name="detector">ProblemDetector instance for dependency analysis</param>
+        /// <param name="project">Project to analyze</param>
+        /// <returns>Complete list of problematic classes including cascaded dependencies</returns>
+        private List<ProblematicClass> CascadeProblematicClasses(
+            List<ProblematicClass> initialProblematicClasses, 
+            ProblemDetector detector,
+            Project project) {
+            
+            var allProblematicClasses = new List<ProblematicClass>(initialProblematicClasses);
+            var problematicClassNames = new HashSet<string>(
+                initialProblematicClasses.Select(c => c.FullName),
+                StringComparer.OrdinalIgnoreCase);
+            
+            // Queue of classes to check for dependents
+            // ONLY classes that will be FULLY COMMENTED OUT (IsFullyCommented = true)
+            var toProcess = new Queue<ProblematicClass>(
+                initialProblematicClasses.Where(c => c.IsFullyCommented));
+            
+            while (toProcess.Count > 0) {
+                var currentClass = toProcess.Dequeue();
+                
+                // CRITICAL CHECK: Only cascade if current class is fully commented
+                // Protected classes with warnings (IsFullyCommented = false) do NOT cascade
+                if (!currentClass.IsFullyCommented) {
+                    continue;
+                }
+                
+                // Find classes that depend on current problematic class
+                var dependents = detector.FindDependentClasses(
+                    project,
+                    currentClass.ClassName,
+                    currentClass.Namespace,
+                    _semanticCache);
+                
+                foreach (var dependentFullName in dependents) {
+                    // Skip if already marked as problematic
+                    if (problematicClassNames.Contains(dependentFullName)) {
+                        continue;
+                    }
+                    
+                    // Extract class name and namespace from full name
+                    var lastDotIndex = dependentFullName.LastIndexOf('.');
+                    string dependentClassName;
+                    string dependentNamespace;
+                    
+                    if (lastDotIndex >= 0) {
+                        dependentNamespace = dependentFullName.Substring(0, lastDotIndex);
+                        dependentClassName = dependentFullName.Substring(lastDotIndex + 1);
+                    } else {
+                        dependentNamespace = null;
+                        dependentClassName = dependentFullName;
+                    }
+                    
+                    // Find the file containing this dependent class
+                    string dependentFilePath = null;
+                    foreach (var document in project.Documents) {
+                        if (!document.FilePath.EndsWith(".cs")) continue;
+                        
+                        var cached = GetCachedSemanticModel(document.FilePath);
+                        if (!cached.HasValue) continue;
+                        
+                        var root = cached.Value.SyntaxTree.GetRoot();
+                        var classes = root.DescendantNodes().OfType<ClassDeclarationSyntax>();
+                        
+                        foreach (var classDecl in classes) {
+                            if (classDecl.Identifier.Text == dependentClassName) {
+                                var ns = ProblemDetector.GetNamespace(classDecl);
+                                if (ns == dependentNamespace || 
+                                    (string.IsNullOrEmpty(ns) && string.IsNullOrEmpty(dependentNamespace))) {
+                                    dependentFilePath = document.FilePath;
+                                    break;
+                                }
+                            }
+                        }
+                        
+                        if (dependentFilePath != null) break;
+                    }
+                    
+                    if (dependentFilePath == null) {
+                        Console.WriteLine($"    [WARNING] Could not find file for dependent class {dependentFullName}");
+                        continue;
+                    }
+                    
+                    // Create ProblematicClass entry for the dependent
+                    var dependentProblematicClass = new ProblematicClass {
+                        ClassName = dependentClassName,
+                        Namespace = dependentNamespace,
+                        FilePath = dependentFilePath,
+                        IsFullyCommented = true,  // Cascaded classes are fully commented by default
+                        Problems = new List<TypeProblem> {
+                            new TypeProblem {
+                                TypeName = currentClass.ClassName,
+                                FullTypeName = currentClass.FullName,
+                                Reason = $"Depends on problematic class '{currentClass.FullName}' which has no .NET equivalent",
+                                Description = $"Class uses '{currentClass.FullName}' which is being commented out due to having no .NET equivalent",
+                                Severity = ProblemSeverity.Critical,
+                                RequiresCommentOut = true
+                            }
+                        }
+                    };
+                    
+                    // Add to results
+                    allProblematicClasses.Add(dependentProblematicClass);
+                    problematicClassNames.Add(dependentFullName);
+                    
+                    // Add to queue to check its dependents (cascade will continue)
+                    toProcess.Enqueue(dependentProblematicClass);
+                    
+                    Console.WriteLine($"    [CASCADE] Class {dependentFullName} marked as problematic (depends on {currentClass.FullName})");
+                }
+            }
+            
+            return allProblematicClasses;
         }
 
         /// <summary>
