@@ -55,3 +55,7 @@ nunit-*.xml
 XafApiConverter/Source/.cr
 XafApiConverter/Source/.vs
 XafApiConverter/Source/Properties/launchSettings.json
+XafApiConverter/XafApiConverter.TestProject/.cr
+XafApiConverter/XafApiConverter.TestProject/.vs
+XafApiConverter/XafApiConverter.TestProject.Etalon/.cr
+XafApiConverter/XafApiConverter.TestProject.Etalon/.vs
