@@ -105,7 +105,7 @@ namespace XafApiConverter.Converter {
 
             if (!string.IsNullOrEmpty(options.DxVersion)) {
                 config.DxPackageVersion = options.DxVersion;
-                // Extract assembly version (e.g., "25.1.6" -> "v25.1")
+                // Extract assembly version (e.g., "25.2.2" -> "v25.2")
                 var parts = options.DxVersion.Split('.');
                 if (parts.Length >= 2) {
                     config.DxAssemblyVersion = $"v{parts[0]}.{parts[1]}";

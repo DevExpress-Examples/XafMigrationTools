@@ -26,6 +26,8 @@ namespace FeatureCenter.Module.Notifications {
     // NOTE: Class has no XAF .NET equivalent
     //   - Base class 'TaskImpl' has no equivalent (inferred from using DevExpress.Persistent.Base.General)
     //     TaskImpl has no equivalent in XAF .NET (loaded from removed-api.txt)
+    //   - Base class 'TaskStatus' has no equivalent (inferred from using DevExpress.Persistent.Base.General)
+    //     TaskStatus has no equivalent in XAF .NET (loaded from removed-api.txt)
     // TODO: It is necessary to test the application's behavior and, if necessary, develop a new solution.
 [NavigationItem(false)]
     [Hint(Hints.TaskNotificationsHint)]

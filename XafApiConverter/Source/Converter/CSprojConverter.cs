@@ -147,8 +147,8 @@ namespace XafApiConverter.Converter {
             var propertyGroup = CreateMainPropertyGroup(info);
             project.Add(propertyGroup);
 
-            // TRANS-005: Add NuGet packages
-            AddPackageReferences(project, info);
+            // TRANS-005: Add or update NuGet packages
+            AddOrUpdatePackageReferences(project, originalDoc, info);
 
             // TRANS-007: Add custom embedded resources
             AddCustomEmbeddedResources(project, originalDoc, Path.GetDirectoryName(projectPath));
@@ -190,6 +190,86 @@ namespace XafApiConverter.Converter {
             return propertyGroup;
         }
 
+        /// <summary>
+        /// Add or update package references.
+        /// If DevExpress packages already exist (starting with DevExpress.ExpressApp), 
+        /// update their versions instead of adding new packages.
+        /// </summary>
+        private void AddOrUpdatePackageReferences(XElement project, XDocument originalDoc, ProjectInfo info) {
+            // Check if original project has DevExpress.ExpressApp packages
+            var existingPackages = originalDoc.Descendants()
+                .Where(e => e.Name.LocalName == "PackageReference")
+                .Select(e => new {
+                    Name = e.Attribute("Include")?.Value,
+                    Version = e.Attribute("Version")?.Value,
+                    Element = e
+                })
+                .Where(p => !string.IsNullOrEmpty(p.Name))
+                .ToList();
+
+            var hasDevExpressPackages = existingPackages.Any(p => 
+                p.Name.StartsWith("DevExpress.ExpressApp", StringComparison.OrdinalIgnoreCase));
+
+            if (hasDevExpressPackages) {
+                // Project already has DevExpress packages - update versions instead of adding new ones
+                Console.WriteLine("  Found existing DevExpress packages - updating versions...");
+                
+                var itemGroup = new XElement("ItemGroup");
+                bool anyPackageUpdated = false;
+
+                foreach (var package in existingPackages) {
+                    var packageRef = new XElement("PackageReference");
+                    packageRef.SetAttributeValue("Include", package.Name);
+                    
+                    // Update version for DevExpress packages
+                    if (package.Name.StartsWith("DevExpress.ExpressApp", StringComparison.OrdinalIgnoreCase) ||
+                        package.Name.StartsWith("DevExpress.Persistent", StringComparison.OrdinalIgnoreCase) ||
+                        package.Name.StartsWith("DevExpress.Data", StringComparison.OrdinalIgnoreCase) ||
+                        package.Name.StartsWith("DevExpress.Office", StringComparison.OrdinalIgnoreCase) ||
+                        package.Name.StartsWith("DevExpress.Pdf", StringComparison.OrdinalIgnoreCase) ||
+                        package.Name.StartsWith("DevExpress.Printing", StringComparison.OrdinalIgnoreCase) ||
+                        package.Name.StartsWith("DevExpress.Sparkline", StringComparison.OrdinalIgnoreCase) ||
+                        package.Name.StartsWith("DevExpress.Charts", StringComparison.OrdinalIgnoreCase) ||
+                        package.Name.StartsWith("DevExpress.CodeParser", StringComparison.OrdinalIgnoreCase) ||
+                        package.Name.StartsWith("DevExpress.Drawing", StringComparison.OrdinalIgnoreCase) ||
+                        package.Name.StartsWith("DevExpress.Images", StringComparison.OrdinalIgnoreCase) ||
+                        package.Name.StartsWith("DevExpress.Maui", StringComparison.OrdinalIgnoreCase) ||
+                        package.Name.StartsWith("DevExpress.RichEdit", StringComparison.OrdinalIgnoreCase) ||
+                        package.Name.StartsWith("DevExpress.Spreadsheet", StringComparison.OrdinalIgnoreCase) ||
+                        package.Name.StartsWith("DevExpress.Xpo", StringComparison.OrdinalIgnoreCase) ||
+                        package.Name.StartsWith("DevExpress.Xpf", StringComparison.OrdinalIgnoreCase)) {
+                        
+                        if (!_config.UseDirectoryPackages) {
+                            packageRef.SetAttributeValue("Version", _config.DxPackageVersion);
+                            
+                            if (package.Version != _config.DxPackageVersion) {
+                                Console.WriteLine($"    Updated: {package.Name} from {package.Version} to {_config.DxPackageVersion}");
+                                anyPackageUpdated = true;
+                            }
+                        }
+                    }
+                    else {
+                        // Keep original version for non-DevExpress packages
+                        if (!_config.UseDirectoryPackages && !string.IsNullOrEmpty(package.Version)) {
+                            packageRef.SetAttributeValue("Version", package.Version);
+                        }
+                    }
+                    
+                    itemGroup.Add(packageRef);
+                }
+                
+                if (!anyPackageUpdated) {
+                    Console.WriteLine("    All DevExpress packages are already at version {_config.DxPackageVersion}");
+                }
+
+                project.Add(itemGroup);
+            }
+            else {
+                // No DevExpress packages found - add new packages from PackageManager
+                Console.WriteLine("  No existing DevExpress packages found - adding new packages...");
+                AddPackageReferences(project, info);
+            }
+        }
 
         private void AddPackageReferences(XElement project, ProjectInfo info) {
             var packages = _packageManager.GetPackages(info.IsWindowsProject, info.IsWebProject, info.IsEfProject);

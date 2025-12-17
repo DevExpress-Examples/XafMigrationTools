@@ -26,8 +26,11 @@ namespace XafApiConverterTests {
             MSBuildLocator.RegisterDefaults();
             string projectPath = Directory.GetFiles(projectDir, "*.csproj", SearchOption.TopDirectoryOnly).First();
             string solutionPath = Directory.GetFiles(projectDir, "*.sln", SearchOption.TopDirectoryOnly).First();
-            XafApiConverter.Converter.ConversionCli.Run(new string[] { "-p", projectDir });
+
+            XafApiConverter.Converter.ConversionCli.Run(new string[] { "-p", projectPath });
             XafApiConverter.Converter.TypeMigrationCli.Run(new string[] { "-s", solutionPath });
+            //XafApiConverter.Converter.CSprojConverter cSprojConverter = new XafApiConverter.Converter.CSprojConverter(null);
+            //cSprojConverter.ConvertProject(projectPath, false);
         }
     }
 }

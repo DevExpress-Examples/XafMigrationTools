@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 
 
 namespace XafApiConverter.Converter {
@@ -14,8 +14,8 @@ namespace XafApiConverter.Converter {
         public string SourceFrameworkFull { get; set; } = ".NET Framework 4.8.1";
 
         // DevExpress Versions
-        public string DxPackageVersion { get; set; } = "25.1.6";
-        public string DxAssemblyVersion { get; set; } = "v25.1";
+        public string DxPackageVersion { get; set; } = "25.2.3-pre-25339";
+        public string DxAssemblyVersion { get; set; } = "v25.2";
         public bool UseDirectoryPackages { get; set; } = false;
 
         // Package Versions
