@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.Text;
+using XafApiConverter.Converter;
 using Xunit;
 
 namespace XafApiConverterTests {
@@ -27,10 +28,11 @@ namespace XafApiConverterTests {
             string projectPath = Directory.GetFiles(projectDir, "*.csproj", SearchOption.TopDirectoryOnly).First();
             string solutionPath = Directory.GetFiles(projectDir, "*.sln", SearchOption.TopDirectoryOnly).First();
 
+            
+            // Step 2: SDK-style conversion
             XafApiConverter.Converter.ConversionCli.Run(new string[] { "-p", projectPath });
+            // Step 1: Type migration (analyze and comment out problematic classes)
             XafApiConverter.Converter.TypeMigrationCli.Run(new string[] { "-s", solutionPath });
-            //XafApiConverter.Converter.CSprojConverter cSprojConverter = new XafApiConverter.Converter.CSprojConverter(null);
-            //cSprojConverter.ConvertProject(projectPath, false);
         }
     }
 }

@@ -156,7 +156,15 @@ namespace XafApiConverter.Converter {
                 "DevExpress.ExpressApp.PivotGrid.Web",
                 null,
                 "DevExpress.ExpressApp.PivotGrid.Web has no Blazor equivalent",
+                new[] { ".cs" }) },
+
+            { "DevExpress.ExpressApp.Workflow", new NamespaceReplacement(
+                "DevExpress.ExpressApp.Workflow",
+                null,
+                "DevExpress.ExpressApp.Workflow has no equivalent in .NET",
                 new[] { ".cs" }) }
+
+            
         };
 
         /// <summary>

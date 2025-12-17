@@ -161,9 +161,20 @@ namespace XafApiConverter.Converter {
         }
 
         private void ProcessCSharpFile(Document document) {
-            var syntaxTree = document.GetSyntaxTreeAsync().Result;
-            if (syntaxTree == null) return;
-
+            // CRITICAL: Read file from DISK, not from Roslyn document cache!
+            // Phase 2 (ClassCommenter) may have modified files on disk,
+            // but Roslyn workspace still has old cached syntax trees.
+            // We must read the current state from disk to preserve Phase 2 changes.
+            
+            var filePath = document.FilePath;
+            if (!File.Exists(filePath)) {
+                Console.WriteLine($"    [WARNING] File not found: {filePath}");
+                return;
+            }
+            
+            // Read current content from disk (may contain Phase 2 modifications)
+            var fileContent = File.ReadAllText(filePath);
+            var syntaxTree = CSharpSyntaxTree.ParseText(fileContent);
             var root = syntaxTree.GetRoot();
             var originalRoot = root;
 
@@ -179,7 +190,7 @@ namespace XafApiConverter.Converter {
 
             // Save if changed
             if (root != originalRoot) {
-                File.WriteAllText(document.FilePath, root.ToFullString());
+                File.WriteAllText(filePath, root.ToFullString());
             }
         }
 
@@ -406,13 +417,45 @@ namespace XafApiConverter.Converter {
         /// <summary>
         /// Phase 3: Detect problems for LLM analysis
         /// TRANS-009: Classes using NO_EQUIVALENT types
+        /// Uses cached semantic models from Phase 1.5 to analyze ORIGINAL code before any modifications.
         /// </summary>
         private void DetectProblems() {
             foreach (var project in _solution.Projects) {
                 var detector = new ProblemDetector(_solution);
 
-                // Detect problematic C# classes
-                var problematicClasses = detector.FindClassesWithNoEquivalentTypes(project);
+                // NEW: Analyze using cached semantic models (original state before modifications)
+                var problematicClasses = new List<ProblematicClass>();
+                
+                foreach (var document in project.Documents) {
+                    if (!document.FilePath.EndsWith(".cs")) continue;
+                    
+                    // Get cached semantic model and syntax tree (ORIGINAL state)
+                    var cached = GetCachedSemanticModel(document.FilePath);
+                    if (!cached.HasValue) {
+                        Console.WriteLine($"    [WARNING] No cached semantic model for {Path.GetFileName(document.FilePath)}, skipping");
+                        continue;
+                    }
+                    
+                    var semanticModel = cached.Value.SemanticModel;
+                    var syntaxTree = cached.Value.SyntaxTree;
+                    var root = syntaxTree.GetRoot();
+                    
+                    // Extract using directives from ORIGINAL syntax tree
+                    var usingDirectives = root.DescendantNodes()
+                        .OfType<UsingDirectiveSyntax>()
+                        .Select(u => u.Name?.ToString())
+                        .Where(n => !string.IsNullOrEmpty(n))
+                        .ToHashSet();
+                    
+                    // Analyze classes using ORIGINAL semantic model and syntax tree
+                    var classesInFile = ProblemDetector.AnalyzeClassesInSyntaxTree(
+                        document.FilePath,
+                        root,
+                        semanticModel,
+                        usingDirectives);
+                    
+                    problematicClasses.AddRange(classesInFile);
+                }
                 
                 // Find dependencies for each problematic class using semantic analysis
                 foreach (var problematicClass in problematicClasses) {
