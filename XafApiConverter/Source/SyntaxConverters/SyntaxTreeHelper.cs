@@ -9,7 +9,6 @@ namespace XafApiConverter {
             if (!string.IsNullOrEmpty(addComment)) {
                 leadingTrivias = leadingTrivias.Add(SyntaxFactory.Comment($"// {addComment}"));
                 leadingTrivias = leadingTrivias.Add(SyntaxFactory.CarriageReturnLineFeed);
-                leadingTrivias = leadingTrivias.AddRange(line.GetLeadingTrivia());
             }
             leadingTrivias = leadingTrivias.Add(SyntaxFactory.Comment("// "));
             return line.WithLeadingTrivia(leadingTrivias);

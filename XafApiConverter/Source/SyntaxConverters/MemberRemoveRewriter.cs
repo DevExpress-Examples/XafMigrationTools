@@ -25,7 +25,7 @@ namespace XafApiConverter {
                 insideInvocation = false;
                 if (hasAccessToMember) {
                     hasAccessToMember = false;
-                    newNode = SyntaxTreeHelper.CommentLine(newNode);
+                    newNode = SyntaxTreeHelper.CommentLine(newNode, "https://supportcenter.devexpress.com/ticket/details/T1312589");
                 }
                 return newNode;
             }
@@ -41,7 +41,7 @@ namespace XafApiConverter {
                 insideInvocation = false;
                 if (hasAccessToMember) {
                     hasAccessToMember = false;
-                    return SyntaxTreeHelper.CommentLine(newNode);
+                    return SyntaxTreeHelper.CommentLine(newNode, "https://supportcenter.devexpress.com/ticket/details/T1312589");
                 }
                 return newNode;
             }
