@@ -7,10 +7,15 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Remove="Converter\removed-api.txt" />
+  </ItemGroup>
+
+  <ItemGroup>
     <InternalsVisibleTo Include="XafApiConverterTests" />
   </ItemGroup>
 
   <ItemGroup>
+    <EmbeddedResource Include="Converter\removed-api.txt" />
     <EmbeddedResource Include="PermissionPolicyRoleExtensions_XPO_cs" />
     <EmbeddedResource Include="PermissionPolicyRoleExtensions_EF_cs" />
   </ItemGroup>

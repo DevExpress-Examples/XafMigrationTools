@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Threading.Tasks;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
@@ -154,20 +155,22 @@ namespace XafApiConverterTests.ClassCommenterTests {
 
         [Fact]
         [Trait("Category", "Integration")]
-        public void TestCommentStructure_HasAllRequiredElements() {
+        public void TestNamespaceAmbiguity_ShouldNotCommentOutWrongType() {
             // Arrange
-            var inputFile = Path.Combine(_testFilesPath, "CustomStringEditor.cs");
+            // SchedulerNotifications inherits from Event (DevExpress.Persistent.BaseImpl.Event from XPO)
+            // But removed-api.txt contains DevExpress.Persistent.BaseImpl.EF.Event (from EF Core)
+            // These are DIFFERENT types in different namespaces - class should NOT be commented
+            var inputFile = Path.Combine(_testFilesPath, "SchedulerNotificationsSimple.cs");
 
             // Act
             var result = RunFullMigrationPipeline(inputFile);
-
-            // Assert - Check comment structure
-            Assert.Contains("// NOTE: Class commented out due to types having no XAF .NET equivalent", result);
-            Assert.Contains("//   - Base class 'ASPxPropertyEditor'", result);
-            Assert.Contains("//     ASPxPropertyEditor has Blazor equivalent", result);
-            Assert.Contains("// TODO: It is necessary to test the application's behavior", result);
-            Assert.Contains("// ========== COMMENTED OUT CLASS ==========", result);
-            Assert.Contains("// ========================================", result);
+            
+            // Assert - SchedulerNotifications should remain ACTIVE (not commented out)
+            // It inherits from Event which could be XPO or EF, but using directive shows DevExpress.Persistent.BaseImpl (XPO)
+            // The removed type is DevExpress.Persistent.BaseImpl.EF.Event (different namespace!)
+            Assert.Contains("public class SchedulerNotifications : Event {", result);
+            Assert.DoesNotContain("// public class SchedulerNotifications", result);
+            Assert.DoesNotContain("// NOTE: Class commented out", result);
         }
 
         [Fact]
@@ -323,13 +326,17 @@ namespace XafApiConverterTests.ClassCommenterTests {
             var syntaxTree = CSharpSyntaxTree.ParseText(content);
             var root = syntaxTree.GetRoot();
 
+            // Create compilation to get semantic model
+            var compilation = CreateCompilation(syntaxTree);
+            var semanticModel = compilation.GetSemanticModel(syntaxTree);
+
             // Analyze classes for problems
             var problematicClasses = new List<ProblematicClass>();
             var classes = root.DescendantNodes().OfType<ClassDeclarationSyntax>();
 
             foreach (var classDecl in classes) {
                 var className = classDecl.Identifier.Text;
-                var problems = AnalyzeClassForProblems(classDecl, className);
+                var problems = AnalyzeClassForProblems(classDecl, className, semanticModel);
                 
                 if (problems.Any(p => p.RequiresCommentOut)) {
                     problematicClasses.Add(new ProblematicClass {
@@ -369,25 +376,30 @@ namespace XafApiConverterTests.ClassCommenterTests {
             var mainRoot = mainTree.GetRoot();
             var designerRoot = designerTree.GetRoot();
 
+            // Create compilation with both syntax trees to get semantic models
+            var compilation = CreateCompilation(mainTree, designerTree);
+            var mainSemanticModel = compilation.GetSemanticModel(mainTree);
+            var designerSemanticModel = compilation.GetSemanticModel(designerTree);
+
             // Find all classes in both files
-            var allClasses = new Dictionary<string, List<ClassDeclarationSyntax>>();
+            var allClasses = new Dictionary<string, List<(ClassDeclarationSyntax, SemanticModel)>>();
 
             // Collect classes from main file
             foreach (var classDecl in mainRoot.DescendantNodes().OfType<ClassDeclarationSyntax>()) {
                 var className = classDecl.Identifier.Text;
                 if (!allClasses.ContainsKey(className)) {
-                    allClasses[className] = new List<ClassDeclarationSyntax>();
+                    allClasses[className] = new List<(ClassDeclarationSyntax, SemanticModel)>();
                 }
-                allClasses[className].Add(classDecl);
+                allClasses[className].Add((classDecl, mainSemanticModel));
             }
 
             // Collect classes from designer file
             foreach (var classDecl in designerRoot.DescendantNodes().OfType<ClassDeclarationSyntax>()) {
                 var className = classDecl.Identifier.Text;
                 if (!allClasses.ContainsKey(className)) {
-                    allClasses[className] = new List<ClassDeclarationSyntax>();
+                    allClasses[className] = new List<(ClassDeclarationSyntax, SemanticModel)>();
                 }
-                allClasses[className].Add(classDecl);
+                allClasses[className].Add((classDecl, designerSemanticModel));
             }
 
             // Analyze ALL parts of each partial class
@@ -399,8 +411,8 @@ namespace XafApiConverterTests.ClassCommenterTests {
 
                 // Collect problems from ALL parts
                 var allProblems = new List<TypeProblem>();
-                foreach (var classDecl in classParts) {
-                    var problems = AnalyzeClassForProblems(classDecl, className);
+                foreach (var (classDecl, semanticModel) in classParts) {
+                    var problems = AnalyzeClassForProblems(classDecl, className, semanticModel);
                     allProblems.AddRange(problems);
                 }
 
@@ -435,37 +447,130 @@ namespace XafApiConverterTests.ClassCommenterTests {
         }
 
         /// <summary>
+        /// Create a minimal compilation for semantic analysis
+        /// </summary>
+        private CSharpCompilation CreateCompilation(params SyntaxTree[] syntaxTrees) {
+            var references = new[] {
+                MetadataReference.CreateFromFile(typeof(object).Assembly.Location),
+                MetadataReference.CreateFromFile(typeof(System.Linq.Enumerable).Assembly.Location),
+            };
+
+            return CSharpCompilation.Create(
+                "TestAssembly",
+                syntaxTrees,
+                references,
+                new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary));
+        }
+
+        /// <summary>
         /// Analyze class for problems based on base types and used types
+        /// Uses semantic model to resolve FULL type names with namespaces
+        /// Falls back to using directives when semantic model cannot resolve types
         /// </summary>
         private List<TypeProblem> AnalyzeClassForProblems(
             ClassDeclarationSyntax classDecl, 
-            string className) {
+            string className,
+            SemanticModel semanticModel) {
             var problems = new List<TypeProblem>();
+
+            // Get using directives for fallback namespace resolution
+            var root = classDecl.SyntaxTree.GetRoot();
+            var usingDirectives = root.DescendantNodes()
+                .OfType<UsingDirectiveSyntax>()
+                .Select(u => u.Name?.ToString())
+                .Where(n => !string.IsNullOrEmpty(n))
+                .ToHashSet();
 
             // Check base classes
             if (classDecl.BaseList != null) {
                 foreach (var baseType in classDecl.BaseList.Types) {
                     var typeName = baseType.Type.ToString();
                     
-                    if (TypeReplacementMap.NoEquivalentTypes.TryGetValue(typeName, out var noEquivType)) {
-                        problems.Add(new TypeProblem {
-                            TypeName = typeName,
-                            FullTypeName = noEquivType.GetFullOldTypeName(),
-                            Reason = $"Base class '{typeName}' has no equivalent in XAF .NET",
-                            Description = noEquivType.Description,
-                            Severity = ProblemSeverity.Critical,
-                            RequiresCommentOut = noEquivType.CommentOutEntireClass
-                        });
+                    // Try to get the full type name using semantic model
+                    var typeSymbol = semanticModel.GetSymbolInfo(baseType.Type).Symbol as INamedTypeSymbol;
+                    string fullTypeName = null;
+                    
+                    if (typeSymbol != null && !typeSymbol.ToDisplayString().StartsWith("?")) {
+                        // Get full type name including namespace
+                        fullTypeName = typeSymbol.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)
+                            .Replace("global::", ""); // Remove global:: prefix
                     }
-                    else if (TypeReplacementMap.ManualConversionRequiredTypes.TryGetValue(typeName, out var manualType)) {
-                        problems.Add(new TypeProblem {
-                            TypeName = typeName,
-                            FullTypeName = manualType.GetFullOldTypeName(),
-                            Reason = $"Base class '{typeName}' has equivalent in XAF .NET ({manualType.NewType}) but automatic conversion is not possible. See: {manualType.GetFullNewTypeName()}",
-                            Description = manualType.Description,
-                            Severity = ProblemSeverity.High,
-                            RequiresCommentOut = manualType.CommentOutEntireClass
-                        });
+
+                    // If we have semantic info, use it for precise matching
+                    if (fullTypeName != null) {
+                        // Check against NoEquivalentTypes using FULL type name comparison
+                        var matchingNoEquiv = TypeReplacementMap.NoEquivalentTypes.Values
+                            .FirstOrDefault(t => {
+                                var expectedFullName = t.GetFullOldTypeName();
+                                // Match if full names are equal
+                                return fullTypeName.Equals(expectedFullName, StringComparison.Ordinal) ||
+                                       fullTypeName.EndsWith($".{expectedFullName}", StringComparison.Ordinal);
+                            });
+
+                        if (matchingNoEquiv != null) {
+                            problems.Add(new TypeProblem {
+                                TypeName = typeName,
+                                FullTypeName = fullTypeName,
+                                Reason = $"Base class '{typeName}' has no equivalent in XAF .NET",
+                                Description = matchingNoEquiv.Description,
+                                Severity = ProblemSeverity.Critical,
+                                RequiresCommentOut = matchingNoEquiv.CommentOutEntireClass
+                            });
+                            continue; // Move to next base type
+                        }
+
+                        // Check ManualConversionRequiredTypes
+                        var matchingManual = TypeReplacementMap.ManualConversionRequiredTypes.Values
+                            .FirstOrDefault(t => {
+                                var expectedFullName = t.GetFullOldTypeName();
+                                return fullTypeName.Equals(expectedFullName, StringComparison.Ordinal) ||
+                                       fullTypeName.EndsWith($".{expectedFullName}", StringComparison.Ordinal);
+                            });
+
+                        if (matchingManual != null) {
+                            problems.Add(new TypeProblem {
+                                TypeName = typeName,
+                                FullTypeName = fullTypeName,
+                                Reason = $"Base class '{typeName}' has equivalent in XAF .NET ({matchingManual.NewType}) but automatic conversion is not possible. See: {matchingManual.GetFullNewTypeName()}",
+                                Description = matchingManual.Description,
+                                Severity = ProblemSeverity.High,
+                                RequiresCommentOut = matchingManual.CommentOutEntireClass
+                            });
+                        }
+                    }
+                    else {
+                        // Semantic model couldn't resolve type - use USING DIRECTIVES for namespace inference
+                        // This is more reliable than simple name matching
+                        
+                        // Find all problematic types with this simple name
+                        var candidateTypes = TypeReplacementMap.NoEquivalentTypes.Values
+                            .Concat(TypeReplacementMap.ManualConversionRequiredTypes.Values)
+                            .Where(t => t.OldType == typeName)
+                            .ToList();
+
+                        foreach (var candidateType in candidateTypes) {
+                            // Check if the namespace of this candidate type is in the using directives
+                            if (!string.IsNullOrEmpty(candidateType.OldNamespace) && 
+                                usingDirectives.Contains(candidateType.OldNamespace)) {
+                                // Found a match based on using directives!
+                                var isNoEquiv = TypeReplacementMap.NoEquivalentTypes.ContainsKey(typeName);
+                                
+                                problems.Add(new TypeProblem {
+                                    TypeName = typeName,
+                                    FullTypeName = candidateType.GetFullOldTypeName(),
+                                    Reason = isNoEquiv 
+                                        ? $"Base class '{typeName}' has no equivalent in XAF .NET (inferred from using {candidateType.OldNamespace})"
+                                        : $"Base class '{typeName}' has equivalent in XAF .NET ({candidateType.NewType}) but automatic conversion is not possible (inferred from using {candidateType.OldNamespace})",
+                                    Description = candidateType.Description,
+                                    Severity = isNoEquiv ? ProblemSeverity.Critical : ProblemSeverity.High,
+                                    RequiresCommentOut = candidateType.CommentOutEntireClass
+                                });
+                                break; // Found the match, don't check other candidates
+                            }
+                        }
+                        
+                        // If no match found via using directives, the type is likely safe
+                        // (e.g., Event from DevExpress.Persistent.BaseImpl - XPO, which is fine)
                     }
                 }
             }
@@ -477,15 +582,48 @@ namespace XafApiConverterTests.ClassCommenterTests {
                 .Distinct();
 
             foreach (var identifier in identifiers) {
-                if (TypeReplacementMap.NoEquivalentTypes.TryGetValue(identifier, out var noEquivType)) {
-                    problems.Add(new TypeProblem {
-                        TypeName = identifier,
-                        FullTypeName = noEquivType.GetFullOldTypeName(),
-                        Reason = $"Type '{identifier}' has no equivalent in XAF .NET",
-                        Description = noEquivType.Description,
-                        Severity = ProblemSeverity.High,
-                        RequiresCommentOut = noEquivType.CommentOutEntireClass
-                    });
+                // Get the identifier node to check semantic info
+                var identifierNode = classDecl.DescendantNodes()
+                    .OfType<IdentifierNameSyntax>()
+                    .FirstOrDefault(i => i.Identifier.Text == identifier);
+
+                if (identifierNode != null) {
+                    var symbol = semanticModel.GetSymbolInfo(identifierNode).Symbol as INamedTypeSymbol;
+                    if (symbol != null && !symbol.ToDisplayString().StartsWith("?")) {
+                        var fullTypeName = symbol.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)
+                            .Replace("global::", "");
+
+                        // Check with full type name
+                        var matchingNoEquiv = TypeReplacementMap.NoEquivalentTypes.Values
+                            .FirstOrDefault(t => fullTypeName.Equals(t.GetFullOldTypeName(), StringComparison.Ordinal));
+
+                        if (matchingNoEquiv != null) {
+                            problems.Add(new TypeProblem {
+                                TypeName = identifier,
+                                FullTypeName = fullTypeName,
+                                Reason = $"Type '{identifier}' has no equivalent in XAF .NET",
+                                Description = matchingNoEquiv.Description,
+                                Severity = ProblemSeverity.High,
+                                RequiresCommentOut = matchingNoEquiv.CommentOutEntireClass
+                            });
+                        }
+                    }
+                    else {
+                        // Fallback to using directives for identifiers too
+                        if (TypeReplacementMap.NoEquivalentTypes.TryGetValue(identifier, out var noEquivType)) {
+                            if (!string.IsNullOrEmpty(noEquivType.OldNamespace) && 
+                                usingDirectives.Contains(noEquivType.OldNamespace)) {
+                                problems.Add(new TypeProblem {
+                                    TypeName = identifier,
+                                    FullTypeName = noEquivType.GetFullOldTypeName(),
+                                    Reason = $"Type '{identifier}' has no equivalent in XAF .NET (inferred from using {noEquivType.OldNamespace})",
+                                    Description = noEquivType.Description,
+                                    Severity = ProblemSeverity.High,
+                                    RequiresCommentOut = noEquivType.CommentOutEntireClass
+                                });
+                            }
+                        }
+                    }
                 }
             }
 

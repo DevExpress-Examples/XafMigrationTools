@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using System.Reflection;
 
 namespace XafApiConverter.Converter {
     /// <summary>
@@ -8,6 +10,9 @@ namespace XafApiConverter.Converter {
     /// TRANS-006, TRANS-007, TRANS-008, TRANS-009
     /// </summary>
     internal class TypeReplacementMap {
+        private static readonly object _lockObject = new();
+        private static bool _isInitialized = false;
+
         /// <summary>
         /// Namespace replacements (TRANS-006, TRANS-007)
         /// </summary>
@@ -20,7 +25,7 @@ namespace XafApiConverter.Converter {
                 new[] { ".cs" }) },
 
 
-            // TRANS-007: DevExpress Web ? Blazor
+            // TRANS-007: DevExpress Web → Blazor
             { "DevExpress.ExpressApp.Web", new NamespaceReplacement(
                 "DevExpress.ExpressApp.Web",
                 "DevExpress.ExpressApp.Blazor",
@@ -250,9 +255,11 @@ namespace XafApiConverter.Converter {
 
         /// <summary>
         /// Types with NO XAF .NET equivalent (TRANS-009)
-        /// These types have no equivalents in XAF .NET and require commenting out entire classes
+        /// These types have no equivalents in XAF .NET and require commenting out entire classes.
+        /// This collection is dynamically populated from removed-api.txt and can be manually extended.
         /// </summary>
         public static readonly Dictionary<string, TypeReplacement> NoEquivalentTypes = new() {
+            // Manually defined types with detailed descriptions
             { "AnalysisControlWeb", new TypeReplacement(
                 "AnalysisControlWeb",
                 null,
@@ -356,7 +363,7 @@ namespace XafApiConverter.Converter {
                 "DevExpress.ExpressApp.Web.Layout",
                 null,
                 "LayoutItemTemplate has no Blazor equivalent (Web Forms layout specific)",
-                commentOutEntireClass: true) },  // Added flag
+                commentOutEntireClass: true) },
 
             { "LayoutGroupTemplate", new TypeReplacement(
                 "LayoutGroupTemplate",
@@ -364,7 +371,7 @@ namespace XafApiConverter.Converter {
                 "DevExpress.ExpressApp.Web.Layout",
                 null,
                 "LayoutGroupTemplate has no Blazor equivalent (Web Forms layout specific)",
-                commentOutEntireClass: true) },  // Added flag
+                commentOutEntireClass: true) },
 
             { "TabbedGroupTemplate", new TypeReplacement(
                 "TabbedGroupTemplate",
@@ -372,7 +379,7 @@ namespace XafApiConverter.Converter {
                 "DevExpress.ExpressApp.Web.Layout",
                 null,
                 "TabbedGroupTemplate has no Blazor equivalent (Web Forms layout specific)",
-                commentOutEntireClass: true) },  // Added flag
+                commentOutEntireClass: true) },
 
             // Web Forms specific types (TRANS-009)
             { "Page", new TypeReplacement(
@@ -406,16 +413,16 @@ namespace XafApiConverter.Converter {
                 "DevExpress.ExpressApp.Blazor.Editors",
                 "WebPropertyEditor has Blazor equivalent (BlazorPropertyEditorBase) but automatic conversion is not possible. Manual refactoring required.",
                 new[] { ".cs" },
-                commentOutEntireClass: true) },  // Changed to true - classes inheriting from this need complete rewrite
+                commentOutEntireClass: true) },
 
             { "ASPxPropertyEditor", new TypeReplacement(
                 "ASPxPropertyEditor",
                 "BlazorPropertyEditorBase",
-                "DevExpress.ExpressApp.Web.Editors",
+                "DevExpress.ExpressApp.Web.Editors.ASPx",
                 "DevExpress.ExpressApp.Blazor.Editors",
                 "ASPxPropertyEditor has Blazor equivalent (BlazorPropertyEditorBase) but automatic conversion is not possible. Manual refactoring required.",
                 new[] { ".cs" },
-                commentOutEntireClass: true) },  // Changed to true - classes inheriting from this need complete rewrite
+                commentOutEntireClass: true) },
 
             { "ASPxDateTimePropertyEditor", new TypeReplacement(
                 "ASPxDateTimePropertyEditor",
@@ -424,7 +431,7 @@ namespace XafApiConverter.Converter {
                 "DevExpress.ExpressApp.Blazor.Editors",
                 "ASPxDateTimePropertyEditor has Blazor equivalent (DateTimePropertyEditor) but automatic conversion is not possible. Manual refactoring required.",
                 new[] { ".cs" },
-                commentOutEntireClass: true) }  // Changed to true - classes inheriting from this need complete rewrite
+                commentOutEntireClass: true) }
         };
 
         /// <summary>
@@ -485,10 +492,115 @@ namespace XafApiConverter.Converter {
             //"ParametrizedAction"
         };
 
+        static TypeReplacementMap() {
+            // Automatically initialize on first access
+            EnsureInitialized();
+        }
+
+        /// <summary>
+        /// Ensures that NoEquivalentTypes dictionary is initialized with data from removed-api.txt
+        /// </summary>
+        private static void EnsureInitialized() {
+            if (_isInitialized) return;
+
+            lock (_lockObject) {
+                if (_isInitialized) return;
+
+                LoadRemovedApiTypes();
+                _isInitialized = true;
+            }
+        }
+
+        /// <summary>
+        /// Loads removed API types from removed-api.txt embedded resource and populates NoEquivalentTypes dictionary
+        /// </summary>
+        private static void LoadRemovedApiTypes() {
+            try {
+                // Get the assembly containing this class
+                var assembly = Assembly.GetExecutingAssembly();
+                
+                // Get the resource name - typically namespace + filename
+                // Expected format: "XafApiConverter.Converter.removed-api.txt"
+                string resourceName = "XafApiConverter.Converter.removed-api.txt";
+                
+                // Try to find the resource with different possible names
+                var resourceNames = assembly.GetManifestResourceNames();
+                var matchingResource = resourceNames.FirstOrDefault(r => r.EndsWith("removed-api.txt", StringComparison.OrdinalIgnoreCase));
+                
+                if (matchingResource == null) {
+                    // Resource not found, skip loading (NoEquivalentTypes will only contain manually defined entries)
+                    Console.WriteLine($"Warning: removed-api.txt resource not found. Available resources: {string.Join(", ", resourceNames)}");
+                    return;
+                }
+
+                // Read the embedded resource
+                using (Stream stream = assembly.GetManifestResourceStream(matchingResource)) {
+                    if (stream == null) {
+                        Console.WriteLine($"Warning: Could not open stream for resource '{matchingResource}'");
+                        return;
+                    }
+
+                    using (StreamReader reader = new StreamReader(stream)) {
+                        string line;
+                        while ((line = reader.ReadLine()) != null) {
+                            string trimmedLine = line.Trim();
+
+                            // Skip empty lines and comments
+                            if (string.IsNullOrWhiteSpace(trimmedLine) || trimmedLine.StartsWith("#")) {
+                                continue;
+                            }
+
+                            // Parse full type name (e.g., "DevExpress.ExpressApp.Security.ClientPermissionRequestProcessor")
+                            string fullTypeName = trimmedLine;
+
+                            // Extract namespace and type name
+                            int lastDotIndex = fullTypeName.LastIndexOf('.');
+                            if (lastDotIndex == -1) {
+                                // No namespace, skip
+                                continue;
+                            }
+
+                            string namespaceName = fullTypeName.Substring(0, lastDotIndex);
+                            string typeName = fullTypeName.Substring(lastDotIndex + 1);
+
+                            // Only add if not already in the dictionary (manually defined entries take precedence)
+                            if (!NoEquivalentTypes.ContainsKey(typeName)) {
+                                NoEquivalentTypes[typeName] = new TypeReplacement(
+                                    typeName,
+                                    null, // No equivalent
+                                    namespaceName,
+                                    null,
+                                    $"{typeName} has no equivalent in XAF .NET (loaded from removed-api.txt)",
+                                    new[] { ".cs" },
+                                    commentOutEntireClass: true);
+                            }
+                        }
+                    }
+                }
+
+                // Step 2: Remove types that have equivalents in TypeReplacements
+                var typesToRemove = new List<string>();
+                foreach (var kvp in NoEquivalentTypes) {
+                    if (TypeReplacements.ContainsKey(kvp.Key)) {
+                        typesToRemove.Add(kvp.Key);
+                    }
+                }
+
+                foreach (var typeToRemove in typesToRemove) {
+                    NoEquivalentTypes.Remove(typeToRemove);
+                }
+
+            } catch (Exception ex) {
+                // Log error or handle gracefully - don't crash the application
+                Console.WriteLine($"Warning: Failed to load removed-api.txt from embedded resources: {ex.Message}");
+            }
+        }
+
         /// <summary>
         /// Get all namespace replacements (both normal and NO_EQUIVALENT)
         /// </summary>
         public static IEnumerable<NamespaceReplacement> GetAllNamespaceReplacements() {
+            EnsureInitialized();
             return NamespaceReplacements.Values.Concat(NoEquivalentNamespaces.Values);
         }
 
@@ -496,6 +608,7 @@ namespace XafApiConverter.Converter {
         /// Get all type replacements (normal, NO_EQUIVALENT, and MANUAL_CONVERSION_REQUIRED)
         /// </summary>
         public static IEnumerable<TypeReplacement> GetAllTypeReplacements() {
+            EnsureInitialized();
             return TypeReplacements.Values
                 .Concat(NoEquivalentTypes.Values)
                 .Concat(ManualConversionRequiredTypes.Values);
@@ -505,6 +618,7 @@ namespace XafApiConverter.Converter {
         /// Check if a type requires commenting out entire class
         /// </summary>
         public static bool RequiresCommentOutClass(string typeName) {
+            EnsureInitialized();
             return NoEquivalentTypes.TryGetValue(typeName, out var replacement) && 
                    replacement.CommentOutEntireClass;
         }
@@ -513,6 +627,7 @@ namespace XafApiConverter.Converter {
         /// Check if a type requires manual conversion
         /// </summary>
         public static bool RequiresManualConversion(string typeName) {
+            EnsureInitialized();
             return ManualConversionRequiredTypes.ContainsKey(typeName);
         }
 
@@ -520,7 +635,41 @@ namespace XafApiConverter.Converter {
         /// Check if an enum usage requires commenting out entire class
         /// </summary>
         public static bool IsProblematicEnum(string enumName) {
+            EnsureInitialized();
             return ProblematicEnums.ContainsKey(enumName);
+        }
+
+        /// <summary>
+        /// Force reload of removed-api.txt (useful for testing)
+        /// </summary>
+        public static void ReloadRemovedApiTypes() {
+            lock (_lockObject) {
+                _isInitialized = false;
+                // Clear dynamically loaded entries (keep manually defined ones)
+                var manualEntries = NoEquivalentTypes
+                    .Where(kvp => !kvp.Value.Description.Contains("loaded from removed-api.txt"))
+                    .ToList();
+                
+                NoEquivalentTypes.Clear();
+                foreach (var entry in manualEntries) {
+                    NoEquivalentTypes[entry.Key] = entry.Value;
+                }
+
+                EnsureInitialized();
+            }
+        }
+
+        /// <summary>
+        /// Gets statistics about loaded types (for debugging)
+        /// </summary>
+        public static (int manuallyDefined, int loadedFromFile, int total) GetLoadedTypesStatistics() {
+            EnsureInitialized();
+            
+            int manuallyDefined = NoEquivalentTypes.Count(kvp => !kvp.Value.Description.Contains("loaded from removed-api.txt"));
+            int loadedFromFile = NoEquivalentTypes.Count(kvp => kvp.Value.Description.Contains("loaded from removed-api.txt"));
+            int total = NoEquivalentTypes.Count;
+
+            return (manuallyDefined, loadedFromFile, total);
         }
     }
 

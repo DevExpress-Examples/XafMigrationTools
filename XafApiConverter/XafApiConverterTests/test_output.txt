@@ -1,0 +1,22 @@
+  Determining projects to restore...
+  All projects are up-to-date for restore.
+  XafApiConverter -> D:\Work\DXSources\G\Examples\XafMigrationTools\XafApiConverter\Source\bin\Debug\net10.0\XafApiConverter.dll
+  XafApiConverterTests -> D:\Work\DXSources\G\Examples\XafMigrationTools\XafApiConverter\XafApiConverterTests\bin\Debug\net10.0\XafApiConverterTests.dll
+Test run for D:\Work\DXSources\G\Examples\XafMigrationTools\XafApiConverter\XafApiConverterTests\bin\Debug\net10.0\XafApiConverterTests.dll (.NETCoreApp,Version=v10.0)
+VSTest version 18.0.1 (x64)
+
+Starting test execution, please wait...
+A total of 1 test files matched the specified pattern.
+[xUnit.net 00:00:00.59]     XafApiConverterTests.ClassCommenterTests.ClassCommenterTests.TestNamespaceAmbiguity_ShouldNotCommentOutWrongType [FAIL]
+  Failed XafApiConverterTests.ClassCommenterTests.ClassCommenterTests.TestNamespaceAmbiguity_ShouldNotCommentOutWrongType [489 ms]
+  Error Message:
+   Assert.DoesNotContain() Failure: Sub-string found
+                                      Γåô (pos 823)
+String: ┬╖┬╖┬╖") { }\r\n    }\r\n\r\n    // NOTE: Class commen"┬╖┬╖┬╖
+Found:  "// NOTE: Class commented out"
+  Stack Trace:
+     at XafApiConverterTests.ClassCommenterTests.ClassCommenterTests.TestNamespaceAmbiguity_ShouldNotCommentOutWrongType() in D:\Work\DXSources\G\Examples\XafMigrationTools\XafApiConverter\XafApiConverterTests\ClassCommenterTests.cs:line 171
+   at System.Reflection.MethodBaseInvoker.InterpretedInvoke_Method(Object obj, IntPtr* args)
+   at System.Reflection.MethodBaseInvoker.InvokeWithNoArgs(Object obj, BindingFlags invokeAttr)
+
+Failed!  - Failed:     1, Passed:     0, Skipped:     0, Total:     1, Duration: 497 ms - XafApiConverterTests.dll (net10.0)

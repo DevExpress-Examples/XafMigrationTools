@@ -36,13 +36,16 @@ namespace XafApiConverter.Converter {
                 Console.WriteLine("Phase 1: Loading solution...");
                 LoadSolution();
 
-                // Phase 2: Apply automatic replacements
-                Console.WriteLine("Phase 2: Applying automatic replacements...");
-                ApplyAutomaticReplacements();
-
-                // Phase 3: Detect problems
-                Console.WriteLine("Phase 3: Detecting problems for LLM analysis...");
+                // Phase 2: Detect and comment out problematic classes FIRST (before changing usings!)
+                // This allows using directives analysis to work correctly for namespace resolution
+                Console.WriteLine("Phase 2: Detecting and commenting out problematic classes...");
                 DetectProblems();
+                CommentOutProblematicClasses();
+
+                // Phase 3: Apply automatic replacements (usings + types)
+                // Now it's safe to change usings since problematic classes are already commented
+                Console.WriteLine("Phase 3: Applying automatic replacements...");
+                ApplyAutomaticReplacements();
 
                 // Phase 4: Build project
                 Console.WriteLine("Phase 4: Building project...");
@@ -51,10 +54,6 @@ namespace XafApiConverter.Converter {
                 // Phase 5: Generate report
                 Console.WriteLine("Phase 5: Generating report...");
                 SaveReport();
-
-                // Phase 6: Comment out problematic classes (NEW)
-                Console.WriteLine("Phase 6: Commenting out problematic classes...");
-                CommentOutProblematicClasses();
 
                 Console.WriteLine();
                 Console.WriteLine("[OK] Migration analysis complete!");

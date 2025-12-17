@@ -21,14 +21,17 @@
     </PackageReference>
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="5.0.0" />
     <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Workspaces" Version="5.0.0" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Using Include="Xunit" />
+    
+    <!-- Temporarily removed - causes MSBuild assembly loading conflicts -->
+    <!-- These will be added back when MSBuildWorkspace functionality is needed -->
+    <!-- <PackageReference Include="Microsoft.CodeAnalysis.Workspaces.MSBuild" Version="5.0.0" /> -->
+    <!-- <PackageReference Include="Microsoft.Build.Locator" Version="1.11.2" /> -->
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\Source\XafApiConverter.csproj" />
+    <!-- Temporarily commented out - will be used later for real project testing with MSBuildWorkspace -->
+    <!-- <ProjectReference Include="..\XafApiConverter.TestProject\XafApiConverter.TestProject.csproj" /> -->
   </ItemGroup>
 
   <ItemGroup>
