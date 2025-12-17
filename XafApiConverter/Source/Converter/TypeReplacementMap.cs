@@ -462,6 +462,9 @@ namespace XafApiConverter.Converter {
             // XAF Module base classes
             "ModuleBase",
             "ModuleUpdater",
+
+            // XAF Business Object base classes
+            "BaseObject",
             
             // XAF Controller base classes
             //"ViewController",
