@@ -188,6 +188,7 @@
     <PackageReference Include="DevExpress.Xpo" Version="25.1.3" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="ASPxCustomListEditor.cs" />
     <Compile Include="ASPxCustomListEditor2.cs" />
     <Compile Include="ASPxCustomListEditorControl2.cs" />
     <Compile Include="BO\Message.cs" />

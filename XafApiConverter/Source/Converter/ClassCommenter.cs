@@ -586,48 +586,67 @@ namespace XafApiConverter.Converter {
             // Pattern 4: // internal class ClassName
             
             var commentMarker = "// ========== COMMENTED OUT CLASS ==========";
-            var commentIndex = content.IndexOf(commentMarker, StringComparison.Ordinal);
             
-            // Start from beginning if no marker found yet
-            var searchStart = commentIndex >= 0 ? commentIndex : 0;
-            
-            // Search for various patterns of commented class declarations
-            var patterns = new[] {
-                $"// public class {className}",           // Standard pattern
-                $"//     public class {className}",       // With standard indent
-                $"// internal class {className}",        // Internal modifier
-                $"//     internal class {className}",    // Internal with indent
-                $"//\tpublic class {className}",         // Tab indentation
-                $"//  public class {className}",         // Double space
-                $"//    public class {className}",       // 4 spaces indent
-                $"//private class {className}",          // Private
-                $"//protected class {className}",        // Protected
-            };
-            
-            // Check if any pattern matches in the search region (next 1000 characters)
-            var searchLength = Math.Min(1000, content.Length - searchStart);
-            if (searchLength <= 0) return false;
-            
-            var searchRegion = content.Substring(searchStart, searchLength);
-            
-            foreach (var pattern in patterns) {
-                if (searchRegion.Contains(pattern, StringComparison.Ordinal)) {
-                    return true;
+            // CRITICAL FIX: Find ALL commented blocks in the file, not just the first one!
+            // This handles multiple classes in one file correctly.
+            var currentIndex = 0;
+            while (true) {
+                // Find next comment marker
+                var commentIndex = content.IndexOf(commentMarker, currentIndex, StringComparison.Ordinal);
+                if (commentIndex < 0) {
+                    // No more comment markers found
+                    break;
                 }
+                
+                // Find the end of this commented block (next closing marker or end of file)
+                var closingMarker = "// ========================================";
+                var closingIndex = content.IndexOf(closingMarker, commentIndex + commentMarker.Length, StringComparison.Ordinal);
+                if (closingIndex < 0) {
+                    // No closing marker - assume rest of file
+                    closingIndex = content.Length;
+                }
+                
+                // Extract the commented block content
+                var blockLength = closingIndex - commentIndex;
+                var commentedBlock = content.Substring(commentIndex, blockLength);
+                
+                // CRITICAL: Use word boundary check to avoid matching substrings!
+                // For example, "ASPxCustomListEditor" should NOT match "ASPxCustomListEditorControl"
+                // We check for word boundaries: space, colon, curly brace, newline, etc.
+                var patterns = new[] {
+                    $"// public class {className} ",          // Space after (e.g., class Foo extends Bar)
+                    $"// public class {className}:",         // Colon after (e.g., class Foo : Bar)
+                    $"// public class {className}{{",        // Curly brace after (e.g., class Foo {)
+                    $"// public class {className}\r",        // Newline after
+                    $"// public class {className}\n",        // Newline after
+                    $"//     public class {className} ",     // With indent + space
+                    $"//     public class {className}:",     // With indent + colon
+                    $"//     public class {className}{{",    // With indent + brace
+                    $"// internal class {className} ",       // Internal + space
+                    $"// internal class {className}:",       // Internal + colon
+                    $"// internal class {className}{{",      // Internal + brace
+                    $"//     internal class {className} ",   // Internal + indent + space
+                    $"//     internal class {className}:",   // Internal + indent + colon
+                    $"//\tpublic class {className} ",        // Tab + space
+                    $"//\tpublic class {className}:",        // Tab + colon
+                    $"//  public class {className} ",        // Double space + space
+                    $"//    public class {className} ",      // 4 spaces + space
+                    $"//private class {className} ",         // Private + space
+                    $"//protected class {className} ",       // Protected + space
+                };
+                
+                foreach (var pattern in patterns) {
+                    if (commentedBlock.Contains(pattern, StringComparison.Ordinal)) {
+                        // Found the specific class in this commented block!
+                        return true;
+                    }
+                }
+                
+                // Continue searching after this block
+                currentIndex = closingIndex + closingMarker.Length;
             }
             
-            // Also check if the entire class declaration appears in comments
-            // by searching for // followed by [PropertyEditor or [<any attribute related to this class>
-            var attributePattern = $"// [PropertyEditor";
-            if (searchRegion.Contains(attributePattern, StringComparison.Ordinal)) {
-                // Check if class name appears nearby
-                var attributeIndex = searchRegion.IndexOf(attributePattern, StringComparison.Ordinal);
-                var nearbySearch = searchRegion.Substring(attributeIndex, Math.Min(300, searchRegion.Length - attributeIndex));
-                if (nearbySearch.Contains(className, StringComparison.Ordinal)) {
-                    return true;
-                }
-            }
-            
+            // Class not found in any commented blocks
             return false;
         }
         
