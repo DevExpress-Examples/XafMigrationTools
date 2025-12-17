@@ -109,12 +109,11 @@ namespace XafApiConverter.Converter {
                 "Maps.Web has no Blazor equivalent",
                 new[] { ".cs", ".xafml" }) },
 
-            //TODO: Revisit if Kpi gets a .NET equivalent in the future
-            //{ "DevExpress.ExpressApp.Kpi", new NamespaceReplacement(
-            //    "DevExpress.ExpressApp.Kpi",
-            //    null,
-            //    "DevExpress.ExpressApp.Kpi has no .NET equivalent",
-            //    new[] { ".cs", ".xafml" }) },
+            { "DevExpress.ExpressApp.Kpi", new NamespaceReplacement(
+                "DevExpress.ExpressApp.Kpi",
+                null,
+                "DevExpress.ExpressApp.Kpi has no .NET equivalent",
+                new[] { ".cs", ".xafml" }) },
 
             { "DevExpress.ExpressApp.ScriptRecorder.Web", new NamespaceReplacement(
                 "DevExpress.ExpressApp.ScriptRecorder.Web",
@@ -475,12 +474,14 @@ namespace XafApiConverter.Converter {
         /// 2. Generic types are matched without type parameters (e.g., "ViewController" matches "ViewController<T>")
         /// 3. Matching is done on base class names ONLY, not on full type paths
         /// 4. If a protected class inherits from a no-equivalent type, only the no-equivalent parts get warnings
+        /// 5. This collection is dynamically populated from ProtectedTypes.txt embedded resource
         /// 
         /// TESTING:
         /// ========
         /// See ClassCommenterTests.TestProtectedBaseClass_NotCommented_WithWarning for validation
         /// </summary>
         public static readonly HashSet<string> ProtectedBaseClasses = new(StringComparer.OrdinalIgnoreCase) {
+            // Manually defined protected base classes - these are always protected
             // XAF Module base classes - NEVER comment out, only warn
             "ModuleBase",           // Core XAF module infrastructure
             "ModuleUpdater",        // Database update logic
@@ -528,6 +529,9 @@ namespace XafApiConverter.Converter {
             //"SimpleAction",
             //"SingleChoiceAction",
             //"ParametrizedAction"
+            
+            // Additional protected types are loaded from ProtectedTypes.txt embedded resource
+            // See LoadProtectedTypes() method for dynamic loading
         };
 
         static TypeReplacementMap() {
@@ -536,7 +540,7 @@ namespace XafApiConverter.Converter {
         }
 
         /// <summary>
-        /// Ensures that NoEquivalentTypes dictionary is initialized with data from removed-api.txt
+        /// Ensures that NoEquivalentTypes dictionary and ProtectedBaseClasses set are initialized
         /// </summary>
         private static void EnsureInitialized() {
             if (_isInitialized) return;
@@ -545,6 +549,7 @@ namespace XafApiConverter.Converter {
                 if (_isInitialized) return;
 
                 LoadRemovedApiTypes();
+                LoadProtectedTypes();
                 _isInitialized = true;
             }
         }
@@ -635,6 +640,91 @@ namespace XafApiConverter.Converter {
         }
 
         /// <summary>
+        /// Loads protected types from ProtectedTypes.txt embedded resource and adds them to ProtectedBaseClasses set.
+        /// Protected types are business object base classes and interfaces that should receive WARNING comments
+        /// but should NOT be automatically commented out.
+        /// 
+        /// File format:
+        /// - Lines starting with '#' are treated as comments (ignored)
+        /// - Empty lines are ignored
+        /// - Each non-comment line contains a full type name: "Namespace.TypeName"
+        /// - Only the simple type name (after last dot) is added to ProtectedBaseClasses
+        /// 
+        /// Example:
+        /// # DevExpress.Persistent.Base.v25.2
+        /// DevExpress.Persistent.Base.General.ITask
+        /// DevExpress.Persistent.BaseImpl.Task
+        /// 
+        /// Result: "ITask" and "Task" are added to ProtectedBaseClasses
+        /// </summary>
+        private static void LoadProtectedTypes() {
+            try {
+                var assembly = Assembly.GetExecutingAssembly();
+                
+                // Try to find ProtectedTypes.txt resource
+                var resourceNames = assembly.GetManifestResourceNames();
+                var matchingResource = resourceNames.FirstOrDefault(r => r.EndsWith("ProtectedTypes.txt", StringComparison.OrdinalIgnoreCase));
+                
+                if (matchingResource == null) {
+                    Console.WriteLine($"Info: ProtectedTypes.txt resource not found. Using only manually defined protected types.");
+                    return;
+                }
+
+                int loadedCount = 0;
+                
+                using (Stream stream = assembly.GetManifestResourceStream(matchingResource)) {
+                    if (stream == null) {
+                        Console.WriteLine($"Warning: Could not open stream for resource '{matchingResource}'");
+                        return;
+                    }
+
+                    using (StreamReader reader = new StreamReader(stream)) {
+                        string line;
+                        while ((line = reader.ReadLine()) != null) {
+                            string trimmedLine = line.Trim();
+
+                            // Skip empty lines and comments
+                            if (string.IsNullOrWhiteSpace(trimmedLine) || trimmedLine.StartsWith("#")) {
+                                continue;
+                            }
+
+                            // Parse full type name (e.g., "DevExpress.Persistent.BaseImpl.Task")
+                            string fullTypeName = trimmedLine;
+
+                            // Extract simple type name (after last dot)
+                            int lastDotIndex = fullTypeName.LastIndexOf('.');
+                            if (lastDotIndex == -1) {
+                                // No namespace - use as-is
+                                if (!ProtectedBaseClasses.Contains(fullTypeName)) {
+                                    ProtectedBaseClasses.Add(fullTypeName);
+                                    loadedCount++;
+                                }
+                                continue;
+                            }
+
+                            string typeName = fullTypeName.Substring(lastDotIndex + 1);
+
+                            // Add to ProtectedBaseClasses if not already present
+                            // (manually defined entries take precedence due to case-insensitive comparison)
+                            if (!ProtectedBaseClasses.Contains(typeName)) {
+                                ProtectedBaseClasses.Add(typeName);
+                                loadedCount++;
+                            }
+                        }
+                    }
+                }
+
+                if (loadedCount > 0) {
+                    Console.WriteLine($"Info: Loaded {loadedCount} protected types from ProtectedTypes.txt");
+                }
+
+            } catch (Exception ex) {
+                // Log error or handle gracefully - don't crash the application
+                Console.WriteLine($"Warning: Failed to load ProtectedTypes.txt from embedded resources: {ex.Message}");
+            }
+        }
+
+        /// <summary>
         /// Get all namespace replacements (both normal and NO_EQUIVALENT)
         /// </summary>
         public static IEnumerable<NamespaceReplacement> GetAllNamespaceReplacements() {
@@ -698,6 +788,41 @@ namespace XafApiConverter.Converter {
         }
 
         /// <summary>
+        /// Force reload of both removed-api.txt and ProtectedTypes.txt (useful for testing)
+        /// </summary>
+        public static void ReloadAllTypes() {
+            lock (_lockObject) {
+                _isInitialized = false;
+                
+                // Clear dynamically loaded entries from NoEquivalentTypes
+                var manualNoEquivEntries = NoEquivalentTypes
+                    .Where(kvp => !kvp.Value.Description.Contains("loaded from removed-api.txt"))
+                    .ToList();
+                
+                NoEquivalentTypes.Clear();
+                foreach (var entry in manualNoEquivEntries) {
+                    NoEquivalentTypes[entry.Key] = entry.Value;
+                }
+                
+                // Clear dynamically loaded protected types
+                var manualProtectedTypes = new[] {
+                    "ModuleBase", "ModuleUpdater", "BaseObject",
+                    "XafApplication", "BlazorApplication", "WinApplication"
+                };
+                
+                var toRemove = ProtectedBaseClasses
+                    .Where(t => !manualProtectedTypes.Contains(t, StringComparer.OrdinalIgnoreCase))
+                    .ToList();
+                
+                foreach (var type in toRemove) {
+                    ProtectedBaseClasses.Remove(type);
+                }
+
+                EnsureInitialized();
+            }
+        }
+
+        /// <summary>
         /// Gets statistics about loaded types (for debugging)
         /// </summary>
         public static (int manuallyDefined, int loadedFromFile, int total) GetLoadedTypesStatistics() {
@@ -706,6 +831,26 @@ namespace XafApiConverter.Converter {
             int manuallyDefined = NoEquivalentTypes.Count(kvp => !kvp.Value.Description.Contains("loaded from removed-api.txt"));
             int loadedFromFile = NoEquivalentTypes.Count(kvp => kvp.Value.Description.Contains("loaded from removed-api.txt"));
             int total = NoEquivalentTypes.Count;
+
+            return (manuallyDefined, loadedFromFile, total);
+        }
+
+        /// <summary>
+        /// Gets statistics about protected types (for debugging)
+        /// </summary>
+        public static (int manuallyDefined, int loadedFromFile, int total) GetProtectedTypesStatistics() {
+            EnsureInitialized();
+            
+            // Manually defined protected types (core types)
+            var manualTypes = new[] {
+                "ModuleBase", "ModuleUpdater", "BaseObject",
+                "XafApplication", "BlazorApplication", "WinApplication"
+            };
+            
+            int manuallyDefined = ProtectedBaseClasses.Count(t => 
+                manualTypes.Contains(t, StringComparer.OrdinalIgnoreCase));
+            int total = ProtectedBaseClasses.Count;
+            int loadedFromFile = total - manuallyDefined;
 
             return (manuallyDefined, loadedFromFile, total);
         }
