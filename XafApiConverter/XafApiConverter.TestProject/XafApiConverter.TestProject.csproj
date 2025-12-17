@@ -192,6 +192,9 @@
     <Compile Include="BO\ProtectedHeir_1.cs" />
     <Compile Include="BO\ProtectedHeir_2.cs" />
     <Compile Include="BO\TestProtectedClass.cs" />
+    <None Include="CustomLayoutTemplates.cs">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
     <Compile Include="Notifications\SchedulerNotifications.cs" />
   </ItemGroup>
 </Project>
