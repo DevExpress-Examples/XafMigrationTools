@@ -100,6 +100,8 @@ namespace XafApiConverterTests {
                 string etalonLine = i < etalonLines.Length ? etalonLines[i] : "";
                 string targetLine = i < targetLines.Length ? targetLines[i] : "";
                 if (etalonLine != targetLine) {
+                    string etalonFileContent = File.ReadAllText(etalonPath);
+                    string targetFileContent = File.ReadAllText(targetPath);
                     if (throwIfHasDifferences) {
                         Assert.Fail($"File {targetPath} does not math etalon file {etalonPath} at line {i + 1}.\r\nExpected: \"{etalonLine}\"\r\nActual:   \"{targetLine}\"");
                     }
