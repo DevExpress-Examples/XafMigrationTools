@@ -107,46 +107,125 @@ namespace XafApiConverter.Converter {
             var root = syntaxTree.GetRoot();
             var originalRoot = root;
 
+            // Use unified static methods for processing
+            int namespacesReplaced = 0;
+            int typesReplaced = 0;
+            
+            root = ProcessUsingsInRoot(root, ref namespacesReplaced);
+            root = ProcessTypesInRoot(root, ref typesReplaced);
+
+            _report.NamespacesReplaced += namespacesReplaced;
+            _report.TypesReplaced += typesReplaced;
+
+            // Save if changed
+            if (root != originalRoot) {
+                File.WriteAllText(document.FilePath, root.ToFullString());
+            }
+        }
+
+        /// <summary>
+        /// Process using directives in syntax root.
+        /// Internal static helper for tests and production use.
+        /// Handles SqlClient namespace, DevExpress namespaces, and NO_EQUIVALENT namespace removal.
+        /// </summary>
+        internal static SyntaxNode ProcessUsingsInRoot(SyntaxNode root) {
+            int dummy = 0;
+            return ProcessUsingsInRoot(root, ref dummy);
+        }
+
+        /// <summary>
+        /// Process using directives with counter update.
+        /// </summary>
+        private static SyntaxNode ProcessUsingsInRoot(SyntaxNode root, ref int replacedCount) {
+            var compilationUnit = root as CompilationUnitSyntax;
+            if (compilationUnit == null) return root;
+
+            var newUsings = new List<UsingDirectiveSyntax>();
+            bool modified = false;
+
+            foreach (var usingDirective in compilationUnit.Usings) {
+                var namespaceName = usingDirective.Name?.ToString();
+                
+                // Check if should be removed (NO_EQUIVALENT namespaces)
+                if (ShouldRemoveNamespace(namespaceName)) {
+                    modified = true;
+                    replacedCount++;
+                    continue; // Skip (remove)
+                }
+
+                // Check if should be replaced
+                var newNamespace = GetNamespaceReplacement(namespaceName);
+                if (newNamespace != null) {
+                    // Create new using with proper whitespace: "using Namespace;"
+                    // We need to copy all trivia from original
+                    var newName = SyntaxFactory.ParseName(newNamespace);
+                    var newUsing = SyntaxFactory.UsingDirective(newName)
+                        .WithUsingKeyword(usingDirective.UsingKeyword) // Keep "using" keyword with its trivia
+                        .WithSemicolonToken(usingDirective.SemicolonToken); // Keep semicolon with its trivia
+                    
+                    newUsings.Add(newUsing);
+                    modified = true;
+                    replacedCount++;
+                    continue;
+                }
+
+                // Keep unchanged
+                newUsings.Add(usingDirective);
+            }
+
+            return modified ? compilationUnit.WithUsings(SyntaxFactory.List(newUsings)) : root;
+        }
+
+        /// <summary>
+        /// Check if namespace should be removed (NO_EQUIVALENT).
+        /// </summary>
+        private static bool ShouldRemoveNamespace(string namespaceName) {
+            return TypeReplacementMap.NoEquivalentNamespaces.ContainsKey(namespaceName) ||
+                   TypeReplacementMap.NoEquivalentNamespaces.Values.Any(ns => 
+                       namespaceName.StartsWith(ns.OldNamespace + "."));
+        }
+
+        /// <summary>
+        /// Get replacement for namespace or null if no replacement needed.
+        /// Handles SqlClient and DevExpress namespace migrations.
+        /// </summary>
+        private static string GetNamespaceReplacement(string namespaceName) {
             // TRANS-006: SqlClient namespace
-            var sqlClientReplacements = new Dictionary<string, string> {
-                { "System.Data.SqlClient", "Microsoft.Data.SqlClient" }
-            };
+            if (namespaceName == "System.Data.SqlClient") {
+                return "Microsoft.Data.SqlClient";
+            }
 
-            foreach (var replacement in sqlClientReplacements) {
-                var oldRoot = root;
-                root = ReplaceUsingNamespace(root, replacement.Key, replacement.Value);
-                if (root != oldRoot) {
-                    _report.NamespacesReplaced++;
+            // TRANS-007: DevExpress namespaces
+            if (TypeReplacementMap.NamespaceReplacements.TryGetValue(namespaceName, out var replacement)) {
+                if (replacement.HasEquivalent && replacement.AppliesToFileType(".cs")) {
+                    return replacement.NewNamespace;
                 }
             }
 
-            // TRANS-007: DevExpress namespace migrations
-            foreach (var nsReplacement in TypeReplacementMap.NamespaceReplacements.Values) {
-                if (!nsReplacement.AppliesToFileType(".cs")) continue;
-                if (!nsReplacement.HasEquivalent) continue;
+            return null;
+        }
 
-                var oldRoot = root;
-                root = ReplaceUsingNamespace(root, nsReplacement.OldNamespace, nsReplacement.NewNamespace);
-                if (root != oldRoot) {
-                    _report.NamespacesReplaced++;
-                }
-            }
+        /// <summary>
+        /// Process type replacements in syntax root.
+        /// Internal static helper for tests and production use.
+        /// Applies all type replacements from TypeReplacementMap.
+        /// </summary>
+        internal static SyntaxNode ProcessTypesInRoot(SyntaxNode root) {
+            int dummy = 0;
+            return ProcessTypesInRoot(root, ref dummy);
+        }
 
-            // NEW: Remove using directives for NO_EQUIVALENT namespaces
-            foreach (var nsReplacement in TypeReplacementMap.NoEquivalentNamespaces.Values) {
-                if (!nsReplacement.AppliesToFileType(".cs")) continue;
-
-                var oldRoot = root;
-                root = RemoveUsingNamespace(root, nsReplacement.OldNamespace);
-                if (root != oldRoot) {
-                    _report.NamespacesReplaced++;
-                }
-            }
+        /// <summary>
+        /// Process type replacements with counter update.
+        /// </summary>
+        private static SyntaxNode ProcessTypesInRoot(SyntaxNode root, ref int replacedCount) {
+            var originalRoot = root;
 
             // TRANS-008: Type replacements
             foreach (var typeReplacement in TypeReplacementMap.TypeReplacements.Values) {
-                if (!typeReplacement.AppliesToFileType(".cs")) continue;
-                if (!typeReplacement.HasEquivalent) continue;
+                if (!typeReplacement.AppliesToFileType(".cs") || !typeReplacement.HasEquivalent) {
+                    continue;
+                }
 
                 var oldRoot = root;
                 var rewriter = new TypeReplaceRewriter(
@@ -155,14 +234,11 @@ namespace XafApiConverter.Converter {
                 root = rewriter.Visit(root);
 
                 if (root != oldRoot) {
-                    _report.TypesReplaced++;
+                    replacedCount++;
                 }
             }
 
-            // Save if changed
-            if (root != originalRoot) {
-                File.WriteAllText(document.FilePath, root.ToFullString());
-            }
+            return root;
         }
 
         /// <summary>

@@ -7,11 +7,11 @@ using DevExpress.ExpressApp.Model;
 
 namespace FeatureCenter.Module.Web.PropertyEditors {
     // NOTE: Class commented out due to types having no XAF .NET equivalent
-    //   - Base class 'WebPropertyEditor' has no equivalent in XAF .NET (inferred from using DevExpress.ExpressApp.Web.Editors)
+    //   - Base class 'WebPropertyEditor' has no equivalent (inferred from using DevExpress.ExpressApp.Web.Editors)
     //     WebPropertyEditor has no equivalent in XAF .NET (loaded from removed-api.txt)
-    //   - Base class 'ITestable' has no equivalent in XAF .NET (inferred from using DevExpress.ExpressApp.Web.TestScripts)
+    //   - Base class 'ITestable' has no equivalent (inferred from using DevExpress.ExpressApp.Web.TestScripts)
     //     ITestable has no equivalent in XAF .NET (loaded from removed-api.txt)
-    //   - Type 'IJScriptTestControl' has no equivalent in XAF .NET (inferred from using DevExpress.ExpressApp.Web.TestScripts)
+    //   - Base class 'IJScriptTestControl' has no equivalent (inferred from using DevExpress.ExpressApp.Web.TestScripts)
     //     IJScriptTestControl has no Blazor equivalent (Test framework specific)
     // TODO: It is necessary to test the application's behavior and, if necessary, develop a new solution.
     // ========== COMMENTED OUT CLASS ==========
@@ -75,11 +75,11 @@ namespace FeatureCenter.Module.Web.PropertyEditors {
         }
     }
     // NOTE: Class commented out due to types having no XAF .NET equivalent
-    //   - Base class 'IJScriptTestControl' has no equivalent in XAF .NET (inferred from using DevExpress.ExpressApp.Web.TestScripts)
+    //   - Base class 'IJScriptTestControl' has no equivalent (inferred from using DevExpress.ExpressApp.Web.TestScripts)
     //     IJScriptTestControl has no Blazor equivalent (Test framework specific)
-    //   - Type 'StandardTestControlScriptsDeclaration' has no equivalent in XAF .NET (inferred from using DevExpress.ExpressApp.Web.TestScripts)
+    //   - Base class 'StandardTestControlScriptsDeclaration' has no equivalent (inferred from using DevExpress.ExpressApp.Web.TestScripts)
     //     StandardTestControlScriptsDeclaration has no equivalent in XAF .NET (loaded from removed-api.txt)
-    //   - Type 'TestScriptsDeclarationBase' has no equivalent in XAF .NET (inferred from using DevExpress.ExpressApp.Web.TestScripts)
+    //   - Base class 'TestScriptsDeclarationBase' has no equivalent (inferred from using DevExpress.ExpressApp.Web.TestScripts)
     //     TestScriptsDeclarationBase has no equivalent in XAF .NET (loaded from removed-api.txt)
     // TODO: It is necessary to test the application's behavior and, if necessary, develop a new solution.
     // ========== COMMENTED OUT CLASS ==========
@@ -104,11 +104,11 @@ namespace FeatureCenter.Module.Web.PropertyEditors {
 
 
     // NOTE: Class commented out due to types having no XAF .NET equivalent
-    //   - Base class 'IJScriptTestControl' has no equivalent in XAF .NET (inferred from using DevExpress.ExpressApp.Web.TestScripts)
+    //   - Base class 'IJScriptTestControl' has no equivalent (inferred from using DevExpress.ExpressApp.Web.TestScripts)
     //     IJScriptTestControl has no Blazor equivalent (Test framework specific)
-    //   - Type 'StandardTestControlScriptsDeclaration' has no equivalent in XAF .NET (inferred from using DevExpress.ExpressApp.Web.TestScripts)
+    //   - Base class 'StandardTestControlScriptsDeclaration' has no equivalent (inferred from using DevExpress.ExpressApp.Web.TestScripts)
     //     StandardTestControlScriptsDeclaration has no equivalent in XAF .NET (loaded from removed-api.txt)
-    //   - Type 'TestScriptsDeclarationBase' has no equivalent in XAF .NET (inferred from using DevExpress.ExpressApp.Web.TestScripts)
+    //   - Base class 'TestScriptsDeclarationBase' has no equivalent (inferred from using DevExpress.ExpressApp.Web.TestScripts)
     //     TestScriptsDeclarationBase has no equivalent in XAF .NET (loaded from removed-api.txt)
     // TODO: It is necessary to test the application's behavior and, if necessary, develop a new solution.
     // ========== COMMENTED OUT CLASS ==========

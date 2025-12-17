@@ -37,19 +37,12 @@ namespace XafApiConverter.Converter {
                 var classes = root.DescendantNodes().OfType<ClassDeclarationSyntax>();
 
                 foreach (var classDecl in classes) {
-                    // Check if class inherits from a protected base class
-                    //if (IsProtectedClass(classDecl, semanticModel)) {
-                    //    Console.WriteLine($"      [INFO] Skipping class {classDecl.Identifier.Text} - inherits from protected base class");
-                    //    continue;
-                    //}
-                    
                     var problems = AnalyzeClass(classDecl, semanticModel, document.FilePath);
                     if (problems.Any()) {
                         problematicClasses.Add(new ProblematicClass {
                             ClassName = classDecl.Identifier.Text,
                             FilePath = document.FilePath,
                             Problems = problems
-                            // REMOVED: ClassSyntax - will be reloaded fresh each time
                         });
                     }
                 }
@@ -57,88 +50,87 @@ namespace XafApiConverter.Converter {
 
             return problematicClasses;
         }
-        
+
         /// <summary>
-        /// Check if a class inherits from a protected base class
+        /// Analyze classes in a syntax tree for problematic types.
+        /// This is a stateless helper method that can be used by tests.
         /// </summary>
-        private bool IsProtectedClass(ClassDeclarationSyntax classDecl, SemanticModel semanticModel) {
-            if (classDecl.BaseList == null) {
-                return false;
-            }
+        /// <param name="filePath">Path to the file being analyzed</param>
+        /// <param name="root">Syntax tree root</param>
+        /// <param name="semanticModel">Semantic model for type resolution</param>
+        /// <param name="usingDirectives">Using directives for fallback namespace resolution</param>
+        /// <returns>List of problematic classes found</returns>
+        internal static List<ProblematicClass> AnalyzeClassesInSyntaxTree(
+            string filePath,
+            SyntaxNode root,
+            SemanticModel semanticModel,
+            HashSet<string> usingDirectives) {
             
-            foreach (var baseType in classDecl.BaseList.Types) {
-                var typeInfo = semanticModel.GetTypeInfo(baseType.Type);
-                if (typeInfo.Type != null) {
-                    var baseTypeName = typeInfo.Type.Name;
-                    
-                    // Check against protected base classes list
-                    if (TypeReplacementMap.ProtectedBaseClasses.Contains(baseTypeName)) {
-                        return true;
-                    }
-                    
-                    // Also check the full type name for generic types
-                    var fullTypeName = typeInfo.Type.ToDisplayString();
-                    if (TypeReplacementMap.ProtectedBaseClasses.Any(p => fullTypeName.Contains(p))) {
-                        return true;
-                    }
+            var problematicClasses = new List<ProblematicClass>();
+            var classes = root.DescendantNodes().OfType<ClassDeclarationSyntax>();
+
+            foreach (var classDecl in classes) {
+                // Use unified analysis logic
+                var problems = AnalyzeSingleClass(classDecl, semanticModel, usingDirectives);
+                
+                if (problems.Any(p => p.RequiresCommentOut)) {
+                    problematicClasses.Add(new ProblematicClass {
+                        ClassName = classDecl.Identifier.Text,
+                        FilePath = filePath,
+                        Problems = problems
+                    });
                 }
             }
-            
-            return false;
+
+            return problematicClasses;
         }
 
-        private List<TypeProblem> AnalyzeClass(
+        /// <summary>
+        /// Core analysis logic for a single class.
+        /// Used by both production code and tests to ensure consistency.
+        /// </summary>
+        /// <param name="classDecl">Class declaration to analyze</param>
+        /// <param name="semanticModel">Semantic model for type resolution</param>
+        /// <param name="usingDirectives">Using directives for fallback namespace resolution (can be null)</param>
+        /// <returns>List of type problems found in the class</returns>
+        internal static List<TypeProblem> AnalyzeSingleClass(
             ClassDeclarationSyntax classDecl,
             SemanticModel semanticModel,
-            string filePath) {
+            HashSet<string> usingDirectives) {
+            
             var problems = new List<TypeProblem>();
 
-            // Check base class (e.g., : Page)
+            // 1. Check base classes
             if (classDecl.BaseList != null) {
                 foreach (var baseType in classDecl.BaseList.Types) {
-                    var typeInfo = semanticModel.GetTypeInfo(baseType.Type);
-                    if (typeInfo.Type != null) {
-                        var typeName = typeInfo.Type.Name;
-                        var typeNamespace = typeInfo.Type.ContainingNamespace?.ToDisplayString();
+                    var typeName = baseType.Type.ToString();
+                    var typeSymbol = semanticModel.GetSymbolInfo(baseType.Type).Symbol as INamedTypeSymbol;
 
-                        if (TypeReplacementMap.NoEquivalentTypes.ContainsKey(typeName)) {
-                            var noEquivReplacement = TypeReplacementMap.NoEquivalentTypes[typeName];
-                            problems.Add(new TypeProblem {
-                                TypeName = typeName,
-                                FullTypeName = $"{typeNamespace}.{typeName}",
-                                Reason = $"Base class '{typeName}' has no equivalent in XAF .NET",
-                                Description = noEquivReplacement.Description,  // NEW: Add description
-                                Severity = ProblemSeverity.Critical,
-                                RequiresCommentOut = noEquivReplacement.CommentOutEntireClass
-                            });
-                        }
-                        else if (TypeReplacementMap.ManualConversionRequiredTypes.ContainsKey(typeName)) {
-                            var replacement = TypeReplacementMap.ManualConversionRequiredTypes[typeName];
-                            problems.Add(new TypeProblem {
-                                TypeName = typeName,
-                                FullTypeName = $"{typeNamespace}.{typeName}",
-                                Reason = $"Base class '{typeName}' has equivalent in XAF .NET ({replacement.NewType}) but automatic conversion is not possible. See: {replacement.GetFullNewTypeName()}",
-                                Description = replacement.Description,  // NEW: Add description
-                                Severity = ProblemSeverity.High,
-                                RequiresCommentOut = replacement.CommentOutEntireClass  // Use flag from TypeReplacement
-                            });
-                        }
+                    if (typeSymbol != null && !typeSymbol.ToDisplayString().StartsWith("?")) {
+                        // Semantic model resolved - use full type name
+                        var fullTypeName = typeSymbol.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)
+                            .Replace("global::", "");
+                        
+                        CheckTypeAgainstMaps(typeName, fullTypeName, problems);
+                    }
+                    else if (usingDirectives != null) {
+                        // Fallback to using directives
+                        CheckTypeUsingDirectives(typeName, usingDirectives, problems);
                     }
                 }
             }
 
-            // Check for problematic enum usages
+            // 2. Check for problematic enum usages (e.g., TemplateType)
             var memberAccess = classDecl.DescendantNodes().OfType<MemberAccessExpressionSyntax>();
             foreach (var access in memberAccess) {
                 var text = access.ToString();
                 
-                // Check for TemplateType.Horizontal/Vertical
                 if (text.Contains("TemplateType.Horizontal") || text.Contains("TemplateType.Vertical")) {
                     problems.Add(new TypeProblem {
                         TypeName = "TemplateType",
                         FullTypeName = "DevExpress.ExpressApp.Web.Templates.TemplateType",
                         Reason = "Uses TemplateType enum which has no Blazor equivalent",
-                        Description = "TemplateType enum has no Blazor equivalent",  // NEW: Add description
+                        Description = "TemplateType enum has no Blazor equivalent",
                         Severity = ProblemSeverity.Critical,
                         RequiresCommentOut = true
                     });
@@ -146,68 +138,127 @@ namespace XafApiConverter.Converter {
                 }
             }
 
-            // Check for NO_EQUIVALENT and MANUAL_CONVERSION_REQUIRED types in code
+            // 3. Check for NO_EQUIVALENT and MANUAL_CONVERSION_REQUIRED types used in code
             var identifiers = classDecl.DescendantNodes().OfType<IdentifierNameSyntax>();
             foreach (var identifier in identifiers) {
-                var typeInfo = semanticModel.GetTypeInfo(identifier);
-                if (typeInfo.Type != null) {
-                    var typeName = typeInfo.Type.Name;
-                    var typeNamespace = typeInfo.Type.ContainingNamespace?.ToDisplayString();
-
-                    if (TypeReplacementMap.NoEquivalentTypes.ContainsKey(typeName)) {
-                        var noEquivReplacement = TypeReplacementMap.NoEquivalentTypes[typeName];
-                        problems.Add(new TypeProblem {
-                            TypeName = typeName,
-                            FullTypeName = $"{typeNamespace}.{typeName}",
-                            Reason = $"Type '{typeName}' has no equivalent in XAF .NET",
-                            Description = noEquivReplacement.Description,  // NEW: Add description
-                            Severity = ProblemSeverity.High,
-                            RequiresCommentOut = noEquivReplacement.CommentOutEntireClass
-                        });
-                    }
-                    else if (TypeReplacementMap.ManualConversionRequiredTypes.ContainsKey(typeName)) {
-                        var replacement = TypeReplacementMap.ManualConversionRequiredTypes[typeName];
-                        problems.Add(new TypeProblem {
-                            TypeName = typeName,
-                            FullTypeName = $"{typeNamespace}.{typeName}",
-                            Reason = $"Type '{typeName}' has equivalent in XAF .NET ({replacement.NewType}) but automatic conversion is not possible. See: {replacement.GetFullNewTypeName()}",
-                            Description = replacement.Description,  // NEW: Add description
-                            Severity = ProblemSeverity.Medium,
-                            RequiresCommentOut = replacement.CommentOutEntireClass  // Use flag from TypeReplacement
-                        });
+                var symbol = semanticModel.GetSymbolInfo(identifier).Symbol as INamedTypeSymbol;
+                
+                if (symbol != null && !symbol.ToDisplayString().StartsWith("?")) {
+                    // Semantic model resolved
+                    var fullTypeName = symbol.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)
+                        .Replace("global::", "");
+                    
+                    CheckTypeAgainstMaps(identifier.Identifier.Text, fullTypeName, problems);
+                }
+                else if (usingDirectives != null) {
+                    // Fallback to using directives for identifiers
+                    var typeName = identifier.Identifier.Text;
+                    if (TypeReplacementMap.NoEquivalentTypes.ContainsKey(typeName) ||
+                        TypeReplacementMap.ManualConversionRequiredTypes.ContainsKey(typeName)) {
+                        CheckTypeUsingDirectives(typeName, usingDirectives, problems);
                     }
                 }
             }
 
             // Deduplicate problems by FullTypeName
-            var uniqueProblems = problems
+            return problems
                 .GroupBy(p => p.FullTypeName)
                 .Select(g => g.First())
                 .ToList();
-
-            return uniqueProblems;
         }
 
-        private bool IsNoEquivalentType(string typeName, string typeNamespace) {
-            // Check NO_EQUIVALENT types
-            if (TypeReplacementMap.NoEquivalentTypes.ContainsKey(typeName)) {
-                return true;
+        /// <summary>
+        /// Check type against TypeReplacementMap using full type name
+        /// </summary>
+        private static void CheckTypeAgainstMaps(string typeName, string fullTypeName, List<TypeProblem> problems) {
+            // Check NoEquivalentTypes
+            var matchingNoEquiv = TypeReplacementMap.NoEquivalentTypes.Values
+                .FirstOrDefault(t => {
+                    var expectedFullName = t.GetFullOldTypeName();
+                    return fullTypeName.Equals(expectedFullName, StringComparison.Ordinal) ||
+                           fullTypeName.EndsWith($".{expectedFullName}", StringComparison.Ordinal);
+                });
+
+            if (matchingNoEquiv != null) {
+                problems.Add(new TypeProblem {
+                    TypeName = typeName,
+                    FullTypeName = fullTypeName,
+                    Reason = $"Base class '{typeName}' has no equivalent in XAF .NET",
+                    Description = matchingNoEquiv.Description,
+                    Severity = ProblemSeverity.Critical,
+                    RequiresCommentOut = matchingNoEquiv.CommentOutEntireClass
+                });
+                return;
             }
 
-            // Check MANUAL_CONVERSION_REQUIRED types
-            if (TypeReplacementMap.ManualConversionRequiredTypes.ContainsKey(typeName)) {
-                return true;
-            }
+            // Check ManualConversionRequiredTypes
+            var matchingManual = TypeReplacementMap.ManualConversionRequiredTypes.Values
+                .FirstOrDefault(t => {
+                    var expectedFullName = t.GetFullOldTypeName();
+                    return fullTypeName.Equals(expectedFullName, StringComparison.Ordinal) ||
+                           fullTypeName.EndsWith($".{expectedFullName}", StringComparison.Ordinal);
+                });
 
-            // Check NO_EQUIVALENT namespaces
-            if (!string.IsNullOrEmpty(typeNamespace)) {
-                if (TypeReplacementMap.NoEquivalentNamespaces.Values.Any(
-                    ns => typeNamespace.StartsWith(ns.OldNamespace))) {
-                    return true;
+            if (matchingManual != null) {
+                problems.Add(new TypeProblem {
+                    TypeName = typeName,
+                    FullTypeName = fullTypeName,
+                    Reason = $"Base class '{typeName}' has equivalent but requires manual conversion",
+                    Description = matchingManual.Description,
+                    Severity = ProblemSeverity.High,
+                    RequiresCommentOut = matchingManual.CommentOutEntireClass
+                });
+            }
+        }
+
+        /// <summary>
+        /// Check type using directives fallback for namespace resolution
+        /// </summary>
+        private static void CheckTypeUsingDirectives(string typeName, HashSet<string> usingDirectives, List<TypeProblem> problems) {
+            var candidateTypes = TypeReplacementMap.NoEquivalentTypes.Values
+                .Concat(TypeReplacementMap.ManualConversionRequiredTypes.Values)
+                .Where(t => t.OldType == typeName)
+                .ToList();
+
+            foreach (var candidateType in candidateTypes) {
+                if (!string.IsNullOrEmpty(candidateType.OldNamespace) && 
+                    usingDirectives.Contains(candidateType.OldNamespace)) {
+                    var isNoEquiv = TypeReplacementMap.NoEquivalentTypes.ContainsKey(typeName);
+                    
+                    problems.Add(new TypeProblem {
+                        TypeName = typeName,
+                        FullTypeName = candidateType.GetFullOldTypeName(),
+                        Reason = isNoEquiv 
+                            ? $"Base class '{typeName}' has no equivalent (inferred from using {candidateType.OldNamespace})"
+                            : $"Base class '{typeName}' requires manual conversion (inferred from using {candidateType.OldNamespace})",
+                        Description = candidateType.Description,
+                        Severity = isNoEquiv ? ProblemSeverity.Critical : ProblemSeverity.High,
+                        RequiresCommentOut = candidateType.CommentOutEntireClass
+                    });
+                    break;
                 }
             }
+        }
 
-            return false;
+        /// <summary>
+        /// Private wrapper for production use with Solution/Project.
+        /// Extracts using directives and delegates to unified analysis logic.
+        /// </summary>
+        private List<TypeProblem> AnalyzeClass(
+            ClassDeclarationSyntax classDecl,
+            SemanticModel semanticModel,
+            string filePath) {
+            
+            // Extract using directives from the file
+            var root = classDecl.SyntaxTree.GetRoot();
+            var usingDirectives = root.DescendantNodes()
+                .OfType<UsingDirectiveSyntax>()
+                .Select(u => u.Name?.ToString())
+                .Where(n => !string.IsNullOrEmpty(n))
+                .ToHashSet();
+            
+            // Use unified analysis logic
+            return AnalyzeSingleClass(classDecl, semanticModel, usingDirectives);
         }
 
         /// <summary>
@@ -423,7 +474,7 @@ namespace XafApiConverter.Converter {
         public string TypeName { get; set; }
         public string FullTypeName { get; set; }
         public string Reason { get; set; }
-        public string Description { get; set; }  // NEW: Detailed description from TypeReplacement
+        public string Description { get; set; }
         public ProblemSeverity Severity { get; set; }
         public bool RequiresCommentOut { get; set; }
     }
@@ -444,7 +495,7 @@ namespace XafApiConverter.Converter {
         public string FilePath { get; set; }
         public int Line { get; set; }
         public int Column { get; set; }
-        public string Severity { get; set; }  // "error" or "warning"
+        public string Severity { get; set; }
     }
 
     /// <summary>
