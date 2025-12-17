@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Globalization;
 
 using DevExpress.Web;
@@ -11,9 +11,9 @@ using DevExpress.ExpressApp.Model;
 
 namespace FeatureCenter.Module.Web.PropertyEditors {
 	// NOTE: Class commented out due to types having no XAF .NET equivalent
-	//   - Base class 'ASPxPropertyEditor' has no equivalent in XAF .NET (inferred from using DevExpress.ExpressApp.Web.Editors.ASPx)
+	//   - Base class 'ASPxPropertyEditor' has no equivalent (inferred from using DevExpress.ExpressApp.Web.Editors.ASPx)
 	//     ASPxPropertyEditor has no equivalent in XAF .NET (loaded from removed-api.txt)
-	//   - Type 'RenderHelper' has no equivalent in XAF .NET (inferred from using DevExpress.ExpressApp.Web)
+	//   - Base class 'RenderHelper' has no equivalent (inferred from using DevExpress.ExpressApp.Web)
 	//     RenderHelper has no equivalent in XAF .NET (loaded from removed-api.txt)
 	// TODO: It is necessary to test the application's behavior and, if necessary, develop a new solution.
 	// ========== COMMENTED OUT CLASS ==========
