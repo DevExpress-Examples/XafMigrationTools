@@ -141,49 +141,36 @@ namespace XafApiConverterTests.ClassCommenterTests {
 
         [Fact]
         [Trait("Category", "Integration")]
-        public void TestSafeClass_RemainsUncommented() {
-            // Arrange
-            var inputFile = Path.Combine(_testFilesPath, "CustomIntegerEditor.cs");
-
-            // Act
-            var result = RunFullMigrationPipeline(inputFile);
-            
-            // Assert - WelcomeObject should remain uncommented
-            Assert.Contains("public class WelcomeObject {", result);
-            Assert.DoesNotContain("// public class WelcomeObject", result);
-        }
-
-        [Fact]
-        [Trait("Category", "Integration")]
         public void TestNamespaceAmbiguity_ShouldNotCommentOutWrongType() {
             // Arrange
-            // SchedulerNotifications inherits from Event (DevExpress.Persistent.BaseImpl.Event from XPO)
-            // But removed-api.txt contains DevExpress.Persistent.BaseImpl.EF.Event (from EF Core)
+            // CustomLogger inherits from Logger (DevExpress.ExpressApp.MiddleTier.Logger)
+            // But removed-api.txt contains DevExpress.ExpressApp.ScriptRecorder.Logger
             // These are DIFFERENT types in different namespaces - class should NOT be commented
-            var inputFile = Path.Combine(_testFilesPath, "SchedulerNotificationsSimple.cs");
+            var inputFile = Path.Combine(_testFilesPath, "CustomLogger.cs");
 
             // Act
             var result = RunFullMigrationPipeline(inputFile);
-            
-            // Assert - SchedulerNotifications should remain ACTIVE (not commented out)
-            // It inherits from Event which could be XPO or EF, but using directive shows DevExpress.Persistent.BaseImpl (XPO)
-            // The removed type is DevExpress.Persistent.BaseImpl.EF.Event (different namespace!)
-            Assert.Contains("public class SchedulerNotifications : Event {", result);
-            Assert.DoesNotContain("// public class SchedulerNotifications", result);
-            Assert.DoesNotContain("// NOTE: Class commented out", result);
+
+            var expected = NormalizeWhitespace(File.ReadAllText(inputFile));
+            var actual = NormalizeWhitespace(result);
+
+            Assert.Equal(expected, actual);
         }
 
         [Fact]
         [Trait("Category", "Integration")]
-        public void TestDescriptionIncluded_InComments() {
-            // Arrange
-            var inputFile = Path.Combine(_testFilesPath, "CustomStringEditor.cs");
+        public void TestNamespaceAmbiguity_GeneralBOClasses() {
+            // Input file contains problematic types but useses proteted base classes and should not be commented out, only warn comments added
+            var inputFile = Path.Combine(_testFilesPath, "SchedulerNotifications.cs");
+            var expectedFile = Path.Combine(_testFilesPath, "SchedulerNotifications_commented.cs");
 
             // Act
             var result = RunFullMigrationPipeline(inputFile);
 
-            // Assert - Description should be present
-            Assert.Contains("ASPxPropertyEditor has Blazor equivalent (BlazorPropertyEditorBase) but automatic conversion is not possible. Manual refactoring required.", result);
+            var expected = NormalizeWhitespace(File.ReadAllText(expectedFile));
+            var actual = NormalizeWhitespace(result);
+
+            Assert.Equal(expected, actual);
         }
 
         [Theory]
@@ -220,16 +207,17 @@ namespace XafApiConverterTests.ClassCommenterTests {
             File.WriteAllText(tempFile, content);
 
             try {
-                // STEP 1: Replace usings
+                // STEP 1: Analyze and comment out problematic classes
+                content = CommentOutProblematicClasses(tempFile);
+                File.WriteAllText(tempFile, content);
+
+                // STEP 2: Replace usings
                 content = ReplaceUsings(tempFile);
                 File.WriteAllText(tempFile, content);
 
-                // STEP 2: Replace types
+                // STEP 3: Replace types
                 content = ReplaceTypes(tempFile);
                 File.WriteAllText(tempFile, content);
-
-                // STEP 3: Analyze and comment out problematic classes
-                content = CommentOutProblematicClasses(tempFile);
 
                 return content;
             }
