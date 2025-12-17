@@ -15,4 +15,9 @@ namespace Test.Module.BO {
         // Removed class
         public string ActivityInformation { get; set; }
     }
+
+    internal class UnProtectedHeir2 {
+        // Removed class
+        public ActivityInformation ActivityInformation { get; set; }
+    }
 }

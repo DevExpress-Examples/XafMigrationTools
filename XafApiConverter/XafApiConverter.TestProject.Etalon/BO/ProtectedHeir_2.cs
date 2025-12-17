@@ -20,4 +20,15 @@ namespace Test.Module.BO {
     //         public string ActivityInformation { get; set; }
     //     }
     // ========================================
+
+    // NOTE: Class commented out due to types having no XAF .NET equivalent
+    //   - Base class 'ActivityInformation' has no equivalent (inferred from using DevExpress.ExpressApp.Workflow)
+    //     ActivityInformation has no equivalent in XAF .NET (loaded from removed-api.txt)
+    // TODO: It is necessary to test the application's behavior and, if necessary, develop a new solution.
+    // ========== COMMENTED OUT CLASS ==========
+    // internal class UnProtectedHeir2 {
+    //         // Removed class
+    //         public ActivityInformation ActivityInformation { get; set; }
+    //     }
+    // ========================================
 }
