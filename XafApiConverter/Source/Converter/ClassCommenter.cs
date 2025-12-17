@@ -62,8 +62,8 @@ namespace XafApiConverter.Converter {
                 // Comment out this single class
                 if (CommentOutSingleClass(problematicClass.FilePath, problematicClass.ClassName, problematicClass)) {
                     totalCommented++;
-                    _commentedClasses.Add(problematicClass.ClassName);
-                    Console.WriteLine($"    [COMMENTED] {problematicClass.ClassName} in {Path.GetFileName(problematicClass.FilePath)}");
+                    _commentedClasses.Add(problematicClass.FullName);
+                    Console.WriteLine($"    [COMMENTED] {problematicClass.FullName} in {Path.GetFileName(problematicClass.FilePath)}");
 
                     // Comment out dependent classes
                     foreach (var dependent in problematicClass.DependentClasses) {
@@ -71,7 +71,7 @@ namespace XafApiConverter.Converter {
                             continue;
                         }
 
-                        if (CommentOutDependentClass(dependent, problematicClass.ClassName)) {
+                        if (CommentOutDependentClass(dependent, problematicClass.FullName)) {
                             totalCommented++;
                             _commentedClasses.Add(dependent);
                             Console.WriteLine($"    [COMMENTED] {dependent} (dependency)");
@@ -590,7 +590,12 @@ namespace XafApiConverter.Converter {
         /// <summary>
         /// Check if class is already commented out
         /// </summary>
-        private bool IsClassAlreadyCommented(string content, string className) {
+        private bool IsClassAlreadyCommented(string content, string classFullName) {
+            // Extract simple class name from full name (e.g., "MyApp.Models.Message" -> "Message")
+            var className = classFullName.Contains('.') 
+                ? classFullName.Substring(classFullName.LastIndexOf('.') + 1)
+                : classFullName;
+            
             // Look for multiple patterns to catch already commented classes:
             // Pattern 1: // ========== COMMENTED OUT CLASS ==========
             // Pattern 2: // public class ClassName (with any indentation)
@@ -732,27 +737,74 @@ namespace XafApiConverter.Converter {
         }
         
         /// <summary>
-        /// Check if a class inherits from a protected base class
-        /// Protected classes (like ModuleBase, ViewController) should NOT be automatically commented out
+        /// Check if a class inherits from a protected base class.
+        /// Protected classes (like ModuleBase, XafApplication, BaseObject) should NOT be automatically commented out.
+        /// 
+        /// ALGORITHM:
+        /// ==========
+        /// 1. Extract all base type names from the class declaration (class Foo : Bar, IBaz)
+        /// 2. For each base type, extract the simple name without generic parameters
+        ///    Example: "ViewController<DetailView>" → "ViewController"
+        /// 3. Check if the simple name matches ANY protected base class (case-insensitive)
+        /// 4. Use EXACT word boundary matching to avoid false positives
+        ///    Example: "ModuleBase" should NOT match "MyModuleBase"
+        /// 
+        /// EXAMPLES:
+        /// =========
+        /// ✅ "class MyModule : ModuleBase" → TRUE (protected)
+        /// ✅ "class MyModule : ModuleBase, IModule" → TRUE (protected)
+        /// ✅ "class MyApp : XafApplication" → TRUE (protected)
+        /// ❌ "class MyTemplate : LayoutItemTemplate" → FALSE (not protected)
+        /// ❌ "class MyEditor : ASPxPropertyEditor" → FALSE (not protected, unless explicitly added)
+        /// ❌ "class MyModuleBase : BaseClass" → FALSE (not protected - MyModuleBase is not ModuleBase)
         /// </summary>
         private bool IsProtectedClass(ClassDeclarationSyntax classDecl, string fileContent) {
-            if (classDecl.BaseList == null) {
+            if (classDecl.BaseList == null || classDecl.BaseList.Types.Count == 0) {
                 return false;
             }
             
-            // Simple text-based check for protected base class names
-            var baseListText = classDecl.BaseList.ToString();
-            
-            foreach (var protectedBase in TypeReplacementMap.ProtectedBaseClasses) {
-                // Check if base list contains the protected class name
-                // Handle both simple names (ModuleBase) and generic names (ViewController<T>)
-                var simpleName = protectedBase.Split('<')[0]; // Get name without generic part
+            // Extract all base type names from the base list
+            // Example: "class Foo : Bar, IBaz" → ["Bar", "IBaz"]
+            foreach (var baseType in classDecl.BaseList.Types) {
+                var baseTypeSyntax = baseType.Type;
                 
-                if (baseListText.Contains(simpleName, StringComparison.OrdinalIgnoreCase)) {
+                // Extract simple name without generic parameters
+                // Example: "ViewController<DetailView>" → "ViewController"
+                string baseTypeName;
+                
+                if (baseTypeSyntax is GenericNameSyntax genericName) {
+                    // Generic type: ViewController<T>
+                    baseTypeName = genericName.Identifier.Text;
+                }
+                else if (baseTypeSyntax is IdentifierNameSyntax identifierName) {
+                    // Simple type: ModuleBase
+                    baseTypeName = identifierName.Identifier.Text;
+                }
+                else if (baseTypeSyntax is QualifiedNameSyntax qualifiedName) {
+                    // Qualified type: DevExpress.ExpressApp.ModuleBase
+                    // Extract the rightmost part
+                    var rightName = qualifiedName.Right;
+                    if (rightName is GenericNameSyntax rightGeneric) {
+                        baseTypeName = rightGeneric.Identifier.Text;
+                    }
+                    else {
+                        baseTypeName = rightName.Identifier.Text;
+                    }
+                }
+                else {
+                    // Unknown syntax type, skip
+                    continue;
+                }
+                
+                // Check if this base type name matches any protected base class
+                // Use case-insensitive comparison (consistent with ProtectedBaseClasses HashSet)
+                if (TypeReplacementMap.ProtectedBaseClasses.Contains(baseTypeName)) {
+                    // Found a protected base class!
                     return true;
                 }
             }
             
+            // No protected base classes found
             return false;
         }
         
@@ -841,14 +893,14 @@ namespace XafApiConverter.Converter {
         /// <summary>
         /// Comment out a dependent class
         /// </summary>
-        private bool CommentOutDependentClass(string className, string dependencyName) {
+        private bool CommentOutDependentClass(string classFullName, string dependencyFullName) {
             try {
                 // Find the file containing this class
                 var classInfo = _report.ProblematicClasses
-                    .FirstOrDefault(c => c.ClassName == className);
+                    .FirstOrDefault(c => c.FullName == classFullName);
 
                 if (classInfo == null) {
-                    Console.WriteLine($"      [WARNING] Class {className} not in report, skipping");
+                    Console.WriteLine($"      [WARNING] Class {classFullName} not in report, skipping");
                     return false;
                 }
 
@@ -862,8 +914,8 @@ namespace XafApiConverter.Converter {
                 var content = File.ReadAllText(filePath);
                 
                 // STEP 2: Check if class is already commented out (BEFORE parsing!)
-                if (IsClassAlreadyCommented(content, className)) {
-                    Console.WriteLine($"      [WARNING] Class {className} appears to be already commented out, skipping");
+                if (IsClassAlreadyCommented(content, classFullName)) {
+                    Console.WriteLine($"      [WARNING] Class {classFullName} appears to be already commented out, skipping");
                     return false;
                 }
                 
@@ -879,12 +931,12 @@ namespace XafApiConverter.Converter {
                 // STEP 4: Find the class declaration (only active classes!)
                 var allClasses = root.DescendantNodes()
                     .OfType<ClassDeclarationSyntax>()
-                    .Where(c => c.Identifier.Text == className)
+                    .Where(c => $"{ProblemDetector.GetNamespace(c)}.{c.Identifier.Text}" == classFullName)
                     .Where(c => !IsClassInsideComment(c, content))  // NEW: Filter out classes inside comments!
                     .ToList();
 
                 if (!allClasses.Any()) {
-                    Console.WriteLine($"      [WARNING] Class {className} not found as active code in file: {filePath}");
+                    Console.WriteLine($"      [WARNING] Class {classFullName} not found as active code in file: {filePath}");
                     return false;
                 }
                 
@@ -895,12 +947,12 @@ namespace XafApiConverter.Converter {
                 var textBeforeClass = content.Substring(Math.Max(0, classPosition - 100), Math.Min(100, classPosition));
                 
                 if (textBeforeClass.Contains("// ========== COMMENTED OUT CLASS", StringComparison.Ordinal)) {
-                    Console.WriteLine($"      [WARNING] Class {className} is inside a commented block, skipping");
+                    Console.WriteLine($"      [WARNING] Class {classFullName} is inside a commented block, skipping");
                     return false;
                 }
 
                 // STEP 6: Build comment
-                var comment = $@"// NOTE: Class commented out because it depends on '{dependencyName}' which has no XAF .NET equivalent
+                var comment = $@"// NOTE: Class commented out because it depends on '{dependencyFullName}' which has no XAF .NET equivalent
 // TODO: It is necessary to test the application's behavior and, if necessary, develop a new solution.
 ";
 
@@ -925,12 +977,12 @@ namespace XafApiConverter.Converter {
                 // STEP 10: Save file
                 File.WriteAllText(filePath, newContent, Encoding.UTF8);
                 
-                Console.WriteLine($"      [SUCCESS] Dependent class {className} commented out successfully");
+                Console.WriteLine($"      [SUCCESS] Dependent class {classFullName} commented out successfully");
                 
                 return true;
             }
             catch (Exception ex) {
-                Console.WriteLine($"      [ERROR] Failed to comment out dependent class {className}: {ex.Message}");
+                Console.WriteLine($"      [ERROR] Failed to comment out dependent class {classFullName}: {ex.Message}");
                 Console.WriteLine($"      Stack trace: {ex.StackTrace}");
                 return false;
             }

@@ -18,10 +18,20 @@ namespace XafApiConverter.Converter {
         private readonly string _solutionPath;
         private Solution _solution;
         private MigrationReport _report;
+        
+        /// <summary>
+        /// Cache of original semantic models and syntax trees before any modifications.
+        /// Key: Document.FilePath
+        /// Value: (SemanticModel, SyntaxTree, Document)
+        /// This cache is populated once after LoadSolution and never updated.
+        /// Use this for dependency analysis and type resolution on original code.
+        /// </summary>
+        private Dictionary<string, (SemanticModel SemanticModel, SyntaxTree SyntaxTree, Microsoft.CodeAnalysis.Document Document)> _semanticCache;
 
         public TypeMigrationTool(string solutionPath) {
             _solutionPath = solutionPath;
             _report = new MigrationReport { SolutionPath = solutionPath };
+            _semanticCache = new Dictionary<string, (SemanticModel, SyntaxTree, Microsoft.CodeAnalysis.Document)>();
         }
 
         /// <summary>
@@ -35,6 +45,10 @@ namespace XafApiConverter.Converter {
                 // Phase 1: Load solution
                 Console.WriteLine("Phase 1: Loading solution...");
                 LoadSolution();
+                
+                // Phase 1.5: Build semantic cache of original state
+                Console.WriteLine("Phase 1.5: Building semantic cache...");
+                BuildSemanticCache();
 
                 // Phase 2: Detect and comment out problematic classes FIRST (before changing usings!)
                 // This allows using directives analysis to work correctly for namespace resolution
@@ -72,6 +86,52 @@ namespace XafApiConverter.Converter {
             _solution = workspace.OpenSolutionAsync(_solutionPath).Result;
             Console.WriteLine($"  Loaded solution: {Path.GetFileName(_solutionPath)}");
             Console.WriteLine($"  Projects: {_solution.Projects.Count()}");
+        }
+        
+        /// <summary>
+        /// Build semantic cache for all C# documents in the solution.
+        /// This cache represents the ORIGINAL state before any modifications.
+        /// Use this cache for dependency analysis and type resolution.
+        /// </summary>
+        private void BuildSemanticCache() {
+            int totalDocuments = 0;
+            int cachedDocuments = 0;
+            
+            foreach (var project in _solution.Projects) {
+                foreach (var document in project.Documents) {
+                    if (!document.FilePath.EndsWith(".cs")) {
+                        continue;
+                    }
+                    
+                    totalDocuments++;
+                    
+                    try {
+                        var syntaxTree = document.GetSyntaxTreeAsync().Result;
+                        var semanticModel = document.GetSemanticModelAsync().Result;
+                        
+                        if (syntaxTree != null && semanticModel != null) {
+                            _semanticCache[document.FilePath] = (semanticModel, syntaxTree, document);
+                            cachedDocuments++;
+                        }
+                    }
+                    catch (Exception ex) {
+                        Console.WriteLine($"    [WARNING] Failed to cache document {Path.GetFileName(document.FilePath)}: {ex.Message}");
+                    }
+                }
+            }
+            
+            Console.WriteLine($"  Cached {cachedDocuments}/{totalDocuments} documents");
+        }
+        
+        /// <summary>
+        /// Get semantic model from cache for a given file path.
+        /// Returns null if not found in cache.
+        /// </summary>
+        internal (SemanticModel SemanticModel, SyntaxTree SyntaxTree, Microsoft.CodeAnalysis.Document Document)? GetCachedSemanticModel(string filePath) {
+            if (_semanticCache.TryGetValue(filePath, out var cached)) {
+                return cached;
+            }
+            return null;
         }
 
         /// <summary>
@@ -354,9 +414,15 @@ namespace XafApiConverter.Converter {
                 // Detect problematic C# classes
                 var problematicClasses = detector.FindClassesWithNoEquivalentTypes(project);
                 
-                // Find dependencies for each problematic class
+                // Find dependencies for each problematic class using semantic analysis
                 foreach (var problematicClass in problematicClasses) {
-                    var dependents = detector.FindDependentClasses(project, problematicClass.ClassName);
+                    // Use semantic cache and namespace for accurate dependency detection
+                    var dependents = detector.FindDependentClasses(
+                        project, 
+                        problematicClass.ClassName,
+                        problematicClass.Namespace,
+                        _semanticCache);
+                    
                     problematicClass.DependentClasses = dependents;
                 }
 
@@ -554,18 +620,5 @@ namespace XafApiConverter.Converter {
         public bool Success { get; set; }
         public int ExitCode { get; set; }
         public List<BuildError> Errors { get; set; } = new();
-    }
-
-    /// <summary>
-    /// Extension methods for easier usage
-    /// </summary>
-    internal static class TypeMigrationExtensions {
-        /// <summary>
-        /// Run type migration on a solution
-        /// </summary>
-        public static MigrationReport MigrateTypes(this string solutionPath) {
-            var tool = new TypeMigrationTool(solutionPath);
-            return tool.RunMigration();
-        }
     }
 }

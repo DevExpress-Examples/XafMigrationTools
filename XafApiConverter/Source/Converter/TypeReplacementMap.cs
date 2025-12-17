@@ -446,27 +446,55 @@ namespace XafApiConverter.Converter {
         };
 
         /// <summary>
-        /// Protected base classes - classes that inherit from these receive WARNING comments but are NOT automatically commented out
-        /// These are critical XAF base classes that must be preserved for manual refactoring.
-        /// When a class inheriting from these base classes has NO_EQUIVALENT types, a warning comment is added above the class:
+        /// Protected base classes - classes that inherit from these receive WARNING comments but are NOT automatically commented out.
+        /// 
+        /// CRITICAL BEHAVIOR:
+        /// ==================
+        /// These are critical XAF base classes that must be preserved for manual refactoring because:
+        /// 1. They are essential for application structure (ModuleBase, XafApplication, etc.)
+        /// 2. They contain business logic that cannot be automatically migrated
+        /// 3. Commenting them out would break the application completely
+        /// 
+        /// When a class inheriting from these base classes uses types with NO_EQUIVALENT:
+        /// - A WARNING comment is added above the class declaration
+        /// - The class itself is NOT commented out
+        /// - Developer must manually review and refactor
+        /// 
+        /// Example output:
         /// <code>
-        /// // NOTE: Class commented out due to types having no XAF .NET equivalent
+        /// // NOTE: Class has no XAF .NET equivalent
         /// //   - Type 'ScriptRecorderAspNetModule' has no equivalent in XAF .NET
         /// //   - Type 'KpiModule' has no equivalent in XAF .NET
         /// // TODO: It is necessary to test the application's behavior and, if necessary, develop a new solution.
-        /// public class MyModule : ModuleBase { ... }
+        /// public class MyModule : ModuleBase { ... }  // ← Class remains active!
         /// </code>
-        /// This allows developers to be aware of issues while keeping the class structure intact for manual migration.
+        /// 
+        /// IMPORTANT NOTES:
+        /// ================
+        /// 1. Case-insensitive matching is used (StringComparer.OrdinalIgnoreCase)
+        /// 2. Generic types are matched without type parameters (e.g., "ViewController" matches "ViewController<T>")
+        /// 3. Matching is done on base class names ONLY, not on full type paths
+        /// 4. If a protected class inherits from a no-equivalent type, only the no-equivalent parts get warnings
+        /// 
+        /// TESTING:
+        /// ========
+        /// See ClassCommenterTests.TestProtectedBaseClass_NotCommented_WithWarning for validation
         /// </summary>
         public static readonly HashSet<string> ProtectedBaseClasses = new(StringComparer.OrdinalIgnoreCase) {
-            // XAF Module base classes
-            "ModuleBase",
-            "ModuleUpdater",
+            // XAF Module base classes - NEVER comment out, only warn
+            "ModuleBase",           // Core XAF module infrastructure
+            "ModuleUpdater",        // Database update logic
 
-            // XAF Business Object base classes
-            "BaseObject",
+            // XAF Business Object base classes - NEVER comment out, only warn
+            "BaseObject",           // Core XAF business object
             
-            // XAF Controller base classes
+            // XAF Controller base classes - CURRENTLY DISABLED
+            // These are commented out because:
+            // 1. Controllers are more granular and can often be safely commented out
+            // 2. Developer can recreate controller logic more easily than module structure
+            // 3. Web-specific controllers (e.g., WebModificationsController) should be replaced, not preserved
+            //
+            // To enable protection for controllers, uncomment the lines below:
             //"ViewController",
             //"ViewController<TViewType>",
             //"ObjectViewController",
@@ -476,17 +504,24 @@ namespace XafApiConverter.Converter {
             //"WindowController",
             //"DialogController",
             
-            // XAF Editor base classes
+            // XAF Editor base classes - CURRENTLY DISABLED
+            // These are commented out because:
+            // 1. Custom editors inheriting from Web-specific classes should be replaced
+            // 2. ASPxPropertyEditor and WebPropertyEditor have no direct Blazor equivalents
+            // 3. BlazorPropertyEditorBase requires complete rewrite of editor logic
+            //
+            // To enable protection for editors, uncomment the lines below:
             //"PropertyEditor",
             //"ListEditor",
             //"BlazorPropertyEditorBase",
             
-            // XAF Application classes
-            "XafApplication",
-            "BlazorApplication",
-            "WinApplication"
+            // XAF Application classes - NEVER comment out, only warn
+            "XafApplication",        // Core application class
+            "BlazorApplication",     // Blazor-specific application
+            "WinApplication"         // WinForms application (for mixed solutions)
             
-            // Other critical base classes
+            // Other critical base classes - CURRENTLY DISABLED
+            // These are commented out for the same reasons as controllers above
             //"Controller",
             //"ViewControllerBase",
             //"ActionBase",
