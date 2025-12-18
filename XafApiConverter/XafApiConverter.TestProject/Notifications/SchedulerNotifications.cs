@@ -1,6 +1,5 @@
 ﻿using DevExpress.ExpressApp;
 using DevExpress.ExpressApp.Actions;
-using DevExpress.ExpressApp.Demos;
 using DevExpress.ExpressApp.Filtering;
 using DevExpress.ExpressApp.Model;
 using DevExpress.ExpressApp.SystemModule.Notifications;
@@ -17,14 +16,12 @@ using System.Linq;
 
 namespace FeatureCenter.Module.Notifications {
     [NavigationItem(false)]
-    [Hint(Hints.EventNotificationsHint)]
     [ImageName("Notifications.Sheduler_with_notifications")]
     public class SchedulerNotifications : Event {
         public SchedulerNotifications(Session session) : base(session) { }
     }
 
     [NavigationItem(false)]
-    [Hint(Hints.TaskNotificationsHint)]
     [ImageName("Notifications.Task_with_notifications")]
     public class TaskWithNotifications : BaseObject, ISupportNotifications {
         private TaskImpl task = new TaskImpl();
