@@ -180,12 +180,12 @@ namespace XafApiConverter.Converter {
                 "Web to Blazor application") },
 
             // Editor Types
-            { "ASPxGridListEditor", new TypeReplacement(
-                "ASPxGridListEditor",
-                "DxGridListEditor",
-                "DevExpress.ExpressApp.Web.Editors.ASPx",
-                "DevExpress.ExpressApp.Blazor.Editors",
-                "ASPx grid to Dx grid") },
+            //{ "ASPxGridListEditor", new TypeReplacement(
+            //    "ASPxGridListEditor",
+            //    "DxGridListEditor",
+            //    "DevExpress.ExpressApp.Web.Editors.ASPx",
+            //    "DevExpress.ExpressApp.Blazor.Editors",
+            //    "ASPx grid to Dx grid") },
 
             { "ASPxLookupPropertyEditor", new TypeReplacement(
                 "ASPxLookupPropertyEditor",
