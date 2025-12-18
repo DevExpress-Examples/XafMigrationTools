@@ -3,7 +3,7 @@
 
 namespace XafApiConverter.Converter {
     /// <summary>
-    /// Configuration for .NET Framework to .NET Core/5+ project conversion
+    /// Configuration for .NET Framework to .NET Core/8+ project conversion
     /// Based on Configuration.md
     /// </summary>
     internal class ConversionConfig {

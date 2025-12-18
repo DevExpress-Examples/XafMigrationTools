@@ -1,8 +1,8 @@
-# CSprojConverter - .NET Framework to .NET Core/5+ Project Converter
+﻿# CSprojConverter - .NET Framework to .NET Core/8+ Project Converter
 
 ## Overview
 
-`CSprojConverter` is a programmatic tool for converting legacy .NET Framework `.csproj` files to modern SDK-style format for .NET Core, .NET 5, .NET 6, .NET 8, .NET 9, and beyond. It specifically targets DevExpress XAF (eXpressApp Framework) projects but can be adapted for other project types.
+`CSprojConverter` is a programmatic tool for converting legacy .NET Framework `.csproj` files to modern SDK-style format for .NET Core, .NET 8, .NET 9, and beyond. It specifically targets DevExpress XAF (eXpressApp Framework) projects but can be adapted for other project types.
 
 ## Features
 

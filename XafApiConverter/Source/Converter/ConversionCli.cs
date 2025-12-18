@@ -125,7 +125,7 @@ namespace XafApiConverter.Converter {
 
         private static int ExecuteConvert(string projectPath, ConversionConfig config, bool createBackup) {
             Console.WriteLine("=".PadRight(60, '='));
-            Console.WriteLine("XAF .NET Framework to .NET Core/5+ Project Converter");
+            Console.WriteLine("XAF .NET Framework to .NET Core/8+ Project Converter");
             Console.WriteLine("=".PadRight(60, '='));
             Console.WriteLine();
 
@@ -162,7 +162,7 @@ namespace XafApiConverter.Converter {
 
         private static void PrintHelp() {
             Console.WriteLine(@"
-XAF .NET Framework to .NET Core/5+ Project Converter
+XAF .NET Framework to .NET Core/8+ Project Converter
 ====================================================
 
 Usage:
