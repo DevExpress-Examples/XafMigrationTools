@@ -469,6 +469,11 @@ namespace XafApiConverter.Converter {
         };
 
         /// <summary>
+        /// Assemblies that removed in v25.2
+        /// </summary>
+        public static readonly HashSet<string> RemovedAssemblies = new();
+
+        /// <summary>
         /// Enum types that require commenting out entire class (TRANS-009)
         /// </summary>
         public static readonly Dictionary<string, EnumReplacement> ProblematicEnums = new() {
@@ -585,6 +590,7 @@ namespace XafApiConverter.Converter {
 
                 LoadRemovedApiTypes();
                 LoadProtectedTypes();
+                LoadRemovedAssemblies();
                 _isInitialized = true;
             }
         }
@@ -756,6 +762,49 @@ namespace XafApiConverter.Converter {
             } catch (Exception ex) {
                 // Log error or handle gracefully - don't crash the application
                 Console.WriteLine($"Warning: Failed to load ProtectedTypes.txt from embedded resources: {ex.Message}");
+            }
+        }
+
+        /// <summary>
+        /// Loads removed assembly names removed-assemblies.txt embedded resource
+        /// </summary>
+        private static void LoadRemovedAssemblies() {
+            try {
+                // Get the assembly containing this class
+                var assembly = Assembly.GetExecutingAssembly();
+
+                // Get the resource name - typically namespace + filename
+                // Expected format: "XafApiConverter.Converter.removed-assemblies.txt"
+                string resourceName = "XafApiConverter.Converter.removed-assemblies.txt";
+
+                // Try to find the resource with different possible names
+                var resourceNames = assembly.GetManifestResourceNames();
+                var matchingResource = resourceNames.FirstOrDefault(r => r.EndsWith("removed-assemblies.txt", StringComparison.OrdinalIgnoreCase));
+
+                if (matchingResource == null) {
+                    // Resource not found, skip loading (NoEquivalentTypes will only contain manually defined entries)
+                    Console.WriteLine($"Warning: removed-assemblies.txt resource not found. Available resources: {string.Join(", ", resourceNames)}");
+                    return;
+                }
+
+                // Read the embedded resource
+                using (Stream stream = assembly.GetManifestResourceStream(matchingResource)) {
+                    if (stream == null) {
+                        Console.WriteLine($"Warning: Could not open stream for resource '{matchingResource}'");
+                        return;
+                    }
+
+                    using (StreamReader reader = new StreamReader(stream)) {
+                        string line;
+                        while ((line = reader.ReadLine()) != null) {
+                            RemovedAssemblies.Add(line);
+                        }
+                    }
+                }
+            }
+            catch (Exception ex) {
+                // Log error or handle gracefully - don't crash the application
+                Console.WriteLine($"Warning: Failed to load removed-api.txt from embedded resources: {ex.Message}");
             }
         }
 
