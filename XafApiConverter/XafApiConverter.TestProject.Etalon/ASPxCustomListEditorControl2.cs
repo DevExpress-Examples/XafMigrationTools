@@ -17,7 +17,9 @@ using DevExpress.ExpressApp.Blazor.Templates;
 using DevExpress.ExpressApp.Blazor;
 
 namespace FeatureCenter.Module.Web.ListEditors {
-    // NOTE: Class commented out due to types having no XAF .NET equivalent
+    // TODO: The 'ASPxCustomListEditorControl2' class has been commented out automatically due to usage of types that have no XAF .NET equivalent.
+    //       Please review the class and implement necessary changes to ensure compatibility with XAF .NET.
+    // NOTE:
     //   - Base class 'IXafCallbackHandler' has no equivalent (inferred from using DevExpress.ExpressApp.Web.Templates)
     //     IXafCallbackHandler has no equivalent in XAF .NET (loaded from removed-api.txt)
     //   - Base class 'XafCallbackManager' has no equivalent (inferred from using DevExpress.ExpressApp.Web.Templates)
@@ -32,7 +34,6 @@ namespace FeatureCenter.Module.Web.ListEditors {
     //     ImageResourceHttpHandler has no Blazor equivalent (Web Forms specific HTTP handler)
     //   - Base class 'WebImageHelper' has no equivalent (inferred from using DevExpress.ExpressApp.Web)
     //     WebImageHelper has no equivalent in XAF .NET (loaded from removed-api.txt)
-    // TODO: It is necessary to test the application's behavior and, if necessary, develop a new solution.
     // ========== COMMENTED OUT CLASS ==========
     // public class ASPxCustomListEditorControl2 : Panel, INamingContainer, IXafCallbackHandler {
     //         private IList dataSource;

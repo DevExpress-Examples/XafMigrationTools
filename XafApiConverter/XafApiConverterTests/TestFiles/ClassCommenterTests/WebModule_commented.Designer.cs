@@ -1,17 +1,13 @@
 ﻿namespace FeatureCenter.Module.Web
 {
-    // NOTE: Partial class has no XAF .NET equivalent
-    //   - Type 'MapsAspNetModule' has no equivalent in XAF .NET
-    //     MapsAspNetModule has no Blazor equivalent
-    // TODO: It is necessary to test the application's behavior and, if necessary, develop a new solution.
-partial class FeatureCenterAspNetModule
+    partial class FeatureCenterAspNetModule
     {
-        /// <summary> 
+        /// <summary>
         /// Required designer variable.
         /// </summary>
         private System.ComponentModel.IContainer components = null;
 
-        /// <summary> 
+        /// <summary>
         /// Clean up any resources being used.
         /// </summary>
         /// <param name="disposing">true if managed resources should be disposed; otherwise, false.</param>
@@ -26,15 +22,15 @@ partial class FeatureCenterAspNetModule
 
         #region Component Designer generated code
 
-        /// <summary> 
-        /// Required method for Designer support - do not modify 
+        /// <summary>
+        /// Required method for Designer support - do not modify
         /// the contents of this method with the code editor.
         /// </summary>
         private void InitializeComponent()
         {
-            // 
+            //
             // FeatureCenterAspNetModule
-            // 
+            //
             this.RequiredModuleTypes.Add(typeof(FeatureCenter.Module.FeatureCenterModule));
             this.RequiredModuleTypes.Add(typeof(DevExpress.ExpressApp.Blazor.SystemModule.SystemBlazorModule));
             this.RequiredModuleTypes.Add(typeof(DevExpress.ExpressApp.Chart.ChartModule));

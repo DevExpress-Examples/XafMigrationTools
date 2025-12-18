@@ -17,18 +17,28 @@ using DevExpress.ExpressApp.Blazor.Templates;
 using DevExpress.ExpressApp.Blazor;
 
 namespace FeatureCenter.Module.Web.ListEditors {
-    public class ASPxCustomListEditorButton : ASPxButton {
-        private string pictureID;
-        public string PictureID {
-            get { return pictureID; }
-            set { pictureID = value; }
-        }
-    }
+    // TODO: The 'ASPxCustomListEditorButton' class has been commented out automatically due to usage of types that have no XAF .NET equivalent.
+    //       Please review the class and implement necessary changes to ensure compatibility with XAF .NET.
+    // NOTE:
+    //   - Base class 'ASPxButton' has no equivalent (inferred from using DevExpress.Web)
+    //     ASPxButton is Web Forms specific
+    // ========== COMMENTED OUT CLASS ==========
+    // public class ASPxCustomListEditorButton : ASPxButton {
+    //         private string pictureID;
+    //         public string PictureID {
+    //             get { return pictureID; }
+    //             set { pictureID = value; }
+    //         }
+    //     }
+    // ========================================
+
     public class CustomListEditorClickEventArgs : EventArgs {
         public IPictureItem ItemClicked;
     }
 
-    // NOTE: Class commented out due to types having no XAF .NET equivalent
+    // TODO: The 'ASPxCustomListEditorControl' class has been commented out automatically due to usage of types that have no XAF .NET equivalent.
+    //       Please review the class and implement necessary changes to ensure compatibility with XAF .NET.
+    // NOTE:
     //   - Base class 'IXafCallbackHandler' has no equivalent (inferred from using DevExpress.ExpressApp.Web.Templates)
     //     IXafCallbackHandler has no equivalent in XAF .NET (loaded from removed-api.txt)
     //   - Base class 'XafCallbackManager' has no equivalent (inferred from using DevExpress.ExpressApp.Web.Templates)
@@ -43,7 +53,6 @@ namespace FeatureCenter.Module.Web.ListEditors {
     //     ImageResourceHttpHandler has no Blazor equivalent (Web Forms specific HTTP handler)
     //   - Base class 'WebImageHelper' has no equivalent (inferred from using DevExpress.ExpressApp.Web)
     //     WebImageHelper has no equivalent in XAF .NET (loaded from removed-api.txt)
-    // TODO: It is necessary to test the application's behavior and, if necessary, develop a new solution.
     // ========== COMMENTED OUT CLASS ==========
     // public class ASPxCustomListEditorControl : Panel, INamingContainer, IXafCallbackHandler {
     //         private IList dataSource;
@@ -186,10 +195,11 @@ namespace FeatureCenter.Module.Web.ListEditors {
         }
     }
 
-    // NOTE: Class commented out due to types having no XAF .NET equivalent
+    // TODO: The 'ASPxCustomListEditor' class has been commented out automatically due to usage of types that have no XAF .NET equivalent.
+    //       Please review the class and implement necessary changes to ensure compatibility with XAF .NET.
+    // NOTE:
     //   - Depends on problematic class 'FeatureCenter.Module.Web.ListEditors.ASPxCustomListEditorControl' which has no .NET equivalent
     //     Class uses 'FeatureCenter.Module.Web.ListEditors.ASPxCustomListEditorControl' which is being commented out due to having no .NET equivalent
-    // TODO: It is necessary to test the application's behavior and, if necessary, develop a new solution.
     // ========== COMMENTED OUT CLASS ==========
     // [ListEditor(typeof(IPictureItem))]
     //     public class ASPxCustomListEditor : ListEditor {

@@ -6,14 +6,15 @@ using FeatureCenter.Module.PropertyEditors;
 using DevExpress.ExpressApp.Model;
 
 namespace FeatureCenter.Module.Web.PropertyEditors {
-    // NOTE: Class commented out due to types having no XAF .NET equivalent
+    // TODO: The 'CustomIntegerEditor' class has been commented out automatically due to usage of types that have no XAF .NET equivalent.
+    //       Please review the class and implement necessary changes to ensure compatibility with XAF .NET.
+    // NOTE:
     //   - Base class 'WebPropertyEditor' has no equivalent (inferred from using DevExpress.ExpressApp.Web.Editors)
     //     WebPropertyEditor has no equivalent in XAF .NET (loaded from removed-api.txt)
     //   - Base class 'ITestable' has no equivalent (inferred from using DevExpress.ExpressApp.Web.TestScripts)
     //     ITestable has no equivalent in XAF .NET (loaded from removed-api.txt)
     //   - Base class 'IJScriptTestControl' has no equivalent (inferred from using DevExpress.ExpressApp.Web.TestScripts)
     //     IJScriptTestControl has no Blazor equivalent (Test framework specific)
-    // TODO: It is necessary to test the application's behavior and, if necessary, develop a new solution.
     // ========== COMMENTED OUT CLASS ==========
     // [PropertyEditor(typeof(Int32), FeatureCenterEditorAliases.CustomIntegerEditor, false)]
     //     public class CustomIntegerEditor : WebPropertyEditor, ITestable {
@@ -74,14 +75,15 @@ namespace FeatureCenter.Module.Web.PropertyEditors {
             }
         }
     }
-    // NOTE: Class commented out due to types having no XAF .NET equivalent
+    // TODO: The 'JSCustomLabelTestControl' class has been commented out automatically due to usage of types that have no XAF .NET equivalent.
+    //       Please review the class and implement necessary changes to ensure compatibility with XAF .NET.
+    // NOTE:
     //   - Base class 'IJScriptTestControl' has no equivalent (inferred from using DevExpress.ExpressApp.Web.TestScripts)
     //     IJScriptTestControl has no Blazor equivalent (Test framework specific)
     //   - Base class 'StandardTestControlScriptsDeclaration' has no equivalent (inferred from using DevExpress.ExpressApp.Web.TestScripts)
     //     StandardTestControlScriptsDeclaration has no equivalent in XAF .NET (loaded from removed-api.txt)
     //   - Base class 'TestScriptsDeclarationBase' has no equivalent (inferred from using DevExpress.ExpressApp.Web.TestScripts)
     //     TestScriptsDeclarationBase has no equivalent in XAF .NET (loaded from removed-api.txt)
-    // TODO: It is necessary to test the application's behavior and, if necessary, develop a new solution.
     // ========== COMMENTED OUT CLASS ==========
     // public class JSCustomLabelTestControl : IJScriptTestControl {
     //         public const string ClassName = "CustomLabelTestControl";
@@ -103,14 +105,15 @@ namespace FeatureCenter.Module.Web.PropertyEditors {
     // ========================================
 
 
-    // NOTE: Class commented out due to types having no XAF .NET equivalent
+    // TODO: The 'JSCustomDropDownListTestControl' class has been commented out automatically due to usage of types that have no XAF .NET equivalent.
+    //       Please review the class and implement necessary changes to ensure compatibility with XAF .NET.
+    // NOTE:
     //   - Base class 'IJScriptTestControl' has no equivalent (inferred from using DevExpress.ExpressApp.Web.TestScripts)
     //     IJScriptTestControl has no Blazor equivalent (Test framework specific)
     //   - Base class 'StandardTestControlScriptsDeclaration' has no equivalent (inferred from using DevExpress.ExpressApp.Web.TestScripts)
     //     StandardTestControlScriptsDeclaration has no equivalent in XAF .NET (loaded from removed-api.txt)
     //   - Base class 'TestScriptsDeclarationBase' has no equivalent (inferred from using DevExpress.ExpressApp.Web.TestScripts)
     //     TestScriptsDeclarationBase has no equivalent in XAF .NET (loaded from removed-api.txt)
-    // TODO: It is necessary to test the application's behavior and, if necessary, develop a new solution.
     // ========== COMMENTED OUT CLASS ==========
     // public class JSCustomDropDownListTestControl : IJScriptTestControl {
     //         public const string ClassName = "CustomDropDownListTestControl";

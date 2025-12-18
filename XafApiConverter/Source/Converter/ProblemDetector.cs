@@ -206,7 +206,7 @@ namespace XafApiConverter.Converter {
                         // Verify namespace matches if we have both
                         if (possibleNamespace == null || 
                             string.IsNullOrEmpty(noEquivType.OldNamespace) ||
-                            possibleNamespace.Equals(noEquivType.OldNamespace, StringComparison.Ordinal) ||
+                            possibleNamespace.Equals(noEquivType.OldNamespace, StringComparison.OrdinalIgnoreCase) ||
                             (usingDirectives != null && usingDirectives.Contains(noEquivType.OldNamespace))) {
                             
                             problems.Add(new TypeProblem {
@@ -226,7 +226,7 @@ namespace XafApiConverter.Converter {
                         // Verify namespace matches if we have both
                         if (possibleNamespace == null || 
                             string.IsNullOrEmpty(manualType.OldNamespace) ||
-                            possibleNamespace.Equals(manualType.OldNamespace, StringComparison.Ordinal) ||
+                            possibleNamespace.Equals(manualType.OldNamespace, StringComparison.OrdinalIgnoreCase) ||
                             (usingDirectives != null && usingDirectives.Contains(manualType.OldNamespace))) {
                             
                             problems.Add(new TypeProblem {
@@ -279,8 +279,8 @@ namespace XafApiConverter.Converter {
             var matchingNoEquiv = TypeReplacementMap.NoEquivalentTypes.Values
                 .FirstOrDefault(t => {
                     var expectedFullName = t.GetFullOldTypeName();
-                    return fullTypeName.Equals(expectedFullName, StringComparison.Ordinal) ||
-                           fullTypeName.EndsWith($".{expectedFullName}", StringComparison.Ordinal);
+                    return fullTypeName.Equals(expectedFullName, StringComparison.OrdinalIgnoreCase) ||
+                           fullTypeName.EndsWith($".{expectedFullName}", StringComparison.OrdinalIgnoreCase);
                 });
 
             if (matchingNoEquiv != null) {
@@ -299,8 +299,8 @@ namespace XafApiConverter.Converter {
             var matchingManual = TypeReplacementMap.ManualConversionRequiredTypes.Values
                 .FirstOrDefault(t => {
                     var expectedFullName = t.GetFullOldTypeName();
-                    return fullTypeName.Equals(expectedFullName, StringComparison.Ordinal) ||
-                           fullTypeName.EndsWith($".{expectedFullName}", StringComparison.Ordinal);
+                    return fullTypeName.Equals(expectedFullName, StringComparison.OrdinalIgnoreCase) ||
+                           fullTypeName.EndsWith($".{expectedFullName}", StringComparison.OrdinalIgnoreCase);
                 });
 
             if (matchingManual != null) {
@@ -573,17 +573,17 @@ namespace XafApiConverter.Converter {
         /// </summary>
         private bool TypeMatchesTarget(string typeName, string fullTypeName, string targetClassName, string targetFullName) {
             // Simple name match
-            if (typeName.Equals(targetClassName, StringComparison.Ordinal)) {
+            if (typeName.Equals(targetClassName, StringComparison.OrdinalIgnoreCase)) {
                 return true;
             }
             
             // Full name match
-            if (fullTypeName.Equals(targetFullName, StringComparison.Ordinal)) {
+            if (fullTypeName.Equals(targetFullName, StringComparison.OrdinalIgnoreCase)) {
                 return true;
             }
             
             // Full name ends with target (e.g., "System.Collections.Generic.List`1" ends with "List")
-            if (fullTypeName.EndsWith($".{targetClassName}", StringComparison.Ordinal)) {
+            if (fullTypeName.EndsWith($".{targetClassName}", StringComparison.OrdinalIgnoreCase)) {
                 // Additional check: make sure namespaces match if we have full target name
                 if (!string.IsNullOrEmpty(targetFullName) && targetFullName.Contains(".")) {
                     return fullTypeName.Contains(targetFullName);

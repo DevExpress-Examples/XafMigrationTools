@@ -10,10 +10,11 @@ namespace Test.Module.BO {
         public string ActivityInformation { get; set; }
     }
 
-    // NOTE: Class commented out due to types having no XAF .NET equivalent
+    // TODO: The 'UnProtectedHeir' class has been commented out automatically due to usage of types that have no XAF .NET equivalent.
+    //       Please review the class and implement necessary changes to ensure compatibility with XAF .NET.
+    // NOTE:
     //   - Base class 'ActivityInformation' has no equivalent (inferred from using DevExpress.ExpressApp.Workflow)
     //     ActivityInformation has no equivalent in XAF .NET (loaded from removed-api.txt)
-    // TODO: It is necessary to test the application's behavior and, if necessary, develop a new solution.
     // ========== COMMENTED OUT CLASS ==========
     // internal class UnProtectedHeir : ActivityInformation {
     //         // Removed class
@@ -21,10 +22,11 @@ namespace Test.Module.BO {
     //     }
     // ========================================
 
-    // NOTE: Class commented out due to types having no XAF .NET equivalent
+    // TODO: The 'UnProtectedHeir2' class has been commented out automatically due to usage of types that have no XAF .NET equivalent.
+    //       Please review the class and implement necessary changes to ensure compatibility with XAF .NET.
+    // NOTE:
     //   - Base class 'ActivityInformation' has no equivalent (inferred from using DevExpress.ExpressApp.Workflow)
     //     ActivityInformation has no equivalent in XAF .NET (loaded from removed-api.txt)
-    // TODO: It is necessary to test the application's behavior and, if necessary, develop a new solution.
     // ========== COMMENTED OUT CLASS ==========
     // internal class UnProtectedHeir2 {
     //         // Removed class

@@ -10,12 +10,13 @@ using FeatureCenter.Module.PropertyEditors;
 using DevExpress.ExpressApp.Model;
 
 namespace FeatureCenter.Module.Web.PropertyEditors {
-	// NOTE: Class commented out due to types having no XAF .NET equivalent
+	// TODO: The 'CustomStringEditor' class has been commented out automatically due to usage of types that have no XAF .NET equivalent.
+	//       Please review the class and implement necessary changes to ensure compatibility with XAF .NET.
+	// NOTE:
 	//   - Base class 'ASPxPropertyEditor' has no equivalent (inferred from using DevExpress.ExpressApp.Web.Editors.ASPx)
 	//     ASPxPropertyEditor has no equivalent in XAF .NET (loaded from removed-api.txt)
 	//   - Base class 'RenderHelper' has no equivalent (inferred from using DevExpress.ExpressApp.Web)
 	//     RenderHelper has no equivalent in XAF .NET (loaded from removed-api.txt)
-	// TODO: It is necessary to test the application's behavior and, if necessary, develop a new solution.
 	// ========== COMMENTED OUT CLASS ==========
 	// [PropertyEditor(typeof(String), FeatureCenterEditorAliases.CustomStringEditor, false)]
 	// 	public class CustomStringEditor : ASPxPropertyEditor {

@@ -95,9 +95,9 @@ namespace XafApiConverter.Converter {
                 sb.AppendLine();
                 sb.AppendLine("**Format Used:**");
                 sb.AppendLine("```csharp");
+                sb.AppendLine($"{ClassCommenter.GetTodoClassCommentedComment("ClassName")}");
                 sb.AppendLine("// NOTE: Class commented out due to types having no XAF .NET equivalent");
                 sb.AppendLine("//   - [Reason for each problematic type]");
-                sb.AppendLine("// TODO: It is necessary to test the application's behavior and, if necessary, develop a new solution.");
                 sb.AppendLine("/*");
                 sb.AppendLine("public class ClassName { ... }");
                 sb.AppendLine("*/");
@@ -325,7 +325,7 @@ namespace XafApiConverter.Converter {
             sb.AppendLine("**For C# files:**");
             sb.AppendLine("```csharp");
             sb.AppendLine("// NOTE: [Type/Feature] has no .NET equivalent");
-            sb.AppendLine("// TODO: It is necessary to test the application's behavior and, if necessary, develop a new solution.");
+            sb.AppendLine($"{ClassCommenter.GetTodoClassCommentedComment("ClassName")}");
             sb.AppendLine("// [commented out code]");
             sb.AppendLine("```");
             sb.AppendLine();
@@ -351,8 +351,10 @@ namespace XafApiConverter.Converter {
         /// Save report to file
         /// </summary>
         public void SaveToFile(string filePath) {
-            var markdown = ToMarkdown();
-            File.WriteAllText(filePath, markdown, Encoding.UTF8);
+            //TODO: Review rport generation
+
+            //var markdown = ToMarkdown();
+            //File.WriteAllText(filePath, markdown, Encoding.UTF8);
         }
 
         /// <summary>

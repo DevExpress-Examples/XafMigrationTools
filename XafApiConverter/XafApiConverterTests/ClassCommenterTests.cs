@@ -70,13 +70,17 @@ namespace XafApiConverterTests.ClassCommenterTests {
         public void TestFullPipeline_PartialClass_ProtectedBaseClass_WarningOnly() {
             var inputFileMain = Path.Combine(_testFilesPath, "WebModule.cs");
             var inputFileDesigner = Path.Combine(_testFilesPath, "WebModule.Designer.cs");
-            var expectedFile = Path.Combine(_testFilesPath, "WebModule_commented.cs");
+            var expectedFileMain = Path.Combine(_testFilesPath, "WebModule_commented.cs");
+            var expectedFileDesigner = Path.Combine(_testFilesPath, "WebModule_commented.Designer.cs");
 
-            var resultMain = RunFullMigrationPipelineForPartialClass(inputFileMain, inputFileDesigner);
-            var expected = NormalizeWhitespace(File.ReadAllText(expectedFile));
-            var actual = NormalizeWhitespace(resultMain);
+            var results = RunFullMigrationPipelineForPartialClass(inputFileMain, inputFileDesigner);
+            var expectedMain = NormalizeWhitespace(File.ReadAllText(expectedFileMain));
+            var expectedDesigner = NormalizeWhitespace(File.ReadAllText(expectedFileDesigner));
+            var actualMain = NormalizeWhitespace(results.Item1);
+            var actualDesign = NormalizeWhitespace(results.Item2);
 
-            Assert.Equal(expected, actual);
+            Assert.Equal(expectedMain, actualMain);
+            Assert.Equal(expectedDesigner, actualDesign);
         }
 
         [Fact]
@@ -89,21 +93,6 @@ namespace XafApiConverterTests.ClassCommenterTests {
             Assert.DoesNotContain("using System.Web.UI.WebControls;", result);
             Assert.DoesNotContain("using DevExpress.ExpressApp.Web.Layout;", result);
             Assert.Contains("using DevExpress.ExpressApp.Blazor", result);
-        }
-
-        [Fact]
-        [Trait("Category", "Integration")]
-        public void TestProtectedBaseClass_NotCommented_WithWarning() {
-            var inputFileMain = Path.Combine(_testFilesPath, "WebModule.cs");
-            var inputFileDesigner = Path.Combine(_testFilesPath, "WebModule.Designer.cs");
-
-            var result = RunFullMigrationPipelineForPartialClass(inputFileMain, inputFileDesigner);
-
-            Assert.DoesNotContain("// ========== COMMENTED OUT CLASS ==========", result);
-            Assert.DoesNotContain("// public sealed partial class FeatureCenterAspNetModule", result);
-            Assert.Contains("// NOTE:", result);
-            Assert.Contains("// TODO: It is necessary to test the application's behavior", result);
-            Assert.Contains("public sealed partial class FeatureCenterAspNetModule : ModuleBase", result);
         }
 
         [Fact]
@@ -180,7 +169,7 @@ namespace XafApiConverterTests.ClassCommenterTests {
         /// <summary>
         /// Run pipeline for partial classes
         /// </summary>
-        private string RunFullMigrationPipelineForPartialClass(string mainFilePath, string designerFilePath) {
+        private (string, string) RunFullMigrationPipelineForPartialClass(string mainFilePath, string designerFilePath) {
             if (!File.Exists(mainFilePath) || !File.Exists(designerFilePath)) {
                 throw new FileNotFoundException("Test files not found");
             }
@@ -199,7 +188,7 @@ namespace XafApiConverterTests.ClassCommenterTests {
                 ApplyReplacements(tempMainFile);
                 ApplyReplacements(tempDesignerFile);
 
-                return File.ReadAllText(tempMainFile);
+                return (File.ReadAllText(tempMainFile), File.ReadAllText(tempDesignerFile));
             }
             finally {
                 if (File.Exists(tempMainFile)) File.Delete(tempMainFile);

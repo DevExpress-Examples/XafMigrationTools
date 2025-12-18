@@ -21,6 +21,22 @@ namespace XafApiConverter.Converter {
             _report = report;
         }
 
+        public static string GetTodoClassCommentedComment(string className) {
+            var sb = new StringBuilder();
+            sb.AppendLine($"// TODO: The '{className}' class has been commented out automatically due to usage of types that have no XAF .NET equivalent.");
+            sb.AppendLine("//       Please review the class and implement necessary changes to ensure compatibility with XAF .NET.");
+            //sb.AppendLine("//       Refer to the migration documentation for guidance on handling such cases.");
+            return sb.ToString();
+        }
+
+        public static string GetTodoClassWithIssuesComment(string className) {
+            var sb = new StringBuilder();
+            sb.AppendLine($"// TODO: The '{className}' class has been marked automatically due to usage of types that have no XAF .NET equivalent.");
+            sb.AppendLine("//       Please review the class and implement necessary changes to ensure compatibility with XAF .NET.");
+            //sb.AppendLine("//       Refer to the migration documentation for guidance on handling such cases.");
+            return sb.ToString();
+        }
+
         /// <summary>
         /// Comment out all problematic classes and their dependencies
         /// </summary>
@@ -186,24 +202,28 @@ namespace XafApiConverter.Converter {
         /// </summary>
         private bool HasWarningComment(string content, string className) {
             var patterns = new[] {
-                "// NOTE: Partial class commented out due to types having no XAF .NET equivalent",
-                "// NOTE: Class commented out due to types having no XAF .NET equivalent",
-                "// NOTE: Class has no XAF .NET equivalent",
-                "// NOTE: Partial class has no XAF .NET equivalent",
-                "// NOTE: This class inherits from protected base class",
-                "// WARNING: This class uses types with no XAF .NET equivalent"
+                //GetTodoClassCommentedComment(className).Trim(),
+                $"// TODO: The '{className}' class",
+                //GetTodoClassWithIssuesComment(className).Trim()
+                //"// NOTE: Partial class commented out due to types having no XAF .NET equivalent",
+                //"// NOTE: Class commented out due to types having no XAF .NET equivalent",
+                //"// NOTE: Class has no XAF .NET equivalent",
+                //"// NOTE: Partial class has no XAF .NET equivalent",
+                //"// NOTE: This class inherits from protected base class",
+                //"// WARNING: This class uses types with no XAF .NET equivalent"
             };
 
             // Search in the area before where class might be
             foreach (var pattern in patterns) {
-                var index = content.IndexOf(pattern, StringComparison.Ordinal);
+                var index = content.IndexOf(pattern, StringComparison.OrdinalIgnoreCase);
                 if (index >= 0) {
+                    return true;
                     // Check if class name appears within next 500 characters
-                    var searchEnd = Math.Min(index + 500, content.Length);
-                    var searchRegion = content.Substring(index, searchEnd - index);
-                    if (searchRegion.Contains(className, StringComparison.Ordinal)) {
-                        return true;
-                    }
+                    //var searchEnd = Math.Min(index + 500, content.Length);
+                    //var searchRegion = content.Substring(index, searchEnd - index);
+                    //if (searchRegion.Contains(className, StringComparison.OrdinalIgnoreCase)) {
+                    //    return true;
+                    //}
                 }
             }
 
@@ -217,7 +237,8 @@ namespace XafApiConverter.Converter {
             var sb = new StringBuilder();
             
             var prefix = isPartial ? "Partial class" : "Class";
-            sb.AppendLine($"// NOTE: {prefix} has no XAF .NET equivalent");
+            sb.AppendLine(GetTodoClassWithIssuesComment(problematicClass.ClassName));
+            sb.AppendLine($"// NOTE:");
             
             var reasons = problematicClass.Problems
                 .Where(p => p.RequiresCommentOut)
@@ -232,8 +253,6 @@ namespace XafApiConverter.Converter {
                     sb.AppendLine($"//     {problem.Description}");
                 }
             }
-            
-            sb.AppendLine("// TODO: It is necessary to test the application's behavior and, if necessary, develop a new solution.");
             
             return sb.ToString();
         }
@@ -442,7 +461,7 @@ namespace XafApiConverter.Converter {
                 var textBeforeClass = content.Substring(Math.Max(0, classPosition - 100), Math.Min(100, classPosition));
                 
                 // If there's a // ========== marker shortly before, it's already commented
-                if (textBeforeClass.Contains("// ========== COMMENTED OUT CLASS", StringComparison.Ordinal)) {
+                if (textBeforeClass.Contains("// ========== COMMENTED OUT CLASS", StringComparison.OrdinalIgnoreCase)) {
                     Console.WriteLine($"      [WARNING] Class {className} is inside a commented block, skipping");
                     return false;
                 }
@@ -592,7 +611,7 @@ namespace XafApiConverter.Converter {
             var currentIndex = 0;
             while (true) {
                 // Find next comment marker
-                var commentIndex = content.IndexOf(commentMarker, currentIndex, StringComparison.Ordinal);
+                var commentIndex = content.IndexOf(commentMarker, currentIndex, StringComparison.OrdinalIgnoreCase);
                 if (commentIndex < 0) {
                     // No more comment markers found
                     break;
@@ -600,7 +619,7 @@ namespace XafApiConverter.Converter {
                 
                 // Find the end of this commented block (next closing marker or end of file)
                 var closingMarker = "// ========================================";
-                var closingIndex = content.IndexOf(closingMarker, commentIndex + commentMarker.Length, StringComparison.Ordinal);
+                var closingIndex = content.IndexOf(closingMarker, commentIndex + commentMarker.Length, StringComparison.OrdinalIgnoreCase);
                 if (closingIndex < 0) {
                     // No closing marker - assume rest of file
                     closingIndex = content.Length;
@@ -636,7 +655,7 @@ namespace XafApiConverter.Converter {
                 };
                 
                 foreach (var pattern in patterns) {
-                    if (commentedBlock.Contains(pattern, StringComparison.Ordinal)) {
+                    if (commentedBlock.Contains(pattern, StringComparison.OrdinalIgnoreCase)) {
                         // Found the specific class in this commented block!
                         return true;
                     }
@@ -669,7 +688,7 @@ namespace XafApiConverter.Converter {
             
             // If the line starts with //, the class is commented out
             var trimmedPrefix = linePrefix.TrimStart(' ', '\t');
-            if (trimmedPrefix.StartsWith("//", StringComparison.Ordinal)) {
+            if (trimmedPrefix.StartsWith("//", StringComparison.OrdinalIgnoreCase)) {
                 return true;
             }
             
@@ -678,14 +697,14 @@ namespace XafApiConverter.Converter {
             var checkRegion = fileContent.Substring(checkStart, classPosition - checkStart);
             
             // If we find the comment marker recently, this class is inside commented block
-            if (checkRegion.Contains("// ========== COMMENTED OUT CLASS ==========", StringComparison.Ordinal)) {
+            if (checkRegion.Contains("// ========== COMMENTED OUT CLASS ==========", StringComparison.OrdinalIgnoreCase)) {
                 // Check if there's a closing marker between the comment start and this class
                 var closingMarker = "// ========================================";
-                var commentStartIndex = checkRegion.LastIndexOf("// ========== COMMENTED OUT CLASS ==========", StringComparison.Ordinal);
+                var commentStartIndex = checkRegion.LastIndexOf("// ========== COMMENTED OUT CLASS ==========", StringComparison.OrdinalIgnoreCase);
                 var afterCommentStart = checkRegion.Substring(commentStartIndex);
                 
                 // If no closing marker found after comment start, we're still inside the comment
-                if (!afterCommentStart.Contains(closingMarker, StringComparison.Ordinal)) {
+                if (!afterCommentStart.Contains(closingMarker, StringComparison.OrdinalIgnoreCase)) {
                     return true;
                 }
             }
@@ -815,7 +834,8 @@ namespace XafApiConverter.Converter {
         /// </summary>
         private string BuildClassComment(ProblematicClass problematicClass) {
             var sb = new StringBuilder();
-            sb.AppendLine("// NOTE: Class commented out due to types having no XAF .NET equivalent");
+            sb.AppendLine(GetTodoClassCommentedComment(problematicClass.ClassName));
+            sb.AppendLine("// NOTE:");
             
             var reasons = problematicClass.Problems
                 .Where(p => p.RequiresCommentOut)
@@ -830,8 +850,6 @@ namespace XafApiConverter.Converter {
                     sb.AppendLine($"//     {problem.Description}");
                 }
             }
-            
-            sb.AppendLine("// TODO: It is necessary to test the application's behavior and, if necessary, develop a new solution.");
             
             return sb.ToString();
         }
@@ -890,104 +908,6 @@ namespace XafApiConverter.Converter {
             sb.AppendLine("// ========================================");
             
             return sb.ToString();
-        }
-
-        /// <summary>
-        /// Comment out a dependent class
-        /// </summary>
-        private bool CommentOutDependentClass(string classFullName, string dependencyFullName) {
-            try {
-                // Find the file containing this class
-                var classInfo = _report.ProblematicClasses
-                    .FirstOrDefault(c => c.FullName == classFullName);
-
-                if (classInfo == null) {
-                    Console.WriteLine($"      [WARNING] Class {classFullName} not in report, skipping");
-                    return false;
-                }
-
-                var filePath = classInfo.FilePath;
-                if (!File.Exists(filePath)) {
-                    Console.WriteLine($"      [ERROR] File not found: {filePath}");
-                    return false;
-                }
-
-                // STEP 1: Load fresh content from disk
-                var content = File.ReadAllText(filePath);
-                
-                // STEP 2: Check if class is already commented out (BEFORE parsing!)
-                if (IsClassAlreadyCommented(content, classFullName)) {
-                    Console.WriteLine($"      [WARNING] Class {classFullName} appears to be already commented out, skipping");
-                    return false;
-                }
-                
-                // STEP 3: Parse syntax tree
-                var syntaxTree = CSharpSyntaxTree.ParseText(content);
-                var root = syntaxTree.GetRoot() as CompilationUnitSyntax;
-
-                if (root == null) {
-                    Console.WriteLine($"      [ERROR] Could not parse file: {filePath}");
-                    return false;
-                }
-
-                // STEP 4: Find the class declaration (only active classes!)
-                var allClasses = root.DescendantNodes()
-                    .OfType<ClassDeclarationSyntax>()
-                    .Where(c => $"{ProblemDetector.GetNamespace(c)}.{c.Identifier.Text}" == classFullName)
-                    .Where(c => !IsClassInsideComment(c, content))  // NEW: Filter out classes inside comments!
-                    .ToList();
-
-                if (!allClasses.Any()) {
-                    Console.WriteLine($"      [WARNING] Class {classFullName} not found as active code in file: {filePath}");
-                    return false;
-                }
-                
-                var classDecl = allClasses.First();
-                
-                // STEP 5: Additional check - verify the class is not inside a comment
-                var classPosition = classDecl.SpanStart;
-                var textBeforeClass = content.Substring(Math.Max(0, classPosition - 100), Math.Min(100, classPosition));
-                
-                if (textBeforeClass.Contains("// ========== COMMENTED OUT CLASS", StringComparison.Ordinal)) {
-                    Console.WriteLine($"      [WARNING] Class {classFullName} is inside a commented block, skipping");
-                    return false;
-                }
-
-                // STEP 6: Build comment
-                var comment = $@"// NOTE: Class commented out because it depends on '{dependencyFullName}' which has no XAF .NET equivalent
-// TODO: It is necessary to test the application's behavior and, if necessary, develop a new solution.
-";
-
-                // STEP 7: Get ONLY the class code directly from file content
-                // Use direct substring instead of GetText() to avoid Roslyn capturing commented code
-                var classStartPosition = classDecl.SpanStart;
-                var classLength = classDecl.Span.Length;
-                var classText = content.Substring(classStartPosition, classLength);
-                var leadingTrivia = classDecl.GetLeadingTrivia();
-                
-                // STEP 8: Build commented version
-                var commentedClass = BuildCommentedClassText(comment, classText, leadingTrivia);
-                
-                // STEP 9: Replace in content using SPAN positions
-                var beforeClass = content.Substring(0, classStartPosition);
-                var afterClass = content.Length > classStartPosition + classLength 
-                    ? content.Substring(classStartPosition + classLength) 
-                    : string.Empty;
-                
-                var newContent = beforeClass + commentedClass + afterClass;
-
-                // STEP 10: Save file
-                File.WriteAllText(filePath, newContent, Encoding.UTF8);
-                
-                Console.WriteLine($"      [SUCCESS] Dependent class {classFullName} commented out successfully");
-                
-                return true;
-            }
-            catch (Exception ex) {
-                Console.WriteLine($"      [ERROR] Failed to comment out dependent class {classFullName}: {ex.Message}");
-                Console.WriteLine($"      Stack trace: {ex.StackTrace}");
-                return false;
-            }
         }
 
         /// <summary>
