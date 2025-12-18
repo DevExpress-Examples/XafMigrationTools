@@ -262,3 +262,11 @@ namespace FeatureCenter.Module.Web.ListEditors {
     // ========================================
 
 }
+
+namespace FeatureCenter.Module.ListEditors {
+    public interface IPictureItem {
+        string ID { get; }
+        System.Drawing.Image Image { get; }
+        string Text { get; }
+    }
+}
