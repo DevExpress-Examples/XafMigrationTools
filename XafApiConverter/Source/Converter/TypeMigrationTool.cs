@@ -26,12 +26,12 @@ namespace XafApiConverter.Converter {
         /// This cache is populated once after LoadSolution and never updated.
         /// Use this for dependency analysis and type resolution on original code.
         /// </summary>
-        private Dictionary<string, (SemanticModel SemanticModel, SyntaxTree SyntaxTree, Microsoft.CodeAnalysis.Document Document)> _semanticCache;
+        private SemanticCache _semanticCache;
 
         public TypeMigrationTool(string solutionPath) {
             _solutionPath = solutionPath;
             _report = new MigrationReport { SolutionPath = solutionPath };
-            _semanticCache = new Dictionary<string, (SemanticModel, SyntaxTree, Microsoft.CodeAnalysis.Document)>();
+            _semanticCache = new SemanticCache();
         }
 
         /// <summary>
@@ -110,7 +110,7 @@ namespace XafApiConverter.Converter {
                         var semanticModel = document.GetSemanticModelAsync().Result;
                         
                         if (syntaxTree != null && semanticModel != null) {
-                            _semanticCache[document.FilePath] = (semanticModel, syntaxTree, document);
+                            _semanticCache.Add(document.FilePath, semanticModel, syntaxTree, document);
                             cachedDocuments++;
                         }
                     }
@@ -123,17 +123,6 @@ namespace XafApiConverter.Converter {
             Console.WriteLine($"  Cached {cachedDocuments}/{totalDocuments} documents");
         }
         
-        /// <summary>
-        /// Get semantic model from cache for a given file path.
-        /// Returns null if not found in cache.
-        /// </summary>
-        internal (SemanticModel SemanticModel, SyntaxTree SyntaxTree, Microsoft.CodeAnalysis.Document Document)? GetCachedSemanticModel(string filePath) {
-            if (_semanticCache.TryGetValue(filePath, out var cached)) {
-                return cached;
-            }
-            return null;
-        }
-
         /// <summary>
         /// Phase 2: Apply automatic namespace and type replacements
         /// TRANS-006, TRANS-007, TRANS-008
@@ -430,14 +419,14 @@ namespace XafApiConverter.Converter {
                     if (!document.FilePath.EndsWith(".cs")) continue;
                     
                     // Get cached semantic model and syntax tree (ORIGINAL state)
-                    var cached = GetCachedSemanticModel(document.FilePath);
-                    if (!cached.HasValue) {
+                    var cached = _semanticCache.TryGetValue(document.FilePath);
+                    if (cached == null) {
                         Console.WriteLine($"    [WARNING] No cached semantic model for {Path.GetFileName(document.FilePath)}, skipping");
                         continue;
                     }
                     
-                    var semanticModel = cached.Value.SemanticModel;
-                    var syntaxTree = cached.Value.SyntaxTree;
+                    var semanticModel = cached.SemanticModel;
+                    var syntaxTree = cached.SyntaxTree;
                     var root = syntaxTree.GetRoot();
                     
                     // Extract using directives from ORIGINAL syntax tree
@@ -610,10 +599,10 @@ namespace XafApiConverter.Converter {
                     foreach (var document in project.Documents) {
                         if (!document.FilePath.EndsWith(".cs")) continue;
                         
-                        var cached = GetCachedSemanticModel(document.FilePath);
-                        if (!cached.HasValue) continue;
+                        var cached = _semanticCache.TryGetValue(document.FilePath);
+                        if (cached == null) continue;
                         
-                        var root = cached.Value.SyntaxTree.GetRoot();
+                        var root = cached.SyntaxTree.GetRoot();
                         var classes = root.DescendantNodes().OfType<ClassDeclarationSyntax>();
                         
                         foreach (var classDecl in classes) {

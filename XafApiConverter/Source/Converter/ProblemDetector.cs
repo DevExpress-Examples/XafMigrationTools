@@ -379,7 +379,7 @@ namespace XafApiConverter.Converter {
             Project project, 
             string targetClassName, 
             string targetNamespace = null,
-            Dictionary<string, (SemanticModel SemanticModel, SyntaxTree SyntaxTree, Microsoft.CodeAnalysis.Document Document)> semanticCache = null) {
+            SemanticCache semanticCache = null) {
             
             var dependents = new List<string>();
             var targetFullName = string.IsNullOrEmpty(targetNamespace) ? targetClassName : $"{targetNamespace}.{targetClassName}";
@@ -391,8 +391,9 @@ namespace XafApiConverter.Converter {
                     // Try to get from cache first
                     SemanticModel semanticModel;
                     SyntaxTree syntaxTree;
-                    
-                    if (semanticCache != null && semanticCache.TryGetValue(document.FilePath, out var cached)) {
+
+                    var cached = (semanticCache != null) ? semanticCache.TryGetValue(document.FilePath) : null;
+                    if (cached != null) {
                         semanticModel = cached.SemanticModel;
                         syntaxTree = cached.SyntaxTree;
                     }
@@ -400,7 +401,7 @@ namespace XafApiConverter.Converter {
                         // Fallback: load directly
                         syntaxTree = document.GetSyntaxTreeAsync().Result;
                         if (syntaxTree == null) continue;
-                        
+
                         semanticModel = document.GetSemanticModelAsync().Result;
                         if (semanticModel == null) continue;
                     }
