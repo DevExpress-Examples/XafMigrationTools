@@ -14,21 +14,22 @@ namespace XafApiConverter {
             if (args.Length > 0) {
                 var command = args[0].ToLowerInvariant();
 
-                // explicit "convert" command
+                // explicit "convert" command (legacy support)
                 if (command == "convert") {
                     var cliArgs = args.Skip(1).ToArray();
                     Environment.Exit(ConversionCli.Run(cliArgs));
                     return;
                 }
 
-                // explicit "migrate-types" command
+                // explicit "migrate-types" command - redirect to unified CLI with --only-type-migration
                 if (command == "migrate-types") {
-                    var cliArgs = args.Skip(1).ToArray();
-                    Environment.Exit(TypeMigrationCli.Run(cliArgs));
+                    var cliArgs = args.Skip(1).ToList();
+                    cliArgs.Add("--only-type-migration");
+                    Environment.Exit(UnifiedMigrationCli.Run(cliArgs.ToArray()));
                     return;
                 }
 
-                // explicit "security-update" command
+                // explicit "security-update" command (legacy support)
                 if (command == "security-update") {
                     var cliArgs = args.Skip(1).ToArray();
                     Environment.Exit(SecurityUpdateCli.Run(cliArgs));
@@ -97,6 +98,8 @@ Example:
 
 Note: This is a legacy command. Consider using the unified workflow:
   XafApiConverter <solution.sln>  (runs all steps including security update)
+  or
+  XafApiConverter <solution.sln> --only-security-update
 ");
         }
     }

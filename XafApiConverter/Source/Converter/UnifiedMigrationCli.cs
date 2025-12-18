@@ -5,6 +5,32 @@ using System.Linq;
 
 namespace XafApiConverter.Converter {
     /// <summary>
+    /// Unified options for XAF migration workflow
+    /// Supports project conversion, security updates, and type migration
+    /// </summary>
+    public class MigrationOptions {
+        public string SolutionPath { get; set; }
+        public string TargetFramework { get; set; }
+        public string DxVersion { get; set; }
+        public string OutputPath { get; set; }
+
+        // Step control
+        public bool SkipProjectConversion { get; set; }
+        public bool SkipTypeMigration { get; set; }
+        public bool SkipSecurityUpdate { get; set; }
+
+        // Type migration specific options
+        public bool CommentIssuesOnly { get; set; }
+        public bool ShowMappings { get; set; }
+
+        // Other options
+        public bool CreateBackup { get; set; } = false;
+        public bool UseDirectoryPackages { get; set; }
+        public bool ValidateOnly { get; set; }
+        public bool ReportOnly { get; set; }
+    }
+
+    /// <summary>
     /// Unified CLI for complete XAF migration workflow
     /// Executes: 1) Project Conversion, 2) Type Migration, 3) Security Types Update
     /// </summary>
@@ -20,6 +46,12 @@ namespace XafApiConverter.Converter {
 
             try {
                 var options = ParseArguments(args);
+                
+                // Show mappings mode
+                if (options.ShowMappings) {
+                    ShowMappings();
+                    return 0;
+                }
                 
                 if (!ValidateOptions(options)) {
                     return 1;
@@ -105,6 +137,17 @@ namespace XafApiConverter.Converter {
                         options.SkipTypeMigration = true;
                         break;
 
+                    // Type migration specific options
+                    case "--comment-issues-only":
+                    case "-c":
+                        options.CommentIssuesOnly = true;
+                        break;
+
+                    case "--show-mappings":
+                    case "-m":
+                        options.ShowMappings = true;
+                        break;
+
                     // Other options
                     case "--backup":
                     case "-b":
@@ -155,6 +198,64 @@ namespace XafApiConverter.Converter {
             }
 
             return true;
+        }
+
+        private static void ShowMappings() {
+            Console.WriteLine("===============================================");
+            Console.WriteLine("  Type and Namespace Replacement Mappings");
+            Console.WriteLine("===============================================");
+            Console.WriteLine();
+
+            // Namespace mappings
+            Console.WriteLine("## Namespace Replacements (TRANS-006, TRANS-007)");
+            Console.WriteLine();
+            foreach (var ns in TypeReplacementMap.NamespaceReplacements.Values) {
+                Console.WriteLine($"  {ns.OldNamespace}");
+                Console.WriteLine($"  -> {ns.NewNamespace}");
+                Console.WriteLine($"  ({ns.Description})");
+                Console.WriteLine();
+            }
+
+            // Type mappings
+            Console.WriteLine("## Type Replacements (TRANS-008)");
+            Console.WriteLine();
+            foreach (var type in TypeReplacementMap.TypeReplacements.Values) {
+                Console.WriteLine($"  {type.OldType}");
+                Console.WriteLine($"  -> {type.NewType}");
+                Console.WriteLine($"  ({type.Description})");
+                Console.WriteLine();
+            }
+
+            // NO_EQUIVALENT namespaces
+            Console.WriteLine("## No Equivalent Namespaces (Require Commenting Out)");
+            Console.WriteLine();
+            foreach (var ns in TypeReplacementMap.NoEquivalentNamespaces.Values) {
+                Console.WriteLine($"  [X] {ns.OldNamespace}");
+                Console.WriteLine($"  ({ns.Description})");
+                Console.WriteLine();
+            }
+
+            // NO_EQUIVALENT types
+            Console.WriteLine("## No Equivalent Types (Require Commenting Out)");
+            Console.WriteLine();
+            foreach (var type in TypeReplacementMap.NoEquivalentTypes.Values) {
+                Console.WriteLine($"  [X] {type.OldType}");
+                Console.WriteLine($"  ({type.Description})");
+                if (type.CommentOutEntireClass) {
+                    Console.WriteLine($"  [WARNING] Requires commenting out ENTIRE CLASS");
+                }
+                Console.WriteLine();
+            }
+
+            // Problematic enums
+            Console.WriteLine("## Problematic Enums (TRANS-009)");
+            Console.WriteLine();
+            foreach (var enumEntry in TypeReplacementMap.ProblematicEnums.Values) {
+                Console.WriteLine($"  [!] {enumEntry.EnumName}");
+                Console.WriteLine($"  Values: {string.Join(", ", enumEntry.ProblematicValues)}");
+                Console.WriteLine($"  ({enumEntry.Description})");
+                Console.WriteLine();
+            }
         }
 
         private static int ExecuteMigration(MigrationOptions options) {
@@ -226,7 +327,7 @@ namespace XafApiConverter.Converter {
                         Console.WriteLine();
                     }
 
-                    // Step 2: Type Migration (TRANS-006 to TRANS-008)
+                    // Step 3: Type Migration (TRANS-006 to TRANS-008)
                     if(!options.SkipTypeMigration) {
                         Console.ForegroundColor = ConsoleColor.Cyan;
                         Console.WriteLine(">> Step 3/3: Type Migration (Web -> Blazor)");
@@ -383,7 +484,11 @@ namespace XafApiConverter.Converter {
 
         private static int RunTypeMigration(string solutionPath, MigrationOptions options) {
             try {
-                var tool = new TypeMigrationTool(solutionPath);
+                // Create migration tool with merged options
+                var tool = new TypeMigrationTool(options) {
+                    CommentIssuesOnly = options.CommentIssuesOnly
+                };
+
                 var report = tool.RunMigration();
 
                 // Save report
@@ -395,6 +500,11 @@ namespace XafApiConverter.Converter {
                 Console.WriteLine($"Report saved to: {reportPath}");
                 Console.WriteLine();
 
+                // Print next steps if there are problematic classes
+                if (report.ProblematicClasses.Any()) {
+                    PrintNextSteps(report);
+                }
+
                 return report.ProblematicClasses.Any() ? 1 : 0;
             }
             catch (Exception ex) {
@@ -402,6 +512,50 @@ namespace XafApiConverter.Converter {
                 Console.WriteLine($"Type migration failed: {ex.Message}");
                 Console.ResetColor();
                 return 1;
+            }
+        }
+
+        private static void PrintNextSteps(MigrationReport report) {
+            Console.WriteLine("===============================================");
+            Console.WriteLine("  Next Steps");
+            Console.WriteLine("===============================================");
+            Console.WriteLine();
+
+            if (report.ProblematicClasses.Any()) {
+                Console.ForegroundColor = ConsoleColor.Yellow;
+                Console.WriteLine("[!] LLM Analysis Required:");
+                Console.ResetColor();
+                Console.WriteLine();
+                Console.WriteLine("1. Review the generated report (type-migration-report.md)");
+                Console.WriteLine("2. Share the report with LLM (GitHub Copilot, ChatGPT, etc.)");
+                Console.WriteLine("3. LLM will analyze and provide:");
+                Console.WriteLine("   - Which classes to comment out");
+                Console.WriteLine("   - Dependency cascade analysis");
+                Console.WriteLine("   - Alternative Blazor implementations");
+                Console.WriteLine("   - Code fixes for build errors");
+                Console.WriteLine();
+            }
+
+            Console.ForegroundColor = ConsoleColor.Green;
+            Console.WriteLine("[OK] Automatic Changes:");
+            Console.ResetColor();
+            Console.WriteLine();
+            Console.WriteLine($"  * {report.NamespacesReplaced} namespaces migrated");
+            Console.WriteLine($"  * {report.TypesReplaced} types replaced");
+            Console.WriteLine($"  * {report.FilesProcessed} files processed");
+            Console.WriteLine();
+
+            if (!report.BuildSuccessful) {
+                Console.ForegroundColor = ConsoleColor.Cyan;
+                Console.WriteLine("[BUILD] Build Fixes:");
+                Console.ResetColor();
+                Console.WriteLine();
+                Console.WriteLine("After LLM analysis, you can:");
+                Console.WriteLine("1. Build the project: dotnet build");
+                Console.WriteLine("2. Review build errors");
+                Console.WriteLine("3. Apply LLM-suggested fixes");
+                Console.WriteLine("4. Iterate until build succeeds");
+                Console.WriteLine();
             }
         }
 
@@ -498,8 +652,8 @@ XAF Migration Tool - Complete Workflow
 
 Executes complete migration workflow:
   1. Project Conversion (.NET Framework -> .NET)
-  2. Type Migration (Web -> Blazor)
-  3. Security Types Update
+  2. Security Types Update (SecuritySystem* -> PermissionPolicy*)
+  3. Type Migration (Web -> Blazor)
 
 Usage:
   XafApiConverter <path> [options]
@@ -519,12 +673,18 @@ Common Options:
 
 Step Control:
   --skip-conversion         Skip step 1 (project conversion)
-  --skip-type-migration     Skip step 2 (type migration)
-  --skip-security-update    Skip step 3 (security update)
+  --skip-security-update    Skip step 2 (security update)
+  --skip-type-migration     Skip step 3 (type migration)
   
   --only-conversion         Execute only step 1
-  --only-type-migration     Execute only step 2
-  --only-security-update    Execute only step 3
+  --only-security-update    Execute only step 2
+  --only-type-migration     Execute only step 3
+
+Type Migration Options:
+  -c, --comment-issues-only Add warning comments to ALL problematic classes 
+                            without commenting them out
+                            (Treats all classes as protected - useful for manual review)
+  -m, --show-mappings       Show all type and namespace mappings and exit
 
 Other Options:
   -v, --validate            Validation mode only
@@ -532,26 +692,37 @@ Other Options:
   -h, --help                Show this help message
 
 Examples:
-  # Run complete migration (all 3 steps)
-  XafApiConverter MySolution.sln
+=========
 
-  # Run with custom .NET version
-  XafApiConverter MySolution.sln --target-framework net10.0
+# Run complete migration (all 3 steps)
+XafApiConverter MySolution.sln
 
-  # Run with custom DevExpress version
-  XafApiConverter MySolution.sln --dx-version 26.1.6
+# Run with custom .NET version
+XafApiConverter MySolution.sln --target-framework net10.0
 
-  # Skip security update step
-  XafApiConverter MySolution.sln --skip-security-update
+# Run with custom DevExpress version
+XafApiConverter MySolution.sln --dx-version 26.1.6
 
-  # Run only project conversion
-  XafApiConverter MySolution.sln --only-conversion
+# Skip security update step
+XafApiConverter MySolution.sln --skip-security-update
 
-  # Process all solutions in directory
-  XafApiConverter C:\Projects\MyXafApp
+# Run only project conversion
+XafApiConverter MySolution.sln --only-conversion
 
-  # Use Directory.Packages.props
-  XafApiConverter MySolution.sln --directory-packages
+# Run only type migration with warning comments only (no auto-commenting)
+XafApiConverter MySolution.sln --only-type-migration --comment-issues-only
+
+# Process all solutions in directory
+XafApiConverter C:\Projects\MyXafApp
+
+# Use Directory.Packages.props
+XafApiConverter MySolution.sln --directory-packages
+
+# Show type and namespace mappings
+XafApiConverter --show-mappings
+
+# Generate report only (no file changes)
+XafApiConverter MySolution.sln --report-only
 
 Steps Details:
 ==============
@@ -563,18 +734,55 @@ Step 1: Project Conversion
   - Removes legacy assembly references
   - Validates converted projects
 
-Step 2: Type Migration
-  - Migrates namespaces (Web -> Blazor)
-  - Replaces types (ASPx* -> Dx*, WebApplication -> BlazorApplication)
-  - Processes .cs and .xafml files
-  - Detects problematic types (NO_EQUIVALENT)
-  - Generates detailed migration report
-
-Step 3: Security Update
+Step 2: Security Types Update
   - Updates security types (SecuritySystem* -> PermissionPolicy*)
   - Removes obsolete feature toggles
   - Adds PermissionPolicyRoleExtensions
   - Updates permission state setters
+
+Step 3: Type Migration (Hybrid Approach)
+  
+  [OK] AUTOMATIC (No LLM needed):
+    * TRANS-006: Migrate System.Data.SqlClient -> Microsoft.Data.SqlClient
+    * TRANS-007: Migrate DevExpress.ExpressApp.Web.* -> Blazor.*
+    * TRANS-008: Replace types (WebApplication -> BlazorApplication, etc.)
+    * Process both .cs and .xafml files
+    * Generate detailed report
+
+  [!] REQUIRES LLM ANALYSIS:
+    * TRANS-009: Classes using NO_EQUIVALENT types (Page, TemplateType, etc.)
+    * TRANS-010: Iterative build-fix-comment process
+    * Dependency cascade analysis
+    * Commenting out problematic classes
+    * Manual code reviews
+
+Type Migration Modes:
+=====================
+
+1. Full Migration (default):
+   - Applies automatic replacements
+   - Comments out problematic classes automatically
+   - Protected classes (ModuleBase, BaseObject) only get warnings
+
+2. Comment Issues Only (--comment-issues-only):
+   - Applies automatic replacements
+   - ALL problematic classes only get warning comments (no auto-commenting)
+   - Useful for manual review and controlled migration
+   - Developer decides which classes to comment out
+
+3. Report Only (--report-only):
+   - No file modifications
+   - Only generates analysis report
+
+Type Migration Workflow:
+========================
+
+1. Run this tool -> Automatic replacements + problem detection
+2. Review generated report (type-migration-report.md)
+3. Share report with LLM (Copilot, ChatGPT)
+4. LLM analyzes and suggests fixes
+5. Apply LLM fixes
+6. Build and test
 
 Default Behavior:
   By default, ALL THREE STEPS are executed sequentially.
@@ -583,26 +791,9 @@ Default Behavior:
 For more information, see documentation files:
   - README.md
   - TYPE_MIGRATION_README.md
+  - UpdateTypes.md
   - QUICK_START.md
 ");
-        }
-
-        private class MigrationOptions {
-            public string SolutionPath { get; set; }
-            public string TargetFramework { get; set; }
-            public string DxVersion { get; set; }
-            public string OutputPath { get; set; }
-
-            // Step control
-            public bool SkipProjectConversion { get; set; }
-            public bool SkipTypeMigration { get; set; }
-            public bool SkipSecurityUpdate { get; set; }
-
-            // Other options
-            public bool CreateBackup { get; set; } = false;
-            public bool UseDirectoryPackages { get; set; }
-            public bool ValidateOnly { get; set; }
-            public bool ReportOnly { get; set; }
         }
     }
 

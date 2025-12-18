@@ -41,6 +41,19 @@ namespace XafApiConverterTests.ClassCommenterTests {
 
         [Fact]
         [Trait("Category", "Integration")]
+        public void TestFullPipeline_SingleClass_ASPxPropertyEditor_NotificationCommentOnly() {
+            var inputFile = Path.Combine(_testFilesPath, "CustomStringEditor.cs");
+            var expectedFile = Path.Combine(_testFilesPath, "CustomStringEditor_commented_noteOnly.cs");
+
+            var result = RunFullMigrationPipeline(inputFile, true);
+            var expected = NormalizeWhitespace(File.ReadAllText(expectedFile));
+            var actual = NormalizeWhitespace(result);
+
+            Assert.Equal(expected, actual);
+        }
+
+        [Fact]
+        [Trait("Category", "Integration")]
         public void TestFullPipeline_MultipleClasses_AllCommented() {
             var inputFile = Path.Combine(_testFilesPath, "CustomLayoutTemplates.cs");
             var expectedFile = Path.Combine(_testFilesPath, "CustomLayoutTemplates_commented.cs");
@@ -142,7 +155,7 @@ namespace XafApiConverterTests.ClassCommenterTests {
         /// <summary>
         /// Run complete migration pipeline using REAL production code
         /// </summary>
-        private string RunFullMigrationPipeline(string filePath) {
+        private string RunFullMigrationPipeline(string filePath, bool comment_issues_only = false) {
             if (!File.Exists(filePath)) {
                 throw new FileNotFoundException($"Test file not found: {filePath}");
             }
@@ -152,7 +165,7 @@ namespace XafApiConverterTests.ClassCommenterTests {
 
             try {
                 // STEP 1: Detect and comment out problematic classes using REAL ProblemDetector
-                DetectAndCommentProblematicClasses(tempFile);
+                DetectAndCommentProblematicClasses(tempFile, comment_issues_only);
 
                 // STEP 2 & 3: Apply replacements using REAL production logic
                 ApplyReplacements(tempFile);
@@ -199,7 +212,7 @@ namespace XafApiConverterTests.ClassCommenterTests {
         /// <summary>
         /// Detect and comment problematic classes using REAL ProblemDetector logic
         /// </summary>
-        private void DetectAndCommentProblematicClasses(string filePath) {
+        private void DetectAndCommentProblematicClasses(string filePath, bool comment_issues_only) {
             var content = File.ReadAllText(filePath);
             var syntaxTree = CSharpSyntaxTree.ParseText(content);
             var root = syntaxTree.GetRoot();
@@ -235,8 +248,14 @@ namespace XafApiConverterTests.ClassCommenterTests {
                     ProblematicClasses = problematicClasses
                 };
 
+                // Create default options for testing
+                var options = new MigrationOptions {
+                    SolutionPath = filePath,
+                    CommentIssuesOnly = comment_issues_only
+                };
+
                 // Use REAL ClassCommenter
-                var commenter = new ClassCommenter(report);
+                var commenter = new ClassCommenter(report, options);
                 commenter.CommentOutProblematicClasses();
             }
         }
@@ -308,7 +327,13 @@ namespace XafApiConverterTests.ClassCommenterTests {
                     ProblematicClasses = allProblems
                 };
 
-                var commenter = new ClassCommenter(report);
+                // Create default options for testing
+                var options = new MigrationOptions {
+                    SolutionPath = mainFilePath,
+                    CommentIssuesOnly = false
+                };
+
+                var commenter = new ClassCommenter(report, options);
                 commenter.CommentOutProblematicClasses();
             }
         }

@@ -15,6 +15,7 @@ namespace XafApiConverter.Converter {
         private readonly string _solutionPath;
         private Solution _solution;
         private MigrationReport _report;
+        private MigrationOptions _options;
 
         /// <summary>
         /// Cache of original semantic models and syntax trees before any modifications.
@@ -24,10 +25,17 @@ namespace XafApiConverter.Converter {
         /// Use this for dependency analysis and type resolution on original code.
         /// </summary>
         private SemanticCache _semanticCache;
-
-        public TypeMigrationTool(string solutionPath) {
-            _solutionPath = solutionPath;
-            _report = new MigrationReport { SolutionPath = solutionPath };
+        /// <summary>
+        /// When true, all problematic classes will receive warning comments only (no auto-commenting).
+        /// This mode treats ALL classes as protected, allowing manual review and decision-making.
+        /// Useful for controlled migration scenarios where developer wants to review each class individually.
+        /// Default: false (normal mode with automatic commenting for non-protected classes).
+        /// </summary>
+        public bool CommentIssuesOnly { get; set; } = false;
+        public TypeMigrationTool(MigrationOptions options) {
+            _options = options;
+            _solutionPath = options.SolutionPath;
+            _report = new MigrationReport { SolutionPath = _solutionPath };
             _semanticCache = new SemanticCache();
         }
 
@@ -605,12 +613,12 @@ namespace XafApiConverter.Converter {
         /// Implements TRANS-010 lightweight version
         /// </summary>
         private void CommentOutProblematicClasses() {
-            var commenter = new ClassCommenter(_report);
+            var commenter = new ClassCommenter(_report, _options);
             var commentedCount = commenter.CommentOutProblematicClasses();
 
             if(commentedCount > 0) {
                 Console.WriteLine($"  Commented out {commentedCount} classes");
-
+                
                 // Update report with commented classes
                 _report.ClassesCommented = commentedCount;
                 _report.CommentedClassNames = commenter.GetCommentedClasses().ToList();
