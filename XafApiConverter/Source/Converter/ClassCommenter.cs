@@ -16,8 +16,10 @@ namespace XafApiConverter.Converter {
         private readonly MigrationReport _report;
         private readonly HashSet<string> _commentedClasses = new();
         private readonly HashSet<string> _warningAddedClasses = new();
+        private readonly MigrationOptions _options;
 
-        public ClassCommenter(MigrationReport report) {
+        public ClassCommenter(MigrationReport report, MigrationOptions options) {
+            this._options = options;
             _report = report;
         }
 
@@ -83,9 +85,17 @@ namespace XafApiConverter.Converter {
         }
 
         /// <summary>
-        /// Check if a class is protected (inherits from ModuleBase, etc.) without modifying it
+        /// Check if a class is protected (inherits from ModuleBase, etc.) without modifying it.
+        /// 
+        /// IMPORTANT: In CommentIssuesOnly mode, this method ALWAYS returns true,
+        /// treating all classes as protected (only warning comments will be added).
         /// </summary>
         private bool CheckIfProtectedClass(string filePath, string className) {
+            // Comment Issues Only mode: treat ALL classes as protected
+            if (_options.CommentIssuesOnly) {
+                return true;
+            }
+            
             try {
                 if (!File.Exists(filePath)) {
                     return false;
@@ -761,34 +771,46 @@ namespace XafApiConverter.Converter {
         /// Check if a class inherits from a protected base class.
         /// Protected classes (like ModuleBase, XafApplication, BaseObject) should NOT be automatically commented out.
         /// 
+        /// IMPORTANT: In CommentIssuesOnly mode, this method ALWAYS returns true,
+        /// treating all classes as protected (only warning comments will be added).
+        /// 
         /// ALGORITHM:
-        /// ==========
+        /// =========
         /// 1. Extract all base type names from the class declaration (class Foo : Bar, IBaz)
         /// 2. For each base type, extract the simple name without generic parameters
         ///    Example: "ViewController<DetailView>" → "ViewController"
-        /// 3. Check if the simple name matches ANY protected base class (case-insensitive)
-        /// 4. Use EXACT word boundary matching to avoid false positives
+        /// 3. Use semantic model from cache to get accurate type and assembly information
+        /// 4. Check if the simple name matches ANY protected base class (case-insensitive)
+        /// 5. Use EXACT word boundary matching to avoid false positives
         ///    Example: "ModuleBase" should NOT match "MyModuleBase"
+        /// 
+        /// NEW: Uses semantic model from cache to get assembly information for base types.
+        /// This allows filtering based on assembly origin (e.g., DevExpress vs user code).
         /// 
         /// EXAMPLES:
         /// =========
-        /// ✅ "class MyModule : ModuleBase" → TRUE (protected)
+        /// ✅ "class MyModule : ModuleBase" → TRUE (protected, from DevExpress.ExpressApp)
         /// ✅ "class MyModule : ModuleBase, IModule" → TRUE (protected)
-        /// ✅ "class MyApp : XafApplication" → TRUE (protected)
+        /// ✅ "class MyApp : XafApplication" → TRUE (protected, from DevExpress.ExpressApp)
         /// ❌ "class MyTemplate : LayoutItemTemplate" → FALSE (not protected)
         /// ❌ "class MyEditor : ASPxPropertyEditor" → FALSE (not protected, unless explicitly added)
         /// ❌ "class MyModuleBase : BaseClass" → FALSE (not protected - MyModuleBase is not ModuleBase)
         /// </summary>
         private bool IsProtectedClass(ClassDeclarationSyntax classDecl, string fileContent) {
+            // Comment Issues Only mode: treat ALL classes as protected
+            if (_options.CommentIssuesOnly) {
+                return true;
+            }
+            
             if (classDecl.BaseList == null || classDecl.BaseList.Types.Count == 0) {
                 return false;
             }
-            
+
             // Extract all base type names from the base list
             // Example: "class Foo : Bar, IBaz" → ["Bar", "IBaz"]
             foreach (var baseType in classDecl.BaseList.Types) {
                 var baseTypeSyntax = baseType.Type;
-                
+
                 // Extract simple name without generic parameters
                 // Example: "ViewController<DetailView>" → "ViewController"
                 string baseTypeName;
