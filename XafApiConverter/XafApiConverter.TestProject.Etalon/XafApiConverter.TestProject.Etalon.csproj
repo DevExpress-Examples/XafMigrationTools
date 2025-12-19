@@ -1,22 +1,46 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project Sdk="Microsoft.NET.Sdk">
-  <PropertyGroup>
-    <TargetFramework>net9.0</TargetFramework>
-    <RootNamespace>Test.Module</RootNamespace>
-    <AssemblyName>Test.Module</AssemblyName>
-  </PropertyGroup>
-  <ItemGroup>
-    <PackageReference Include="DevExpress.ExpressApp" Version="25.1.6" />
-    <PackageReference Include="DevExpress.ExpressApp.Xpo" Version="25.1.6" />
-    <PackageReference Include="DevExpress.ExpressApp.EFCore" Version="25.1.6" />
-    <PackageReference Include="DevExpress.Persistent.Base" Version="25.1.6" />
-    <PackageReference Include="DevExpress.Persistent.BaseImpl.Xpo" Version="25.1.6" />
-    <PackageReference Include="DevExpress.Persistent.BaseImpl.EFCore" Version="25.1.6" />
-    <PackageReference Include="DevExpress.Xpo" Version="25.1.6" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="CustomLayoutTemplates.cs" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-  </ItemGroup>
+	<PropertyGroup>
+		<TargetFramework>net9.0</TargetFramework>
+		<RootNamespace>Test.Module</RootNamespace>
+		<AssemblyName>Test.Module</AssemblyName>
+	</PropertyGroup>
+	<ItemGroup>
+		<PackageReference Include="Azure.Identity" Version="1.17.1" />
+		<PackageReference Include="DevExpress.ExpressApp.AuditTrail.Xpo" Version="25.1.6" />
+		<PackageReference Include="DevExpress.ExpressApp.Chart" Version="25.1.6" />
+		<PackageReference Include="DevExpress.ExpressApp.CloneObject" Version="25.1.6" />
+		<PackageReference Include="DevExpress.ExpressApp.CodeAnalysis" Version="25.1.6" />
+		<PackageReference Include="DevExpress.ExpressApp.ConditionalAppearance" Version="25.1.6" />
+		<PackageReference Include="DevExpress.ExpressApp.Dashboards" Version="25.1.6" />
+		<PackageReference Include="DevExpress.ExpressApp.Notifications" Version="25.1.6" />
+		<PackageReference Include="DevExpress.ExpressApp.Office" Version="25.1.6" />
+		<PackageReference Include="DevExpress.ExpressApp.PivotGrid" Version="25.1.6" />
+		<PackageReference Include="DevExpress.ExpressApp.ReportsV2" Version="25.1.6" />
+		<PackageReference Include="DevExpress.ExpressApp.Scheduler" Version="25.1.6" />
+		<PackageReference Include="DevExpress.ExpressApp.Security" Version="25.1.6" />
+		<PackageReference Include="DevExpress.ExpressApp.StateMachine" Version="25.1.6" />
+		<PackageReference Include="DevExpress.ExpressApp.TreeListEditors" Version="25.1.6" />
+		<PackageReference Include="DevExpress.ExpressApp.Validation" Version="25.1.6" />
+		<PackageReference Include="DevExpress.ExpressApp.ViewVariantsModule" Version="25.1.6" />
+		<PackageReference Include="DevExpress.Persistent.BaseImpl.Xpo" Version="25.1.6" />
+		<PackageReference Include="Microsoft.CodeAnalysis.CSharp" Version="4.10.0" />
+		<PackageReference Include="Microsoft.Data.SqlClient" Version="5.2.2" />
+		<PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="9.0.0" />
+		<PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="9.0.0" />
+		<PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="9.0.0" />
+		<PackageReference Include="Microsoft.Extensions.Options" Version="9.0.0" />
+		<PackageReference Include="Microsoft.Identity.Client" Version="4.78.0" />
+		<PackageReference Include="Microsoft.IdentityModel.Protocols.OpenIdConnect" Version="8.14.0" />
+		<PackageReference Include="Microsoft.NETCore.Platforms" Version="7.0.4" />
+		<PackageReference Include="System.Configuration.ConfigurationManager" Version="9.0.0" />
+		<PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.14.0" />
+		<PackageReference Include="System.Security.AccessControl" Version="6.0.1" />
+		<PackageReference Include="System.Text.Json" Version="9.0.6" />
+	</ItemGroup>
+	<ItemGroup>
+		<None Include="CustomLayoutTemplates.cs" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</None>
+	</ItemGroup>
 </Project>

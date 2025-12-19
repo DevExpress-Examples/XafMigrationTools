@@ -9,7 +9,7 @@ namespace XafApiConverterTests {
             "bin", "obj"
         };
         static readonly HashSet<string> doNotCompareFilesWithExtensions = new HashSet<string>(StringComparer.OrdinalIgnoreCase) {
-            ".sln", ".md"
+            ".sln", ".md", ".user"
         };
 
         public static string CreateProjectCopy(string projectDirectory) {

@@ -14,6 +14,7 @@ namespace Test.Module.BO {
     internal class UnProtectedHeir : ActivityInformation {
         // Removed class
         public string ActivityInformation { get; set; }
+        public UnProtectedHeir(Type activityType) : base(activityType) { }
     }
 
     internal class UnProtectedHeir2 {
