@@ -38,9 +38,4 @@
 		<PackageReference Include="System.Security.AccessControl" Version="6.0.1" />
 		<PackageReference Include="System.Text.Json" Version="9.0.6" />
 	</ItemGroup>
-	<ItemGroup>
-		<None Include="CustomLayoutTemplates.cs" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
-			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-		</None>
-	</ItemGroup>
 </Project>

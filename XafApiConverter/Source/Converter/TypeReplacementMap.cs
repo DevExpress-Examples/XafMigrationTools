@@ -386,52 +386,6 @@ namespace XafApiConverter.Converter {
                 "DevExpress.ExpressApp.Web.Layout",
                 null,
                 "TabbedGroupTemplate has no Blazor equivalent (Web Forms layout specific)",
-                commentOutEntireClass: true) },
-
-            // Web Forms specific types (TRANS-009)
-            { "Page", new TypeReplacement(
-                "Page",
-                null,
-                "System.Web.UI",
-                null,
-                "System.Web.UI.Page is Web Forms specific",
-                new[] { ".cs" },
-                commentOutEntireClass: true) },
-
-            { "PopupShowingEventArgs", new TypeReplacement(
-                "PopupShowingEventArgs",
-                null,
-                "DevExpress.ExpressApp.Web",
-                null,
-                "PopupShowingEventArgs is Web Forms specific",
-                new[] { ".cs" },
-                commentOutEntireClass: true) },
-
-            { "PlaceHolder", new TypeReplacement(
-                "PlaceHolder",
-                null,
-                "System.Web.UI.WebControls",
-                null,
-                "PlaceHolder is Web Forms specific",
-                new[] { ".cs" },
-                commentOutEntireClass: true) },
-
-            { "ASPxGridView", new TypeReplacement(
-                "ASPxGridView",
-                null,
-                "DevExpress.Web",
-                null,
-                "ASPxGridView is Web Forms specific",
-                new[] { ".cs" },
-                commentOutEntireClass: true) },
-
-            { "ASPxButton", new TypeReplacement(
-                "ASPxButton",
-                null,
-                "DevExpress.Web",
-                null,
-                "ASPxButton is Web Forms specific",
-                new[] { ".cs" },
                 commentOutEntireClass: true) }
         };
 

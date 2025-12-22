@@ -26,12 +26,7 @@ namespace XafApiConverterTests {
         static void RunFullPipeline(string projectDir) {
             MSBuildLocator.RegisterDefaults();
             string solutionPath = Directory.GetFiles(projectDir, "*.sln", SearchOption.TopDirectoryOnly).First();
-
-            
-            // Step 1: SDK-style conversion
-            XafApiConverter.Converter.UnifiedMigrationCli.Run(new string[] { "-s", solutionPath, "--only-conversion" });
-            // Step 2: Type migration (analyze and comment out problematic classes)
-            XafApiConverter.Converter.UnifiedMigrationCli.Run(new string[] { "-s", solutionPath, "--only-type-migration" });
+            UnifiedMigrationCli.Run(new string[] { "--solution", solutionPath });
         }
     }
 }

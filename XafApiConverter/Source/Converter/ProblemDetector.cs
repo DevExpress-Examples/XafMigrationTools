@@ -1,6 +1,7 @@
 ﻿using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
+using XafApiConverter.SyntaxConverters;
 
 namespace XafApiConverter.Converter {
     /// <summary>
@@ -123,15 +124,10 @@ namespace XafApiConverter.Converter {
             if(classDecl.BaseList != null) {
                 foreach(var baseType in classDecl.BaseList.Types) {
                     var typeName = baseType.Type.ToString();
-                    var typeSymbol = semanticModel.GetSymbolInfo(baseType.Type).Symbol as INamedTypeSymbol;
-
-                    if(typeSymbol != null && !typeSymbol.ToDisplayString().StartsWith("?")) {
-                        // Semantic model resolved - use full type name
-                        var fullTypeName = typeSymbol.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)
-                            .Replace("global::", "");
-
-                        CheckTypeAgainstMaps(typeName, fullTypeName, problems);
-                    } else if(usingDirectives != null) {
+                    if (CheckTypeAgainstMaps(baseType.Type, semanticModel, problems)) {
+                        // Semantic model resolved
+                    }
+                    else if (usingDirectives != null) {
                         // Fallback to using directives
                         CheckTypeUsingDirectives(typeName, usingDirectives, problems);
                     }
@@ -159,16 +155,10 @@ namespace XafApiConverter.Converter {
             // 3. Check for typeof() expressions (e.g., typeof(MapsAspNetModule))
             var typeofExpressions = classDecl.DescendantNodes().OfType<TypeOfExpressionSyntax>();
             foreach(var typeofExpr in typeofExpressions) {
-                var typeSymbol = semanticModel.GetSymbolInfo(typeofExpr.Type).Symbol as INamedTypeSymbol;
-
-                if(typeSymbol != null && !typeSymbol.ToDisplayString().StartsWith("?")) {
-                    // Semantic model resolved - use full type name
-                    var fullTypeName = typeSymbol.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)
-                        .Replace("global::", "");
-                    var typeName = typeSymbol.Name;
-
-                    CheckTypeAgainstMaps(typeName, fullTypeName, problems);
-                } else {
+                if (CheckTypeAgainstMaps(typeofExpr.Type, semanticModel, problems)) {
+                    // Semantic model resolved - use full type name and assembly name
+                }
+                else {
                     // Fallback: semantic model couldn't resolve (common in tests without full assembly references)
                     // Parse the type expression text to extract namespace and type name
                     var typeText = typeofExpr.Type.ToString();
@@ -181,24 +171,25 @@ namespace XafApiConverter.Converter {
                     string typeName;
                     string possibleNamespace = null;
 
-                    if(lastDot >= 0) {
+                    if (lastDot >= 0) {
                         // Fully qualified type name
                         possibleNamespace = typeText.Substring(0, lastDot);
                         typeName = typeText.Substring(lastDot + 1);
-                    } else {
+                    }
+                    else {
                         // Simple type name - rely on using directives
                         typeName = typeText;
                     }
 
                     // Check if this type is in our NoEquivalentTypes or ManualConversionRequiredTypes
-                    if(TypeReplacementMap.NoEquivalentTypes.TryGetValue(typeName, out var noEquivType)) {
+                    if (TypeReplacementMap.NoEquivalentTypes.TryGetValue(typeName, out var noEquivType)) {
                         // Found a matching no-equivalent type
                         var fullTypeName = noEquivType.GetFullOldTypeName();
 
                         // Verify namespace matches if we have both
-                        if(possibleNamespace == null ||
+                        if (possibleNamespace == null ||
                             string.IsNullOrEmpty(noEquivType.OldNamespace) ||
-                            possibleNamespace.Equals(noEquivType.OldNamespace, StringComparison.OrdinalIgnoreCase) ||
+                            possibleNamespace.Equals(noEquivType.OldNamespace, StringComparison.Ordinal) ||
                             (usingDirectives != null && usingDirectives.Contains(noEquivType.OldNamespace))) {
 
                             problems.Add(new TypeProblem {
@@ -210,14 +201,15 @@ namespace XafApiConverter.Converter {
                                 RequiresCommentOut = noEquivType.CommentOutEntireClass
                             });
                         }
-                    } else if(TypeReplacementMap.ManualConversionRequiredTypes.TryGetValue(typeName, out var manualType)) {
+                    }
+                    else if (TypeReplacementMap.ManualConversionRequiredTypes.TryGetValue(typeName, out var manualType)) {
                         // Found a matching manual-conversion-required type
                         var fullTypeName = manualType.GetFullOldTypeName();
 
                         // Verify namespace matches if we have both
-                        if(possibleNamespace == null ||
+                        if (possibleNamespace == null ||
                             string.IsNullOrEmpty(manualType.OldNamespace) ||
-                            possibleNamespace.Equals(manualType.OldNamespace, StringComparison.OrdinalIgnoreCase) ||
+                            possibleNamespace.Equals(manualType.OldNamespace, StringComparison.Ordinal) ||
                             (usingDirectives != null && usingDirectives.Contains(manualType.OldNamespace))) {
 
                             problems.Add(new TypeProblem {
@@ -233,21 +225,17 @@ namespace XafApiConverter.Converter {
                 }
             }
 
-            // 4. Check for NO_EQUIVALENT and MANUAL_CONVERSION_REQUIRED types used in code
-            var identifiers = classDecl.DescendantNodes().OfType<IdentifierNameSyntax>();
-            foreach(var identifier in identifiers) {
-                var symbol = semanticModel.GetSymbolInfo(identifier).Symbol as INamedTypeSymbol;
-
-                if(symbol != null && !symbol.ToDisplayString().StartsWith("?")) {
+            // 4. Check for NO_EQUIVALENT and MANUAL_CONVERSION_REQUIRED types used in cod            
+            var identifierCollector = new IdentifierNameSyntaxCollector();
+            identifierCollector.Visit(classDecl);
+            foreach (var identifier in identifierCollector.Identifiers) {
+                if (CheckTypeAgainstMaps(identifier, semanticModel, problems)) {
                     // Semantic model resolved
-                    var fullTypeName = symbol.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)
-                        .Replace("global::", "");
-
-                    CheckTypeAgainstMaps(identifier.Identifier.Text, fullTypeName, problems);
-                } else if(usingDirectives != null) {
+                }
+                else if (usingDirectives != null) {
                     // Fallback to using directives for identifiers
                     var typeName = identifier.Identifier.Text;
-                    if(TypeReplacementMap.NoEquivalentTypes.ContainsKey(typeName) ||
+                    if (TypeReplacementMap.NoEquivalentTypes.ContainsKey(typeName) ||
                         TypeReplacementMap.ManualConversionRequiredTypes.ContainsKey(typeName)) {
                         CheckTypeUsingDirectives(typeName, usingDirectives, problems);
                     }
@@ -262,9 +250,45 @@ namespace XafApiConverter.Converter {
         }
 
         /// <summary>
+        /// Check type against TypeReplacementMap using Semantic Model
+        /// </summary>
+        /// <returns>true, if Semantic model resolved, otherwise false</returns>
+        private static bool CheckTypeAgainstMaps(IdentifierNameSyntax identifier, SemanticModel semanticModel, List<TypeProblem> problems) {
+            var typeName = identifier.Identifier.Text;
+            var typeSymbol = semanticModel.GetSymbolInfo(identifier).Symbol as INamedTypeSymbol;
+            return CheckTypeAgainstMaps(typeName, typeSymbol, semanticModel, problems);
+        }
+
+        /// <summary>
+        /// Check type against TypeReplacementMap using Semantic Model
+        /// </summary>
+        /// <returns>true, if Semantic model resolved, otherwise false</returns>
+        private static bool CheckTypeAgainstMaps(TypeSyntax typeSyntax, SemanticModel semanticModel, List<TypeProblem> problems) {
+            var typeName = typeSyntax.ToString();
+            var typeSymbol = semanticModel.GetSymbolInfo(typeSyntax).Symbol as INamedTypeSymbol;
+            return CheckTypeAgainstMaps(typeName, typeSymbol, semanticModel, problems);
+        }
+
+        /// <summary>
+        /// Check type against TypeReplacementMap using Semantic Model
+        /// </summary>
+        /// <returns>true, if Semantic model resolved, otherwise false</returns>
+        private static bool CheckTypeAgainstMaps(string typeName, INamedTypeSymbol typeSymbol, SemanticModel semanticModel, List<TypeProblem> problems) {
+            if (typeSymbol != null && !typeSymbol.ToDisplayString().StartsWith("?")) {
+                // Semantic model resolved - use full type name and containing assembly
+                string fullTypeName = typeSymbol.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)
+                    .Replace("global::", "");
+                string containingAssemblyName = typeSymbol.ContainingAssembly?.Name;
+                CheckTypeAgainstMaps(typeName, fullTypeName, containingAssemblyName, problems);
+                return true;
+            }
+            return false;
+        }
+
+        /// <summary>
         /// Check type against TypeReplacementMap using full type name
         /// </summary>
-        private static void CheckTypeAgainstMaps(string typeName, string fullTypeName, List<TypeProblem> problems) {
+        private static void CheckTypeAgainstMaps(string typeName, string fullTypeName, string assemblyName, List<TypeProblem> problems) {
             // Check NoEquivalentTypes
             var matchingNoEquiv = TypeReplacementMap.NoEquivalentTypes.Values
                 .FirstOrDefault(t => {
@@ -293,7 +317,7 @@ namespace XafApiConverter.Converter {
                            fullTypeName.EndsWith($".{expectedFullName}", StringComparison.OrdinalIgnoreCase);
                 });
 
-            if(matchingManual != null) {
+            if (matchingManual != null) {
                 problems.Add(new TypeProblem {
                     TypeName = typeName,
                     FullTypeName = fullTypeName,
@@ -303,6 +327,30 @@ namespace XafApiConverter.Converter {
                     RequiresCommentOut = matchingManual.CommentOutEntireClass
                 });
             }
+
+            // Check removed assemblies
+            if (assemblyName != null && fullTypeName.StartsWith("DevExpress.")) {
+                string assemblyNameWithoutVersion = GetAsssemblyNameWithoutVersion(assemblyName);
+                if (TypeReplacementMap.RemovedAssemblies.Contains(assemblyNameWithoutVersion)) {
+                    problems.Add(new TypeProblem {
+                        TypeName = typeName,
+                        FullTypeName = fullTypeName,
+                        Reason = $"Class '{typeName}' has no equivalent in XAF .NET",
+                        Description = $"{assemblyName} assembly is removed in v25.2",
+                        Severity = ProblemSeverity.Critical,
+                        RequiresCommentOut = true
+                    });
+                    return;
+                }
+            }
+        }
+
+        static string GetAsssemblyNameWithoutVersion(string assemblyName) {
+            if (assemblyName.EndsWith(".dll"))
+                assemblyName = assemblyName.Replace(".dll", "");
+            if (!assemblyName.StartsWith("DevExpress.") || assemblyName.LastIndexOf(".v") != assemblyName.Length - 6)
+                return assemblyName;
+            return assemblyName.Substring(0, assemblyName.Length - 6);
         }
 
         /// <summary>
@@ -441,113 +489,21 @@ namespace XafApiConverter.Converter {
             SemanticModel semanticModel) {
 
             // 1. Check base types
-            if(classDecl.BaseList != null) {
-                foreach(var baseType in classDecl.BaseList.Types) {
-                    var typeSymbol = semanticModel.GetSymbolInfo(baseType.Type).Symbol as INamedTypeSymbol;
-                    if(typeSymbol != null) {
-                        var fullTypeName = typeSymbol.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)
-                            .Replace("global::", "");
-
-                        // Check if this base type matches the target
-                        if(TypeMatchesTarget(typeSymbol.Name, fullTypeName, targetClassName, targetFullName)) {
-                            return true;
-                        }
-                    }
-                }
-            }
-
             // 2. Check field and property types
-            var fieldDeclarations = classDecl.DescendantNodes().OfType<FieldDeclarationSyntax>();
-            foreach(var field in fieldDeclarations) {
-                var typeSymbol = semanticModel.GetSymbolInfo(field.Declaration.Type).Symbol as INamedTypeSymbol;
-                if(typeSymbol != null) {
-                    var fullTypeName = typeSymbol.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)
-                        .Replace("global::", "");
-
-                    if(TypeMatchesTarget(typeSymbol.Name, fullTypeName, targetClassName, targetFullName)) {
-                        return true;
-                    }
-                }
-            }
-
-            var propertyDeclarations = classDecl.DescendantNodes().OfType<PropertyDeclarationSyntax>();
-            foreach(var property in propertyDeclarations) {
-                var typeSymbol = semanticModel.GetSymbolInfo(property.Type).Symbol as INamedTypeSymbol;
-                if(typeSymbol != null) {
-                    var fullTypeName = typeSymbol.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)
-                        .Replace("global::", "");
-
-                    if(TypeMatchesTarget(typeSymbol.Name, fullTypeName, targetClassName, targetFullName)) {
-                        return true;
-                    }
-                }
-            }
-
             // 3. Check method parameter types and return types
-            var methodDeclarations = classDecl.DescendantNodes().OfType<MethodDeclarationSyntax>();
-            foreach(var method in methodDeclarations) {
-                // Check return type
-                var returnTypeSymbol = semanticModel.GetSymbolInfo(method.ReturnType).Symbol as INamedTypeSymbol;
-                if(returnTypeSymbol != null) {
-                    var fullTypeName = returnTypeSymbol.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)
-                        .Replace("global::", "");
-
-                    if(TypeMatchesTarget(returnTypeSymbol.Name, fullTypeName, targetClassName, targetFullName)) {
-                        return true;
-                    }
-                }
-
-                // Check parameter types
-                foreach(var parameter in method.ParameterList.Parameters) {
-                    var paramTypeSymbol = semanticModel.GetSymbolInfo(parameter.Type).Symbol as INamedTypeSymbol;
-                    if(paramTypeSymbol != null) {
-                        var fullTypeName = paramTypeSymbol.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)
-                            .Replace("global::", "");
-
-                        if(TypeMatchesTarget(paramTypeSymbol.Name, fullTypeName, targetClassName, targetFullName)) {
-                            return true;
-                        }
-                    }
-                }
-            }
-
             // 4. Check local variable declarations and object creation expressions
-            var variableDeclarations = classDecl.DescendantNodes().OfType<VariableDeclarationSyntax>();
-            foreach(var variable in variableDeclarations) {
-                var typeSymbol = semanticModel.GetSymbolInfo(variable.Type).Symbol as INamedTypeSymbol;
-                if(typeSymbol != null) {
-                    var fullTypeName = typeSymbol.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)
-                        .Replace("global::", "");
-
-                    if(TypeMatchesTarget(typeSymbol.Name, fullTypeName, targetClassName, targetFullName)) {
-                        return true;
-                    }
-                }
-            }
-
             // 5. Check object creation expressions (new TargetType())
-            var objectCreations = classDecl.DescendantNodes().OfType<ObjectCreationExpressionSyntax>();
-            foreach(var creation in objectCreations) {
-                var typeSymbol = semanticModel.GetSymbolInfo(creation.Type).Symbol as INamedTypeSymbol;
-                if(typeSymbol != null) {
-                    var fullTypeName = typeSymbol.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)
-                        .Replace("global::", "");
-
-                    if(TypeMatchesTarget(typeSymbol.Name, fullTypeName, targetClassName, targetFullName)) {
-                        return true;
-                    }
-                }
-            }
-
             // 6. Check typeof() expressions
-            var typeofExpressions = classDecl.DescendantNodes().OfType<TypeOfExpressionSyntax>();
-            foreach(var typeofExpr in typeofExpressions) {
-                var typeSymbol = semanticModel.GetSymbolInfo(typeofExpr.Type).Symbol as INamedTypeSymbol;
-                if(typeSymbol != null) {
+            var typeSyntaxFinder = new TypeSyntaxCollector();
+            typeSyntaxFinder.Visit(classDecl);
+            foreach(TypeSyntax typeSyntax in typeSyntaxFinder.Types) {
+                var typeSymbol = semanticModel.GetSymbolInfo(typeSyntax).Symbol as INamedTypeSymbol;
+                if (typeSymbol != null) {
                     var fullTypeName = typeSymbol.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)
                         .Replace("global::", "");
 
-                    if(TypeMatchesTarget(typeSymbol.Name, fullTypeName, targetClassName, targetFullName)) {
+                    // Check if this base type matches the target
+                    if (TypeMatchesTarget(typeSymbol.Name, fullTypeName, targetClassName, targetFullName)) {
                         return true;
                     }
                 }

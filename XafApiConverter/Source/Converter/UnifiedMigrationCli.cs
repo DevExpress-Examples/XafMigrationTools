@@ -32,9 +32,9 @@ namespace XafApiConverter.Converter {
 
     /// <summary>
     /// Unified CLI for complete XAF migration workflow
-    /// Executes: 1) Project Conversion, 2) Type Migration, 3) Security Types Update
+    /// Executes: 1) Type Migration, 2) Security Types Update, 3) Project Conversion
     /// </summary>
-    internal class UnifiedMigrationCli {
+    public class UnifiedMigrationCli {
         /// <summary>
         /// Run unified migration from command line
         /// </summary>
@@ -285,15 +285,15 @@ namespace XafApiConverter.Converter {
                 Console.WriteLine();
 
                 try {
-                    // Step 1: Project Conversion (TRANS-001 to TRANS-005)
-                    if (!options.SkipProjectConversion) {
+                    // Step 1: Type Migration (TRANS-006 to TRANS-008)
+                    if (!options.SkipTypeMigration) {
                         Console.ForegroundColor = ConsoleColor.Cyan;
-                        Console.WriteLine(">> Step 1/3: Project Conversion (.NET Framework -> .NET)");
+                        Console.WriteLine(">> Step 1/3: Type Migration (Web -> Blazor)");
                         Console.ResetColor();
                         Console.WriteLine();
 
-                        var conversionResult = RunProjectConversion(solutionPath, options);
-                        if (conversionResult != 0) {
+                        var typeMigrationResult = RunTypeMigration(solutionPath, options);
+                        if (typeMigrationResult != 0) {
                             Console.ForegroundColor = ConsoleColor.Yellow;
                             Console.WriteLine("[WARNING] Step 1 completed with warnings");
                             Console.ResetColor();
@@ -327,19 +327,20 @@ namespace XafApiConverter.Converter {
                         Console.WriteLine();
                     }
 
-                    // Step 3: Type Migration (TRANS-006 to TRANS-008)
-                    if(!options.SkipTypeMigration) {
+                    // Step 3: Project Conversion (TRANS-001 to TRANS-005)
+                    if (!options.SkipProjectConversion) {
                         Console.ForegroundColor = ConsoleColor.Cyan;
-                        Console.WriteLine(">> Step 3/3: Type Migration (Web -> Blazor)");
+                        Console.WriteLine(">> Step 3/3: Project Conversion (.NET Framework -> .NET)");
                         Console.ResetColor();
                         Console.WriteLine();
 
-                        var typeMigrationResult = RunTypeMigration(solutionPath, options);
-                        if(typeMigrationResult != 0) {
+                        var conversionResult = RunProjectConversion(solutionPath, options);
+                        if (conversionResult != 0) {
                             Console.ForegroundColor = ConsoleColor.Yellow;
                             Console.WriteLine("[WARNING] Step 3 completed with warnings");
                             Console.ResetColor();
-                        } else {
+                        }
+                        else {
                             Console.ForegroundColor = ConsoleColor.Green;
                             Console.WriteLine("[OK] Step 3 completed successfully");
                             Console.ResetColor();
