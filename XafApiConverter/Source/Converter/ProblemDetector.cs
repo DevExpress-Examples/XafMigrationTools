@@ -241,7 +241,7 @@ namespace XafApiConverter.Converter {
             foreach(var identifier in identifiers) {
                 var symbol = semanticModel.GetSymbolInfo(identifier).Symbol as INamedTypeSymbol;
 
-                if(symbol != null && !symbol.ToDisplayString().StartsWith("?")) {
+                if (symbol != null && !symbol.ToDisplayString().StartsWith("?")) {
                     // Semantic model resolved
                     var fullTypeName = symbol.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)
                         .Replace("global::", "");
@@ -252,7 +252,7 @@ namespace XafApiConverter.Converter {
                 else if (usingDirectives != null) {
                     // Fallback to using directives for identifiers
                     var typeName = identifier.Identifier.Text;
-                    if(TypeReplacementMap.NoEquivalentTypes.ContainsKey(typeName) ||
+                    if (TypeReplacementMap.NoEquivalentTypes.ContainsKey(typeName) ||
                         TypeReplacementMap.ManualConversionRequiredTypes.ContainsKey(typeName)) {
                         CheckTypeUsingDirectives(typeName, usingDirectives, problems);
                     }
