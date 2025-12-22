@@ -70,6 +70,7 @@ DevExpress.ExpressApp.Security.Strategy.TypePermissionsObjectOwnerHelper
 DevExpress.ExpressApp.Security.Xpo.Strategy.XpoReloadPermissionsStrategy
 DevExpress.ExpressApp.Security.Xpo.Adapters.XpoClientServerCachedRequestSecurityAdapterProvider
 DevExpress.ExpressApp.Security.Xpo.Adapters.XPOClientServerCachedRequestSecurityAdapter
+DevExpress.ExpressApp.Security.Xpo.Adapters.XpoIntegratedCachedRequestSecurityAdapterProvider
 
 # DevExpress.ExpressApp.v25.2
 
