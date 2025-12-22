@@ -126,11 +126,12 @@ namespace XafApiConverter.Converter {
                     var typeSymbol = semanticModel.GetSymbolInfo(baseType.Type).Symbol as INamedTypeSymbol;
 
                     if(typeSymbol != null && !typeSymbol.ToDisplayString().StartsWith("?")) {
-                        // Semantic model resolved - use full type name
-                        var fullTypeName = typeSymbol.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)
+                        // Semantic model resolved - use full type name and containing assembly
+                        string fullTypeName = typeSymbol.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)
                             .Replace("global::", "");
+                        string containingAssemblyName = typeSymbol.ContainingAssembly?.Name;
 
-                        CheckTypeAgainstMaps(typeName, fullTypeName, problems);
+                        CheckTypeAgainstMaps(typeName, fullTypeName, containingAssemblyName, problems);
                     } else if(usingDirectives != null) {
                         // Fallback to using directives
                         CheckTypeUsingDirectives(typeName, usingDirectives, problems);
@@ -162,13 +163,15 @@ namespace XafApiConverter.Converter {
                 var typeSymbol = semanticModel.GetSymbolInfo(typeofExpr.Type).Symbol as INamedTypeSymbol;
 
                 if(typeSymbol != null && !typeSymbol.ToDisplayString().StartsWith("?")) {
-                    // Semantic model resolved - use full type name
+                    // Semantic model resolved - use full type name and assembly name
                     var fullTypeName = typeSymbol.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)
                         .Replace("global::", "");
                     var typeName = typeSymbol.Name;
+                    string containingAssemblyName = typeSymbol.ContainingAssembly?.Name;
 
-                    CheckTypeAgainstMaps(typeName, fullTypeName, problems);
-                } else {
+                    CheckTypeAgainstMaps(typeName, fullTypeName, containingAssemblyName, problems);
+                }
+                else {
                     // Fallback: semantic model couldn't resolve (common in tests without full assembly references)
                     // Parse the type expression text to extract namespace and type name
                     var typeText = typeofExpr.Type.ToString();
@@ -242,9 +245,11 @@ namespace XafApiConverter.Converter {
                     // Semantic model resolved
                     var fullTypeName = symbol.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)
                         .Replace("global::", "");
+                    string containingAssemblyName = symbol.ContainingAssembly?.Name;
 
-                    CheckTypeAgainstMaps(identifier.Identifier.Text, fullTypeName, problems);
-                } else if(usingDirectives != null) {
+                    CheckTypeAgainstMaps(identifier.Identifier.Text, fullTypeName, containingAssemblyName, problems);
+                }
+                else if (usingDirectives != null) {
                     // Fallback to using directives for identifiers
                     var typeName = identifier.Identifier.Text;
                     if(TypeReplacementMap.NoEquivalentTypes.ContainsKey(typeName) ||
@@ -264,7 +269,7 @@ namespace XafApiConverter.Converter {
         /// <summary>
         /// Check type against TypeReplacementMap using full type name
         /// </summary>
-        private static void CheckTypeAgainstMaps(string typeName, string fullTypeName, List<TypeProblem> problems) {
+        private static void CheckTypeAgainstMaps(string typeName, string fullTypeName, string assemblyName, List<TypeProblem> problems) {
             // Check NoEquivalentTypes
             var matchingNoEquiv = TypeReplacementMap.NoEquivalentTypes.Values
                 .FirstOrDefault(t => {
@@ -293,7 +298,7 @@ namespace XafApiConverter.Converter {
                            fullTypeName.EndsWith($".{expectedFullName}", StringComparison.OrdinalIgnoreCase);
                 });
 
-            if(matchingManual != null) {
+            if (matchingManual != null) {
                 problems.Add(new TypeProblem {
                     TypeName = typeName,
                     FullTypeName = fullTypeName,
@@ -303,6 +308,30 @@ namespace XafApiConverter.Converter {
                     RequiresCommentOut = matchingManual.CommentOutEntireClass
                 });
             }
+
+            // Check removed assemblies
+            if (assemblyName != null && fullTypeName.StartsWith("DevExpress.")) {
+                string assemblyNameWithoutVersion = GetAsssemblyNameWithoutVersion(assemblyName);
+                if (TypeReplacementMap.RemovedAssemblies.Contains(assemblyNameWithoutVersion)) {
+                    problems.Add(new TypeProblem {
+                        TypeName = typeName,
+                        FullTypeName = fullTypeName,
+                        Reason = $"Class '{typeName}' has no equivalent in XAF .NET",
+                        Description = $"{assemblyName} assembly is removed in v25.2",
+                        Severity = ProblemSeverity.Critical,
+                        RequiresCommentOut = true
+                    });
+                    return;
+                }
+            }
+        }
+
+        static string GetAsssemblyNameWithoutVersion(string assemblyName) {
+            if (assemblyName.EndsWith(".dll"))
+                assemblyName = assemblyName.Replace(".dll", "");
+            if (!assemblyName.StartsWith("DevExpress.") || assemblyName.LastIndexOf(".v") != assemblyName.Length - 6)
+                return assemblyName;
+            return assemblyName.Substring(0, assemblyName.Length - 6);
         }
 
         /// <summary>

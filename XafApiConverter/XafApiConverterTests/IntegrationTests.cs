@@ -28,11 +28,11 @@ namespace XafApiConverterTests {
             string projectPath = Directory.GetFiles(projectDir, "*.csproj", SearchOption.TopDirectoryOnly).First();
             string solutionPath = Directory.GetFiles(projectDir, "*.sln", SearchOption.TopDirectoryOnly).First();
 
-            
-            // Step 1: SDK-style conversion
-            XafApiConverter.Converter.ConversionCli.Run(new string[] { "-p", projectPath });
-            // Step 2: Type migration (analyze and comment out problematic classes)
+            // Step 1: Type migration (analyze and comment out problematic classes)
             XafApiConverter.Converter.UnifiedMigrationCli.Run(new string[] { "-s", solutionPath, "--only-type-migration" });
+
+            // Step 2: SDK-style conversion
+            XafApiConverter.Converter.ConversionCli.Run(new string[] { "-p", projectPath });
         }
     }
 }
