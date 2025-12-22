@@ -255,7 +255,7 @@ namespace XafApiConverterTests.ClassCommenterTests {
                 };
 
                 // Use REAL ClassCommenter
-                var commenter = new ClassCommenter(report, options);
+                var commenter = new ClassCommenter(report, options, semanticCache: null);
                 commenter.CommentOutProblematicClasses();
             }
         }
@@ -333,7 +333,7 @@ namespace XafApiConverterTests.ClassCommenterTests {
                     CommentIssuesOnly = false
                 };
 
-                var commenter = new ClassCommenter(report, options);
+                var commenter = new ClassCommenter(report, options, semanticCache: null);
                 commenter.CommentOutProblematicClasses();
             }
         }

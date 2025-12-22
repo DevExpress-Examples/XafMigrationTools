@@ -48,408 +48,410 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
-	<ItemGroup>
-		<Reference Include="DevExpress.Dashboard.v25.1.Core">
-			<SpecificVersion>False</SpecificVersion>
-			<Private>True</Private>
-		</Reference>
-		<Reference Include="DevExpress.Dashboard.v25.1.Web">
-			<SpecificVersion>False</SpecificVersion>
-			<Private>True</Private>
-		</Reference>
-		<Reference Include="DevExpress.Dashboard.v25.1.Web.WebForms">
-			<SpecificVersion>False</SpecificVersion>
-			<Private>True</Private>
-		</Reference>
-		<Reference Include="DevExpress.Data.v25.1">
-			<SpecificVersion>False</SpecificVersion>
-			<Private>True</Private>
-		</Reference>
-		<Reference Include="DevExpress.DataAccess.v25.1">
-			<SpecificVersion>False</SpecificVersion>
-			<Private>True</Private>
-		</Reference>
-		<Reference Include="DevExpress.Drawing.v25.1">
-			<SpecificVersion>False</SpecificVersion>
-			<Private>True</Private>
-		</Reference>
-		<Reference Include="DevExpress.ExpressApp.AuditTrail.Xpo.v25.1">
-			<SpecificVersion>False</SpecificVersion>
-			<Private>True</Private>
-		</Reference>
-		<Reference Include="DevExpress.ExpressApp.Chart.v25.1">
-			<SpecificVersion>False</SpecificVersion>
-			<Private>True</Private>
-		</Reference>
-		<Reference Include="DevExpress.ExpressApp.Chart.Web.v25.1">
-			<SpecificVersion>False</SpecificVersion>
-			<Private>True</Private>
-		</Reference>
-		<Reference Include="DevExpress.ExpressApp.CloneObject.v25.1">
-			<SpecificVersion>False</SpecificVersion>
-			<Private>True</Private>
-		</Reference>
-		<Reference Include="DevExpress.ExpressApp.ConditionalAppearance.v25.1">
-			<SpecificVersion>False</SpecificVersion>
-			<Private>True</Private>
-		</Reference>
-		<Reference Include="DevExpress.ExpressApp.Dashboards.v25.1">
-			<SpecificVersion>False</SpecificVersion>
-			<Private>True</Private>
-		</Reference>
-		<Reference Include="DevExpress.ExpressApp.Dashboards.Web.v25.1">
-			<SpecificVersion>False</SpecificVersion>
-			<Private>True</Private>
-		</Reference>
-		<Reference Include="DevExpress.ExpressApp.FileAttachment.Web.v25.1">
-			<SpecificVersion>False</SpecificVersion>
-			<Private>True</Private>
-		</Reference>
-		<Reference Include="DevExpress.ExpressApp.HtmlPropertyEditor.Web.v25.1">
-			<SpecificVersion>False</SpecificVersion>
-			<Private>True</Private>
-		</Reference>
-		<Reference Include="DevExpress.ExpressApp.Kpi.v25.1">
-			<SpecificVersion>False</SpecificVersion>
-			<Private>True</Private>
-		</Reference>
-		<Reference Include="DevExpress.ExpressApp.Maps.Web.v25.1">
-			<SpecificVersion>False</SpecificVersion>
-			<Private>True</Private>
-		</Reference>
-		<Reference Include="DevExpress.ExpressApp.Notifications.v25.1">
-			<SpecificVersion>False</SpecificVersion>
-			<Private>True</Private>
-		</Reference>
-		<Reference Include="DevExpress.ExpressApp.Notifications.Web.v25.1">
-			<SpecificVersion>False</SpecificVersion>
-			<Private>True</Private>
-		</Reference>
-		<Reference Include="DevExpress.ExpressApp.Objects.v25.1">
-			<SpecificVersion>False</SpecificVersion>
-			<Private>True</Private>
-		</Reference>
-		<Reference Include="DevExpress.ExpressApp.Office.v25.1">
-			<SpecificVersion>False</SpecificVersion>
-			<Private>True</Private>
-		</Reference>
-		<Reference Include="DevExpress.ExpressApp.Office.Web.v25.1">
-			<SpecificVersion>False</SpecificVersion>
-			<Private>True</Private>
-		</Reference>
-		<Reference Include="DevExpress.ExpressApp.PivotChart.v25.1">
-			<SpecificVersion>False</SpecificVersion>
-			<Private>True</Private>
-		</Reference>
-		<Reference Include="DevExpress.ExpressApp.PivotChart.Web.v25.1">
-			<SpecificVersion>False</SpecificVersion>
-			<Private>True</Private>
-		</Reference>
-		<Reference Include="DevExpress.ExpressApp.PivotGrid.v25.1">
-			<SpecificVersion>False</SpecificVersion>
-			<Private>True</Private>
-		</Reference>
-		<Reference Include="DevExpress.ExpressApp.PivotGrid.Web.v25.1">
-			<SpecificVersion>False</SpecificVersion>
-			<Private>True</Private>
-		</Reference>
-		<Reference Include="DevExpress.ExpressApp.ReportsV2.v25.1">
-			<SpecificVersion>False</SpecificVersion>
-			<Private>True</Private>
-		</Reference>
-		<Reference Include="DevExpress.ExpressApp.ReportsV2.Web.v25.1">
-			<SpecificVersion>False</SpecificVersion>
-			<Private>True</Private>
-		</Reference>
-		<Reference Include="DevExpress.ExpressApp.Scheduler.v25.1">
-			<SpecificVersion>False</SpecificVersion>
-			<Private>True</Private>
-		</Reference>
-		<Reference Include="DevExpress.ExpressApp.Scheduler.Web.v25.1">
-			<SpecificVersion>False</SpecificVersion>
-			<Private>True</Private>
-		</Reference>
-		<Reference Include="DevExpress.ExpressApp.ScriptRecorder.v25.1">
-			<SpecificVersion>False</SpecificVersion>
-			<Private>True</Private>
-		</Reference>
-		<Reference Include="DevExpress.ExpressApp.ScriptRecorder.Web.v25.1">
-			<SpecificVersion>False</SpecificVersion>
-			<Private>True</Private>
-		</Reference>
-		<Reference Include="DevExpress.ExpressApp.Security.v25.1">
-			<SpecificVersion>False</SpecificVersion>
-			<Private>True</Private>
-		</Reference>
-		<Reference Include="DevExpress.ExpressApp.Security.Xpo.v25.1">
-			<SpecificVersion>False</SpecificVersion>
-			<Private>True</Private>
-		</Reference>
-		<Reference Include="DevExpress.ExpressApp.StateMachine.v25.1">
-			<SpecificVersion>False</SpecificVersion>
-			<Private>True</Private>
-		</Reference>
-		<Reference Include="DevExpress.ExpressApp.TreeListEditors.v25.1">
-			<SpecificVersion>False</SpecificVersion>
-			<Private>True</Private>
-		</Reference>
-		<Reference Include="DevExpress.ExpressApp.TreeListEditors.Web.v25.1">
-			<SpecificVersion>False</SpecificVersion>
-			<Private>True</Private>
-		</Reference>
-		<Reference Include="DevExpress.ExpressApp.v25.1">
-			<SpecificVersion>False</SpecificVersion>
-			<Private>True</Private>
-		</Reference>
-		<Reference Include="DevExpress.ExpressApp.Validation.v25.1">
-			<SpecificVersion>False</SpecificVersion>
-			<Private>True</Private>
-		</Reference>
-		<Reference Include="DevExpress.ExpressApp.Validation.Web.v25.1">
-			<SpecificVersion>False</SpecificVersion>
-			<Private>True</Private>
-		</Reference>
-		<Reference Include="DevExpress.ExpressApp.ViewVariantsModule.v25.1">
-			<SpecificVersion>False</SpecificVersion>
-			<Private>True</Private>
-		</Reference>
-		<Reference Include="DevExpress.ExpressApp.Web.v25.1">
-			<SpecificVersion>False</SpecificVersion>
-			<Private>True</Private>
-		</Reference>
-		<Reference Include="DevExpress.ExpressApp.Workflow.v25.1">
-			<SpecificVersion>False</SpecificVersion>
-			<Private>True</Private>
-		</Reference>
-		<Reference Include="DevExpress.ExpressApp.Xpo.v25.1">
-			<SpecificVersion>False</SpecificVersion>
-			<Private>True</Private>
-		</Reference>
-		<Reference Include="DevExpress.Images.v25.1">
-			<SpecificVersion>False</SpecificVersion>
-			<Private>True</Private>
-		</Reference>
-		<Reference Include="DevExpress.Office.v25.1.Core">
-			<SpecificVersion>False</SpecificVersion>
-			<Private>True</Private>
-		</Reference>
-		<Reference Include="DevExpress.Persistent.Base.v25.1">
-			<SpecificVersion>False</SpecificVersion>
-			<Private>True</Private>
-		</Reference>
-		<Reference Include="DevExpress.Persistent.BaseImpl.Xpo.v25.1">
-			<SpecificVersion>False</SpecificVersion>
-			<Private>True</Private>
-		</Reference>
-		<Reference Include="DevExpress.PivotGrid.v25.1.Core">
-			<SpecificVersion>False</SpecificVersion>
-			<Private>True</Private>
-		</Reference>
-		<Reference Include="DevExpress.Printing.v25.1.Core">
-			<SpecificVersion>False</SpecificVersion>
-			<Private>True</Private>
-		</Reference>
-		<Reference Include="DevExpress.RichEdit.v25.1.Core">
-			<SpecificVersion>False</SpecificVersion>
-			<Private>True</Private>
-		</Reference>
-		<Reference Include="DevExpress.RichEdit.v25.1.Export">
-			<SpecificVersion>False</SpecificVersion>
-			<Private>True</Private>
-		</Reference>
-		<Reference Include="DevExpress.Spreadsheet.v25.1.Core">
-			<SpecificVersion>False</SpecificVersion>
-			<Private>True</Private>
-		</Reference>
-		<Reference Include="DevExpress.Utils.v25.1">
-			<SpecificVersion>False</SpecificVersion>
-			<Private>True</Private>
-		</Reference>
-		<Reference Include="DevExpress.Web.ASPxHtmlEditor.v25.1">
-			<SpecificVersion>False</SpecificVersion>
-			<Private>True</Private>
-		</Reference>
-		<Reference Include="DevExpress.Web.ASPxPivotGrid.v25.1">
-			<SpecificVersion>False</SpecificVersion>
-			<Private>True</Private>
-		</Reference>
-		<Reference Include="DevExpress.Web.ASPxRichEdit.v25.1">
-			<SpecificVersion>False</SpecificVersion>
-			<Private>True</Private>
-		</Reference>
-		<Reference Include="DevExpress.Web.ASPxScheduler.v25.1">
-			<SpecificVersion>False</SpecificVersion>
-			<Private>True</Private>
-		</Reference>
-		<Reference Include="DevExpress.Web.ASPxSpellChecker.v25.1">
-			<SpecificVersion>False</SpecificVersion>
-			<Private>True</Private>
-		</Reference>
-		<Reference Include="DevExpress.Web.ASPxSpreadsheet.v25.1">
-			<SpecificVersion>False</SpecificVersion>
-			<Private>True</Private>
-		</Reference>
-		<Reference Include="DevExpress.Web.ASPxThemes.v25.1">
-			<SpecificVersion>False</SpecificVersion>
-			<Private>True</Private>
-		</Reference>
-		<Reference Include="DevExpress.Web.ASPxTreeList.v25.1">
-			<SpecificVersion>False</SpecificVersion>
-			<Private>True</Private>
-		</Reference>
-		<Reference Include="DevExpress.Web.Resources.v25.1">
-			<SpecificVersion>False</SpecificVersion>
-			<Private>True</Private>
-		</Reference>
-		<Reference Include="DevExpress.Web.v25.1">
-			<SpecificVersion>False</SpecificVersion>
-			<Private>True</Private>
-		</Reference>
-		<Reference Include="DevExpress.Workflow.Activities.v25.1">
-			<SpecificVersion>False</SpecificVersion>
-			<Private>True</Private>
-		</Reference>
-		<Reference Include="DevExpress.Xpo.v25.1">
-			<SpecificVersion>False</SpecificVersion>
-			<Private>True</Private>
-		</Reference>
-		<Reference Include="DevExpress.XtraCharts.v25.1">
-			<SpecificVersion>False</SpecificVersion>
-			<Private>True</Private>
-		</Reference>
-		<Reference Include="DevExpress.XtraCharts.v25.1.Web">
-			<SpecificVersion>False</SpecificVersion>
-			<Private>True</Private>
-		</Reference>
-		<Reference Include="DevExpress.XtraReports.v25.1">
-			<SpecificVersion>False</SpecificVersion>
-			<Private>True</Private>
-		</Reference>
-		<Reference Include="DevExpress.XtraReports.v25.1.Web">
-			<SpecificVersion>False</SpecificVersion>
-			<Private>True</Private>
-		</Reference>
-		<Reference Include="DevExpress.XtraReports.v25.1.Web.WebForms">
-			<SpecificVersion>False</SpecificVersion>
-			<Private>True</Private>
-		</Reference>
-		<Reference Include="DevExpress.XtraScheduler.v25.1.Core">
-			<SpecificVersion>False</SpecificVersion>
-			<Private>True</Private>
-		</Reference>
-		<Reference Include="DevExpress.XtraScheduler.v25.1.Core.Desktop">
-			<SpecificVersion>False</SpecificVersion>
-			<Private>True</Private>
-		</Reference>
-		<Reference Include="mscorlib">
-			<SpecificVersion>False</SpecificVersion>
-			<Private>True</Private>
-		</Reference>
-		<Reference Include="System">
-			<SpecificVersion>False</SpecificVersion>
-			<Private>True</Private>
-		</Reference>
-		<Reference Include="System.Activities">
-			<SpecificVersion>False</SpecificVersion>
-			<Private>True</Private>
-		</Reference>
-		<Reference Include="System.Activities.DurableInstancing">
-			<SpecificVersion>False</SpecificVersion>
-			<Private>True</Private>
-		</Reference>
-		<Reference Include="System.Configuration">
-			<SpecificVersion>False</SpecificVersion>
-			<Private>True</Private>
-		</Reference>
-		<Reference Include="System.Data">
-			<SpecificVersion>False</SpecificVersion>
-			<Private>True</Private>
-		</Reference>
-		<Reference Include="System.Data.DataSetExtensions" />
-		<Reference Include="System.Drawing">
-			<SpecificVersion>False</SpecificVersion>
-			<Private>True</Private>
-		</Reference>
-		<Reference Include="System.Runtime.DurableInstancing">
-			<SpecificVersion>False</SpecificVersion>
-			<Private>True</Private>
-		</Reference>
-		<Reference Include="System.Runtime.Serialization">
-			<SpecificVersion>False</SpecificVersion>
-			<Private>True</Private>
-		</Reference>
-		<Reference Include="System.ServiceModel">
-			<SpecificVersion>False</SpecificVersion>
-			<Private>True</Private>
-		</Reference>
-		<Reference Include="System.ServiceModel.Activities">
-			<SpecificVersion>False</SpecificVersion>
-			<Private>True</Private>
-		</Reference>
-		<Reference Include="System.Web">
-			<SpecificVersion>False</SpecificVersion>
-			<Private>True</Private>
-		</Reference>
-		<Reference Include="System.Web.Extensions" />
-		<Reference Include="System.Xaml">
-			<SpecificVersion>False</SpecificVersion>
-			<Private>True</Private>
-		</Reference>
-		<Reference Include="System.Xml">
-			<SpecificVersion>False</SpecificVersion>
-			<Private>True</Private>
-		</Reference>
-		<Reference Include="System">
-			<Private>False</Private>
-		</Reference>
-		<Reference Include="System.Configuration">
-			<Private>False</Private>
-		</Reference>
-		<Reference Include="System.Data">
-			<Private>False</Private>
-		</Reference>
-		<Reference Include="System.Drawing">
-			<Private>False</Private>
-		</Reference>
-		<Reference Include="System.EnterpriseServices">
-			<Private>False</Private>
-		</Reference>
-		<Reference Include="System.Web">
-			<Private>False</Private>
-		</Reference>
-		<Reference Include="System.Web.ApplicationServices">
-			<Private>False</Private>
-		</Reference>
-		<Reference Include="System.Web.DynamicData">
-			<Private>False</Private>
-		</Reference>
-		<Reference Include="System.Web.Entity">
-			<Private>False</Private>
-		</Reference>
-		<Reference Include="System.Web.Extensions">
-			<Private>False</Private>
-		</Reference>
-		<Reference Include="System.Web.Mobile">
-			<Private>False</Private>
-		</Reference>
-		<Reference Include="System.Web.Services">
-			<Private>False</Private>
-		</Reference>
-		<Reference Include="System.XML">
-			<Private>False</Private>
-		</Reference>
-		<Reference Include="System.Xml.Linq">
-			<Private>False</Private>
-		</Reference>
-		<Reference Include="System.Xml.Linq" />
-	</ItemGroup>
+  <ItemGroup>
+    <Reference Include="DevExpress.Dashboard.v25.1.Core">
+      <SpecificVersion>False</SpecificVersion>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="DevExpress.Dashboard.v25.1.Web">
+      <SpecificVersion>False</SpecificVersion>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="DevExpress.Dashboard.v25.1.Web.WebForms">
+      <SpecificVersion>False</SpecificVersion>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="DevExpress.Data.v25.1">
+      <SpecificVersion>False</SpecificVersion>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="DevExpress.DataAccess.v25.1">
+      <SpecificVersion>False</SpecificVersion>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="DevExpress.Drawing.v25.1">
+      <SpecificVersion>False</SpecificVersion>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="DevExpress.ExpressApp.AuditTrail.Xpo.v25.1">
+      <SpecificVersion>False</SpecificVersion>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="DevExpress.ExpressApp.Chart.v25.1">
+      <SpecificVersion>False</SpecificVersion>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="DevExpress.ExpressApp.Chart.Web.v25.1">
+      <SpecificVersion>False</SpecificVersion>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="DevExpress.ExpressApp.CloneObject.v25.1">
+      <SpecificVersion>False</SpecificVersion>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="DevExpress.ExpressApp.ConditionalAppearance.v25.1">
+      <SpecificVersion>False</SpecificVersion>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="DevExpress.ExpressApp.Dashboards.v25.1">
+      <SpecificVersion>False</SpecificVersion>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="DevExpress.ExpressApp.Dashboards.Web.v25.1">
+      <SpecificVersion>False</SpecificVersion>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="DevExpress.ExpressApp.FileAttachment.Web.v25.1">
+      <SpecificVersion>False</SpecificVersion>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="DevExpress.ExpressApp.HtmlPropertyEditor.Web.v25.1">
+      <SpecificVersion>False</SpecificVersion>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="DevExpress.ExpressApp.Kpi.v25.1">
+      <SpecificVersion>False</SpecificVersion>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="DevExpress.ExpressApp.Maps.Web.v25.1">
+      <SpecificVersion>False</SpecificVersion>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="DevExpress.ExpressApp.Notifications.v25.1">
+      <SpecificVersion>False</SpecificVersion>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="DevExpress.ExpressApp.Notifications.Web.v25.1">
+      <SpecificVersion>False</SpecificVersion>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="DevExpress.ExpressApp.Objects.v25.1">
+      <SpecificVersion>False</SpecificVersion>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="DevExpress.ExpressApp.Office.v25.1">
+      <SpecificVersion>False</SpecificVersion>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="DevExpress.ExpressApp.Office.Web.v25.1">
+      <SpecificVersion>False</SpecificVersion>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="DevExpress.ExpressApp.PivotChart.v25.1">
+      <SpecificVersion>False</SpecificVersion>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="DevExpress.ExpressApp.PivotChart.Web.v25.1">
+      <SpecificVersion>False</SpecificVersion>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="DevExpress.ExpressApp.PivotGrid.v25.1">
+      <SpecificVersion>False</SpecificVersion>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="DevExpress.ExpressApp.PivotGrid.Web.v25.1">
+      <SpecificVersion>False</SpecificVersion>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="DevExpress.ExpressApp.ReportsV2.v25.1">
+      <SpecificVersion>False</SpecificVersion>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="DevExpress.ExpressApp.ReportsV2.Web.v25.1">
+      <SpecificVersion>False</SpecificVersion>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="DevExpress.ExpressApp.Scheduler.v25.1">
+      <SpecificVersion>False</SpecificVersion>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="DevExpress.ExpressApp.Scheduler.Web.v25.1">
+      <SpecificVersion>False</SpecificVersion>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="DevExpress.ExpressApp.ScriptRecorder.v25.1">
+      <SpecificVersion>False</SpecificVersion>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="DevExpress.ExpressApp.ScriptRecorder.Web.v25.1">
+      <SpecificVersion>False</SpecificVersion>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="DevExpress.ExpressApp.Security.v25.1">
+      <SpecificVersion>False</SpecificVersion>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="DevExpress.ExpressApp.Security.Xpo.v25.1">
+      <SpecificVersion>False</SpecificVersion>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="DevExpress.ExpressApp.StateMachine.v25.1">
+      <SpecificVersion>False</SpecificVersion>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="DevExpress.ExpressApp.TreeListEditors.v25.1">
+      <SpecificVersion>False</SpecificVersion>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="DevExpress.ExpressApp.TreeListEditors.Web.v25.1">
+      <SpecificVersion>False</SpecificVersion>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="DevExpress.ExpressApp.v25.1">
+      <SpecificVersion>False</SpecificVersion>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="DevExpress.ExpressApp.Validation.v25.1">
+      <SpecificVersion>False</SpecificVersion>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="DevExpress.ExpressApp.Validation.Web.v25.1">
+      <SpecificVersion>False</SpecificVersion>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="DevExpress.ExpressApp.ViewVariantsModule.v25.1">
+      <SpecificVersion>False</SpecificVersion>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="DevExpress.ExpressApp.Web.v25.1">
+      <SpecificVersion>False</SpecificVersion>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="DevExpress.ExpressApp.Workflow.v25.1">
+      <SpecificVersion>False</SpecificVersion>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="DevExpress.ExpressApp.Xpo.v25.1">
+      <SpecificVersion>False</SpecificVersion>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="DevExpress.Images.v25.1">
+      <SpecificVersion>False</SpecificVersion>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="DevExpress.Office.v25.1.Core">
+      <SpecificVersion>False</SpecificVersion>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="DevExpress.Persistent.Base.v25.1">
+      <SpecificVersion>False</SpecificVersion>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="DevExpress.Persistent.BaseImpl.Xpo.v25.1">
+      <SpecificVersion>False</SpecificVersion>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="DevExpress.PivotGrid.v25.1.Core">
+      <SpecificVersion>False</SpecificVersion>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="DevExpress.Printing.v25.1.Core">
+      <SpecificVersion>False</SpecificVersion>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="DevExpress.RichEdit.v25.1.Core">
+      <SpecificVersion>False</SpecificVersion>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="DevExpress.RichEdit.v25.1.Export">
+      <SpecificVersion>False</SpecificVersion>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="DevExpress.Spreadsheet.v25.1.Core">
+      <SpecificVersion>False</SpecificVersion>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="DevExpress.Utils.v25.1">
+      <SpecificVersion>False</SpecificVersion>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="DevExpress.Web.ASPxHtmlEditor.v25.1">
+      <SpecificVersion>False</SpecificVersion>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="DevExpress.Web.ASPxPivotGrid.v25.1">
+      <SpecificVersion>False</SpecificVersion>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="DevExpress.Web.ASPxRichEdit.v25.1">
+      <SpecificVersion>False</SpecificVersion>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="DevExpress.Web.ASPxScheduler.v25.1">
+      <SpecificVersion>False</SpecificVersion>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="DevExpress.Web.ASPxSpellChecker.v25.1">
+      <SpecificVersion>False</SpecificVersion>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="DevExpress.Web.ASPxSpreadsheet.v25.1">
+      <SpecificVersion>False</SpecificVersion>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="DevExpress.Web.ASPxThemes.v25.1">
+      <SpecificVersion>False</SpecificVersion>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="DevExpress.Web.ASPxTreeList.v25.1">
+      <SpecificVersion>False</SpecificVersion>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="DevExpress.Web.Resources.v25.1">
+      <SpecificVersion>False</SpecificVersion>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="DevExpress.Web.v25.1">
+      <SpecificVersion>False</SpecificVersion>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="DevExpress.Workflow.Activities.v25.1">
+      <SpecificVersion>False</SpecificVersion>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="DevExpress.Xpo.v25.1">
+      <SpecificVersion>False</SpecificVersion>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="DevExpress.XtraCharts.v25.1">
+      <SpecificVersion>False</SpecificVersion>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="DevExpress.XtraCharts.v25.1.Web">
+      <SpecificVersion>False</SpecificVersion>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="DevExpress.XtraReports.v25.1">
+      <SpecificVersion>False</SpecificVersion>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="DevExpress.XtraReports.v25.1.Web">
+      <SpecificVersion>False</SpecificVersion>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="DevExpress.XtraReports.v25.1.Web.WebForms">
+      <SpecificVersion>False</SpecificVersion>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="DevExpress.XtraScheduler.v25.1.Core">
+      <SpecificVersion>False</SpecificVersion>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="DevExpress.XtraScheduler.v25.1.Core.Desktop">
+      <SpecificVersion>False</SpecificVersion>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="mscorlib">
+      <SpecificVersion>False</SpecificVersion>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="System">
+      <SpecificVersion>False</SpecificVersion>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="System.Activities">
+      <SpecificVersion>False</SpecificVersion>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="System.Activities.DurableInstancing">
+      <SpecificVersion>False</SpecificVersion>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="System.Configuration">
+      <SpecificVersion>False</SpecificVersion>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="System.Data">
+      <SpecificVersion>False</SpecificVersion>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="System.Data.DataSetExtensions" />
+    <Reference Include="System.Drawing">
+      <SpecificVersion>False</SpecificVersion>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="System.Runtime.DurableInstancing">
+      <SpecificVersion>False</SpecificVersion>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="System.Runtime.Serialization">
+      <SpecificVersion>False</SpecificVersion>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="System.ServiceModel">
+      <SpecificVersion>False</SpecificVersion>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="System.ServiceModel.Activities">
+      <SpecificVersion>False</SpecificVersion>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="System.Web">
+      <SpecificVersion>False</SpecificVersion>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="System.Web.Extensions" />
+    <Reference Include="System.Xaml">
+      <SpecificVersion>False</SpecificVersion>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="System.Xml">
+      <SpecificVersion>False</SpecificVersion>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="System">
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="System.Configuration">
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="System.Data">
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="System.Drawing">
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="System.EnterpriseServices">
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="System.Web">
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="System.Web.ApplicationServices">
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="System.Web.DynamicData">
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="System.Web.Entity">
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="System.Web.Extensions">
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="System.Web.Mobile">
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="System.Web.Services">
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="System.XML">
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="System.Xml.Linq">
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="System.Xml.Linq" />
+  </ItemGroup>
   <ItemGroup>
     <Compile Include="ASPxCustomListEditor.cs" />
     <Compile Include="ASPxCustomListEditor2.cs" />
     <Compile Include="ASPxCustomListEditorControl2.cs" />
     <Compile Include="BO\Message.cs" />
+    <Compile Include="BO\NoKeyPropertyNamedBaseObject.cs" />
     <Compile Include="BO\ProtectedHeir_1.cs" />
     <Compile Include="BO\ProtectedHeir_2.cs" />
+    <Compile Include="BO\StringKeyPropertyObject.cs" />
     <Compile Include="BO\TestProtectedClass.cs" />
     <None Include="CustomLayoutTemplates.cs">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>

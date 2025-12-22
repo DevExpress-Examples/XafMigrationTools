@@ -663,6 +663,7 @@ Arguments:
 
 Common Options:
   -s, --solution <path>     Solution file or directory path
+  -p, --path <path>         Solution file or directory path (alias)
   -tf, --target-framework   Target .NET version (default: net9.0)
                             Examples: net8.0, net9.0, net10.0
   -dx, --dx-version         DevExpress version (default: 25.1.6)
@@ -687,7 +688,7 @@ Type Migration Options:
   -m, --show-mappings       Show all type and namespace mappings and exit
 
 Other Options:
-  -v, --validate            Validation mode only
+  -v, --validate            Validation mode only (not implemented yet)
   -r, --report-only         Generate reports without modifications
   -h, --help                Show this help message
 
@@ -788,11 +789,20 @@ Default Behavior:
   By default, ALL THREE STEPS are executed sequentially.
   Use --skip-* or --only-* flags to control step execution.
 
+Legacy Commands:
+================
+
+The following legacy commands are still supported for backward compatibility:
+  XafApiConverter convert <solution>      -> XafApiConverter <solution> --only-conversion
+  XafApiConverter migrate-types <solution> -> XafApiConverter <solution> --only-type-migration
+  XafApiConverter security-update <solution> -> XafApiConverter <solution> --only-security-update
+
 For more information, see documentation files:
   - README.md
   - TYPE_MIGRATION_README.md
   - UpdateTypes.md
   - QUICK_START.md
+  - Convert_to_NET.md
 ");
         }
     }

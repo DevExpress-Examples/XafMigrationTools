@@ -55,3 +55,9 @@ DevExpress.Persistent.BaseImpl.PropertyValue
 DevExpress.Persistent.BaseImpl.ServerPrefix
 DevExpress.Persistent.BaseImpl.State
 DevExpress.Persistent.BaseImpl.Task
+
+# DevExpress.Xpo.v25.2
+
+DevExpress.Xpo.XPBaseObject
+DevExpress.Xpo.PersistentBase
+DevExpress.Xpo.XPLiteObject

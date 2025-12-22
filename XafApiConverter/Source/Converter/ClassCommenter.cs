@@ -17,10 +17,12 @@ namespace XafApiConverter.Converter {
         private readonly HashSet<string> _commentedClasses = new();
         private readonly HashSet<string> _warningAddedClasses = new();
         private readonly MigrationOptions _options;
+        private readonly SemanticCache _semanticCache;
 
-        public ClassCommenter(MigrationReport report, MigrationOptions options) {
+        public ClassCommenter(MigrationReport report, MigrationOptions options, SemanticCache semanticCache) {
             this._options = options;
             _report = report;
+            _semanticCache = semanticCache;
         }
 
         public static string GetTodoClassCommentedComment(string className) {
@@ -101,25 +103,45 @@ namespace XafApiConverter.Converter {
                     return false;
                 }
 
+                // Try to get semantic model from cache first (preferred)
+                var cached = _semanticCache?.TryGetValue(filePath);
+                if (cached != null) {
+                    // Use semantic model for accurate type resolution
+                    var root = cached.SyntaxTree.GetRoot() as CompilationUnitSyntax;
+                    if (root != null) {
+                        var classDecl = root.DescendantNodes()
+                            .OfType<ClassDeclarationSyntax>()
+                            .Where(c => c.Identifier.Text == className)
+                            .Where(c => !IsClassInsideComment(c, cached.SyntaxTree.ToString()))
+                            .FirstOrDefault();
+
+                        if (classDecl != null) {
+                            return IsProtectedClassUsingSemanticModel(classDecl, cached.SemanticModel);
+                        }
+                    }
+                }
+
+                // Fallback: parse content and use syntax-only check
                 var content = File.ReadAllText(filePath);
                 var syntaxTree = CSharpSyntaxTree.ParseText(content);
-                var root = syntaxTree.GetRoot() as CompilationUnitSyntax;
+                var root2 = syntaxTree.GetRoot() as CompilationUnitSyntax;
 
-                if (root == null) {
+                if (root2 == null) {
                     return false;
                 }
 
-                var classDecl = root.DescendantNodes()
+                var classDecl2 = root2.DescendantNodes()
                     .OfType<ClassDeclarationSyntax>()
                     .Where(c => c.Identifier.Text == className)
                     .Where(c => !IsClassInsideComment(c, content))
                     .FirstOrDefault();
 
-                if (classDecl == null) {
+                if (classDecl2 == null) {
                     return false;
                 }
 
-                return IsProtectedClass(classDecl, content);
+                // Syntax-only fallback (less reliable)
+                return IsProtectedClassSyntaxOnly(classDecl2, filePath, content);
             }
             catch {
                 return false;
@@ -369,7 +391,18 @@ namespace XafApiConverter.Converter {
                 
                 // STEP 4.5: CRITICAL CHECK - Verify class doesn't inherit from protected base class
                 // Do this BEFORE checking for partial classes to prevent any parts from being commented
-                if (IsProtectedClass(classDecl, content)) {
+                bool isProtected = false;
+                
+                // Try semantic model first (preferred)
+                var cached = _semanticCache?.TryGetValue(filePath);
+                if (cached != null) {
+                    isProtected = IsProtectedClassUsingSemanticModel(classDecl, cached.SemanticModel);
+                } else {
+                    // Fallback to syntax-only check
+                    isProtected = IsProtectedClassSyntaxOnly(classDecl, filePath, content);
+                }
+                
+                if (isProtected) {
                     Console.WriteLine($"      [CRITICAL] Class {className} inherits from protected base class (e.g., ModuleBase)");
                     Console.WriteLine($"      [CRITICAL] This class MUST be preserved for manual refactoring!");
                     Console.WriteLine($"      [CRITICAL] Skipping automatic commenting - please review manually");
@@ -553,7 +586,18 @@ namespace XafApiConverter.Converter {
                 }
                 
                 // CRITICAL CHECK: Verify this partial class part doesn't inherit from protected base class
-                if (IsProtectedClass(classDecl, content)) {
+                bool isProtected = false;
+                
+                // Try semantic model first (preferred)
+                var cached = _semanticCache?.TryGetValue(filePath);
+                if (cached != null) {
+                    isProtected = IsProtectedClassUsingSemanticModel(classDecl, cached.SemanticModel);
+                } else {
+                    // Fallback to syntax-only check
+                    isProtected = IsProtectedClassSyntaxOnly(classDecl, filePath, content);
+                }
+                
+                if (isProtected) {
                     Console.WriteLine($"         - {Path.GetFileName(filePath)}: [PROTECTED] inherits from protected base class");
                     Console.WriteLine($"         - {Path.GetFileName(filePath)}: Adding warning comment instead of commenting out");
                     
@@ -722,10 +766,72 @@ namespace XafApiConverter.Converter {
             return false;
         }
         
-        /// <summary>
-        /// Find all parts of a partial class across the project
-        /// Returns list of (filePath, className) tuples for all partial class parts
-        /// </summary>
+        private bool IsProtectedClassUsingSemanticModel(ClassDeclarationSyntax classDecl, SemanticModel semanticModel) {
+            // Comment Issues Only mode: treat ALL classes as protected
+            if (_options.CommentIssuesOnly) {
+                return true;
+            }
+
+            try {
+                // Get the symbol for this class
+                var classSymbol = semanticModel.GetDeclaredSymbol(classDecl) as INamedTypeSymbol;
+                if (classSymbol == null) {
+                    return false;
+                }
+
+                // Traverse the base type chain
+                var currentBase = classSymbol.BaseType;
+                var visitedTypes = new HashSet<string>();
+
+                while (currentBase != null) {
+                    // Get simple type name
+                    var baseTypeName = currentBase.Name;
+
+                    // Check for circular reference (shouldn't happen but be safe)
+                    if (visitedTypes.Contains(baseTypeName)) {
+                        break;
+                    }
+                    visitedTypes.Add(baseTypeName);
+
+                    // Check if this base type is protected
+                    if (TypeReplacementMap.ProtectedBaseClasses.Contains(baseTypeName)) {
+                        return true;
+                    }
+
+                    // Move to next base type
+                    currentBase = currentBase.BaseType;
+                }
+
+                return false;
+            }
+            catch {
+                // If semantic analysis fails, return false (will use syntax fallback)
+                return false;
+            }
+        }
+
+        private bool IsProtectedClassSyntaxOnly(ClassDeclarationSyntax classDecl, string filePath, string fileContent) {
+            // Comment Issues Only mode: treat ALL classes as protected
+            if (_options.CommentIssuesOnly) {
+                return true;
+            }
+            
+            if (classDecl.BaseList == null || classDecl.BaseList.Types.Count == 0) {
+                return false;
+            }
+
+            // Extract all base type names from the base list
+            // Example: "class Foo : Bar, IBaz" → ["Bar", "IBaz"]
+            foreach (var baseType in classDecl.BaseList.Types) {
+                if (IsProtectedBaseType(baseType.Type, filePath, fileContent, visitedTypes: new HashSet<string>())) {
+                    return true;
+                }
+            }
+            
+            // No protected base classes found
+            return false;
+        }
+
         private List<(string FilePath, string ClassName)> FindPartialClassParts(string className, string currentFilePath) {
             var parts = new List<(string, string)>();
             
@@ -766,89 +872,123 @@ namespace XafApiConverter.Converter {
             
             return parts;
         }
-        
+
         /// <summary>
-        /// Check if a class inherits from a protected base class.
-        /// Protected classes (like ModuleBase, XafApplication, BaseObject) should NOT be automatically commented out.
-        /// 
-        /// IMPORTANT: In CommentIssuesOnly mode, this method ALWAYS returns true,
-        /// treating all classes as protected (only warning comments will be added).
-        /// 
-        /// ALGORITHM:
-        /// =========
-        /// 1. Extract all base type names from the class declaration (class Foo : Bar, IBaz)
-        /// 2. For each base type, extract the simple name without generic parameters
-        ///    Example: "ViewController<DetailView>" → "ViewController"
-        /// 3. Use semantic model from cache to get accurate type and assembly information
-        /// 4. Check if the simple name matches ANY protected base class (case-insensitive)
-        /// 5. Use EXACT word boundary matching to avoid false positives
-        ///    Example: "ModuleBase" should NOT match "MyModuleBase"
-        /// 
-        /// NEW: Uses semantic model from cache to get assembly information for base types.
-        /// This allows filtering based on assembly origin (e.g., DevExpress vs user code).
-        /// 
-        /// EXAMPLES:
-        /// =========
-        /// ✅ "class MyModule : ModuleBase" → TRUE (protected, from DevExpress.ExpressApp)
-        /// ✅ "class MyModule : ModuleBase, IModule" → TRUE (protected)
-        /// ✅ "class MyApp : XafApplication" → TRUE (protected, from DevExpress.ExpressApp)
-        /// ❌ "class MyTemplate : LayoutItemTemplate" → FALSE (not protected)
-        /// ❌ "class MyEditor : ASPxPropertyEditor" → FALSE (not protected, unless explicitly added)
-        /// ❌ "class MyModuleBase : BaseClass" → FALSE (not protected - MyModuleBase is not ModuleBase)
+        /// Recursively check if a base type is protected or inherits from a protected type.
+        /// Uses both direct name matching and transitive inheritance chain analysis.
         /// </summary>
-        private bool IsProtectedClass(ClassDeclarationSyntax classDecl, string fileContent) {
-            // Comment Issues Only mode: treat ALL classes as protected
-            if (_options.CommentIssuesOnly) {
-                return true;
-            }
+        /// <param name="baseTypeSyntax">The base type syntax node</param>
+        /// <param name="currentFilePath">Path to the file being analyzed (for finding base class definitions)</param>
+        /// <param name="fileContent">Content of the current file</param>
+        /// <param name="visitedTypes">Set of already visited type names to prevent infinite recursion</param>
+        /// <returns>True if the type is protected or inherits from a protected type</returns>
+        private bool IsProtectedBaseType(TypeSyntax baseTypeSyntax, string currentFilePath, string fileContent, HashSet<string> visitedTypes) {
+            // Extract simple name without generic parameters
+            string baseTypeName = ExtractSimpleTypeName(baseTypeSyntax);
             
-            if (classDecl.BaseList == null || classDecl.BaseList.Types.Count == 0) {
+            if (string.IsNullOrEmpty(baseTypeName)) {
                 return false;
             }
 
-            // Extract all base type names from the base list
-            // Example: "class Foo : Bar, IBaz" → ["Bar", "IBaz"]
-            foreach (var baseType in classDecl.BaseList.Types) {
-                var baseTypeSyntax = baseType.Type;
+            // Check for circular reference
+            if (visitedTypes.Contains(baseTypeName)) {
+                return false;
+            }
+            visitedTypes.Add(baseTypeName);
 
-                // Extract simple name without generic parameters
-                // Example: "ViewController<DetailView>" → "ViewController"
-                string baseTypeName;
-                
-                if (baseTypeSyntax is GenericNameSyntax genericName) {
+            // STEP 1: Direct check - is this type name in the protected list?
+            if (TypeReplacementMap.ProtectedBaseClasses.Contains(baseTypeName)) {
+                return true;
+            }
+
+            // STEP 2: Transitive check - find the base type definition and check its inheritance
+            // Try to find the class definition in the same file first
+            var baseClassDecl = FindClassDefinitionInFile(baseTypeName, fileContent);
+            
+            if (baseClassDecl != null) {
+                // Found in same file - check its base classes recursively
+                if (baseClassDecl.BaseList != null) {
+                    foreach (var transitiveBase in baseClassDecl.BaseList.Types) {
+                        if (IsProtectedBaseType(transitiveBase.Type, currentFilePath, fileContent, visitedTypes)) {
+                            return true;
+                        }
+                    }
+                }
+            } else if (!string.IsNullOrEmpty(currentFilePath)) {
+                // Not found in same file - try to find in other files in the same directory
+                var directory = Path.GetDirectoryName(currentFilePath);
+                if (!string.IsNullOrEmpty(directory)) {
+                    var otherFiles = Directory.GetFiles(directory, "*.cs", SearchOption.TopDirectoryOnly)
+                        .Where(f => !f.Equals(currentFilePath, StringComparison.OrdinalIgnoreCase));
+                    
+                    foreach (var file in otherFiles) {
+                        try {
+                            var content = File.ReadAllText(file);
+                            var foundClass = FindClassDefinitionInFile(baseTypeName, content);
+                            
+                            if (foundClass != null && foundClass.BaseList != null) {
+                                // Found the base class - check its inheritance recursively
+                                foreach (var transitiveBase in foundClass.BaseList.Types) {
+                                    if (IsProtectedBaseType(transitiveBase.Type, file, content, visitedTypes)) {
+                                        return true;
+                                    }
+                                }
+                                break; // Found the class, no need to search further
+                            }
+                        } catch {
+                            // Ignore errors reading other files
+                            continue;
+                        }
+                    }
+                }
+            }
+
+            return false;
+        }
+
+        /// <summary>
+        /// Extract simple type name from TypeSyntax, handling generics and qualified names
+        /// </summary>
+        private string ExtractSimpleTypeName(TypeSyntax typeSyntax) {
+            switch (typeSyntax) {
+                case GenericNameSyntax genericName:
                     // Generic type: ViewController<T>
-                    baseTypeName = genericName.Identifier.Text;
-                }
-                else if (baseTypeSyntax is IdentifierNameSyntax identifierName) {
+                    return genericName.Identifier.Text;
+                
+                case IdentifierNameSyntax identifierName:
                     // Simple type: ModuleBase
-                    baseTypeName = identifierName.Identifier.Text;
-                }
-                else if (baseTypeSyntax is QualifiedNameSyntax qualifiedName) {
+                    return identifierName.Identifier.Text;
+                
+                case QualifiedNameSyntax qualifiedName:
                     // Qualified type: DevExpress.ExpressApp.ModuleBase
                     // Extract the rightmost part
                     var rightName = qualifiedName.Right;
                     if (rightName is GenericNameSyntax rightGeneric) {
-                        baseTypeName = rightGeneric.Identifier.Text;
+                        return rightGeneric.Identifier.Text;
                     }
-                    else {
-                        baseTypeName = rightName.Identifier.Text;
-                    }
-                }
-                else {
-                    // Unknown syntax type, skip
-                    continue;
-                }
+                    return rightName.Identifier.Text;
                 
-                // Check if this base type name matches any protected base class
-                // Use case-insensitive comparison (consistent with ProtectedBaseClasses HashSet)
-                if (TypeReplacementMap.ProtectedBaseClasses.Contains(baseTypeName)) {
-                    // Found a protected base class!
-                    return true;
-                }
+                default:
+                    return null;
             }
-            
-            // No protected base classes found
-            return false;
+        }
+
+        /// <summary>
+        /// Find a class definition by name in the given file content
+        /// </summary>
+        private ClassDeclarationSyntax FindClassDefinitionInFile(string className, string fileContent) {
+            try {
+                var syntaxTree = CSharpSyntaxTree.ParseText(fileContent);
+                var root = syntaxTree.GetRoot();
+
+                return root.DescendantNodes()
+                    .OfType<ClassDeclarationSyntax>()
+                    .Where(c => c.Identifier.Text == className)
+                    .Where(c => !IsClassInsideComment(c, fileContent))
+                    .FirstOrDefault();
+            } catch {
+                return null;
+            }
         }
         
         /// <summary>

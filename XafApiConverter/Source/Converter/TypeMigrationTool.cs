@@ -613,7 +613,7 @@ namespace XafApiConverter.Converter {
         /// Implements TRANS-010 lightweight version
         /// </summary>
         private void CommentOutProblematicClasses() {
-            var commenter = new ClassCommenter(_report, _options);
+            var commenter = new ClassCommenter(_report, _options, _semanticCache);
             var commentedCount = commenter.CommentOutProblematicClasses();
 
             if(commentedCount > 0) {
