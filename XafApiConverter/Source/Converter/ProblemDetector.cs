@@ -1,6 +1,7 @@
 ﻿using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
+using XafApiConverter.SyntaxConverters;
 
 namespace XafApiConverter.Converter {
     /// <summary>
@@ -236,9 +237,10 @@ namespace XafApiConverter.Converter {
                 }
             }
 
-            // 4. Check for NO_EQUIVALENT and MANUAL_CONVERSION_REQUIRED types used in code
-            var identifiers = classDecl.DescendantNodes().OfType<IdentifierNameSyntax>();
-            foreach(var identifier in identifiers) {
+            // 4. Check for NO_EQUIVALENT and MANUAL_CONVERSION_REQUIRED types used in cod            
+            var identifierCollector = new IdentifierNameSyntaxCollector();
+            identifierCollector.Visit(classDecl);
+            foreach (var identifier in identifierCollector.Identifiers) {
                 var symbol = semanticModel.GetSymbolInfo(identifier).Symbol as INamedTypeSymbol;
 
                 if (symbol != null && !symbol.ToDisplayString().StartsWith("?")) {
@@ -470,113 +472,21 @@ namespace XafApiConverter.Converter {
             SemanticModel semanticModel) {
 
             // 1. Check base types
-            if(classDecl.BaseList != null) {
-                foreach(var baseType in classDecl.BaseList.Types) {
-                    var typeSymbol = semanticModel.GetSymbolInfo(baseType.Type).Symbol as INamedTypeSymbol;
-                    if(typeSymbol != null) {
-                        var fullTypeName = typeSymbol.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)
-                            .Replace("global::", "");
-
-                        // Check if this base type matches the target
-                        if(TypeMatchesTarget(typeSymbol.Name, fullTypeName, targetClassName, targetFullName)) {
-                            return true;
-                        }
-                    }
-                }
-            }
-
             // 2. Check field and property types
-            var fieldDeclarations = classDecl.DescendantNodes().OfType<FieldDeclarationSyntax>();
-            foreach(var field in fieldDeclarations) {
-                var typeSymbol = semanticModel.GetSymbolInfo(field.Declaration.Type).Symbol as INamedTypeSymbol;
-                if(typeSymbol != null) {
-                    var fullTypeName = typeSymbol.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)
-                        .Replace("global::", "");
-
-                    if(TypeMatchesTarget(typeSymbol.Name, fullTypeName, targetClassName, targetFullName)) {
-                        return true;
-                    }
-                }
-            }
-
-            var propertyDeclarations = classDecl.DescendantNodes().OfType<PropertyDeclarationSyntax>();
-            foreach(var property in propertyDeclarations) {
-                var typeSymbol = semanticModel.GetSymbolInfo(property.Type).Symbol as INamedTypeSymbol;
-                if(typeSymbol != null) {
-                    var fullTypeName = typeSymbol.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)
-                        .Replace("global::", "");
-
-                    if(TypeMatchesTarget(typeSymbol.Name, fullTypeName, targetClassName, targetFullName)) {
-                        return true;
-                    }
-                }
-            }
-
             // 3. Check method parameter types and return types
-            var methodDeclarations = classDecl.DescendantNodes().OfType<MethodDeclarationSyntax>();
-            foreach(var method in methodDeclarations) {
-                // Check return type
-                var returnTypeSymbol = semanticModel.GetSymbolInfo(method.ReturnType).Symbol as INamedTypeSymbol;
-                if(returnTypeSymbol != null) {
-                    var fullTypeName = returnTypeSymbol.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)
-                        .Replace("global::", "");
-
-                    if(TypeMatchesTarget(returnTypeSymbol.Name, fullTypeName, targetClassName, targetFullName)) {
-                        return true;
-                    }
-                }
-
-                // Check parameter types
-                foreach(var parameter in method.ParameterList.Parameters) {
-                    var paramTypeSymbol = semanticModel.GetSymbolInfo(parameter.Type).Symbol as INamedTypeSymbol;
-                    if(paramTypeSymbol != null) {
-                        var fullTypeName = paramTypeSymbol.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)
-                            .Replace("global::", "");
-
-                        if(TypeMatchesTarget(paramTypeSymbol.Name, fullTypeName, targetClassName, targetFullName)) {
-                            return true;
-                        }
-                    }
-                }
-            }
-
             // 4. Check local variable declarations and object creation expressions
-            var variableDeclarations = classDecl.DescendantNodes().OfType<VariableDeclarationSyntax>();
-            foreach(var variable in variableDeclarations) {
-                var typeSymbol = semanticModel.GetSymbolInfo(variable.Type).Symbol as INamedTypeSymbol;
-                if(typeSymbol != null) {
-                    var fullTypeName = typeSymbol.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)
-                        .Replace("global::", "");
-
-                    if(TypeMatchesTarget(typeSymbol.Name, fullTypeName, targetClassName, targetFullName)) {
-                        return true;
-                    }
-                }
-            }
-
             // 5. Check object creation expressions (new TargetType())
-            var objectCreations = classDecl.DescendantNodes().OfType<ObjectCreationExpressionSyntax>();
-            foreach(var creation in objectCreations) {
-                var typeSymbol = semanticModel.GetSymbolInfo(creation.Type).Symbol as INamedTypeSymbol;
-                if(typeSymbol != null) {
-                    var fullTypeName = typeSymbol.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)
-                        .Replace("global::", "");
-
-                    if(TypeMatchesTarget(typeSymbol.Name, fullTypeName, targetClassName, targetFullName)) {
-                        return true;
-                    }
-                }
-            }
-
             // 6. Check typeof() expressions
-            var typeofExpressions = classDecl.DescendantNodes().OfType<TypeOfExpressionSyntax>();
-            foreach(var typeofExpr in typeofExpressions) {
-                var typeSymbol = semanticModel.GetSymbolInfo(typeofExpr.Type).Symbol as INamedTypeSymbol;
-                if(typeSymbol != null) {
+            var typeSyntaxFinder = new TypeSyntaxCollector();
+            typeSyntaxFinder.Visit(classDecl);
+            foreach(TypeSyntax typeSyntax in typeSyntaxFinder.Types) {
+                var typeSymbol = semanticModel.GetSymbolInfo(typeSyntax).Symbol as INamedTypeSymbol;
+                if (typeSymbol != null) {
                     var fullTypeName = typeSymbol.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat)
                         .Replace("global::", "");
 
-                    if(TypeMatchesTarget(typeSymbol.Name, fullTypeName, targetClassName, targetFullName)) {
+                    // Check if this base type matches the target
+                    if (TypeMatchesTarget(typeSymbol.Name, fullTypeName, targetClassName, targetFullName)) {
                         return true;
                     }
                 }
