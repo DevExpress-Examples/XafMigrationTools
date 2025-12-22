@@ -447,6 +447,7 @@
     <Compile Include="ASPxCustomListEditor.cs" />
     <Compile Include="ASPxCustomListEditor2.cs" />
     <Compile Include="ASPxCustomListEditorControl2.cs" />
+    <Compile Include="BO\Employee.cs" />
     <Compile Include="BO\Message.cs" />
     <Compile Include="BO\NoKeyPropertyNamedBaseObject.cs" />
     <Compile Include="BO\ProtectedHeir_1.cs" />
@@ -456,6 +457,7 @@
     <Compile Include="CustomLayoutTemplates.cs">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Compile>
+    <Compile Include="DatabaseUpdate\Updater.cs" />
     <Compile Include="Notifications\SchedulerNotifications.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
