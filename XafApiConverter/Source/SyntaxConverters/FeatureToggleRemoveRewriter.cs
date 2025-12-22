@@ -21,7 +21,7 @@ namespace XafApiConverter {
                 isInsideAssignmentExpression = false;
                 if (hasFeatureToggleAccess) {
                     hasFeatureToggleAccess = false;
-                    newNode = SyntaxTreeHelper.CommentLine(newNode);
+                    newNode = SyntaxTreeHelper.CommentLine(newNode, "https://supportcenter.devexpress.com/ticket/details/T1312589");
                 }
                 return newNode;
             }

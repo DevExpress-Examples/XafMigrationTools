@@ -10,9 +10,12 @@ namespace MainDemo.Module.DatabaseUpdate {
 	public class Updater : DevExpress.ExpressApp.Updating.ModuleUpdater {
 
         static Updater() {
-            // DevExpress.Persistent.Base.PasswordCryptographer.EnableRfc2898 = true;
-            // DevExpress.Persistent.Base.PasswordCryptographer.SupportLegacySha512 = false;
-            // DevExpress.ExpressApp.Security.Strategy.SecuritySystemRole.AutoAssociationPermissions = false;
+            // https://supportcenter.devexpress.com/ticket/details/T1312589
+// DevExpress.Persistent.Base.PasswordCryptographer.EnableRfc2898 = true;
+            // https://supportcenter.devexpress.com/ticket/details/T1312589
+// DevExpress.Persistent.Base.PasswordCryptographer.SupportLegacySha512 = false;
+            // https://supportcenter.devexpress.com/ticket/details/T1312589
+// DevExpress.ExpressApp.Security.Strategy.SecuritySystemRole.AutoAssociationPermissions = false;
         }
 
         public Updater(IObjectSpace objectSpace, Version currentDBVersion) : base(objectSpace, currentDBVersion) { }
