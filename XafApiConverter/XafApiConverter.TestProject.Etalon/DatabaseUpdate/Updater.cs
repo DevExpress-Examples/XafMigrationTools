@@ -169,7 +169,8 @@ namespace MainDemo.Module.DatabaseUpdate {
             if(managerRole == null) {
                 managerRole = ObjectSpace.CreateObject<DevExpress.Persistent.BaseImpl.PermissionPolicy.PermissionPolicyRole>();
                 managerRole.Name = "Managers";
-                managerRole.ChildRoles.Add(GetUserRole());
+                // https://supportcenter.devexpress.com/ticket/details/T1312589
+// managerRole.ChildRoles.Add(GetUserRole());
 
 				DevExpress.Persistent.BaseImpl.PermissionPolicy.PermissionPolicyObjectPermissionsObject canEditOwnDepartmentObjectPermission = ObjectSpace.CreateObject<DevExpress.Persistent.BaseImpl.PermissionPolicy.PermissionPolicyObjectPermissionsObject>();
                 canEditOwnDepartmentObjectPermission.Criteria = "Oid=[<Employee>][Oid=CurrentUserId()].Single(Department.Oid)";
