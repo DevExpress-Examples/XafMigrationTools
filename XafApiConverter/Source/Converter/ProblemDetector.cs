@@ -195,7 +195,7 @@ namespace XafApiConverter.Converter {
                             problems.Add(new TypeProblem {
                                 TypeName = typeName,
                                 FullTypeName = fullTypeName,
-                                Reason = $"Type '{typeName}' has no equivalent in XAF .NET",
+                                Reason = $"Type '{fullTypeName}' has no equivalent in XAF .NET",
                                 Description = noEquivType.Description,
                                 Severity = ProblemSeverity.Critical,
                                 RequiresCommentOut = noEquivType.CommentOutEntireClass
@@ -215,7 +215,7 @@ namespace XafApiConverter.Converter {
                             problems.Add(new TypeProblem {
                                 TypeName = typeName,
                                 FullTypeName = fullTypeName,
-                                Reason = $"Type '{typeName}' requires manual conversion",
+                                Reason = $"Type '{fullTypeName}' requires manual conversion",
                                 Description = manualType.Description,
                                 Severity = ProblemSeverity.High,
                                 RequiresCommentOut = manualType.CommentOutEntireClass
@@ -301,7 +301,7 @@ namespace XafApiConverter.Converter {
                 problems.Add(new TypeProblem {
                     TypeName = typeName,
                     FullTypeName = fullTypeName,
-                    Reason = $"Type '{typeName}' has no equivalent in XAF .NET",
+                    Reason = $"Type '{fullTypeName}' has no equivalent in XAF .NET",
                     Description = matchingNoEquiv.Description,
                     Severity = ProblemSeverity.Critical,
                     RequiresCommentOut = matchingNoEquiv.CommentOutEntireClass
@@ -321,7 +321,7 @@ namespace XafApiConverter.Converter {
                 problems.Add(new TypeProblem {
                     TypeName = typeName,
                     FullTypeName = fullTypeName,
-                    Reason = $"Type '{typeName}' has equivalent but requires manual conversion",
+                    Reason = $"Type '{fullTypeName}' has equivalent but requires manual conversion",
                     Description = matchingManual.Description,
                     Severity = ProblemSeverity.High,
                     RequiresCommentOut = matchingManual.CommentOutEntireClass

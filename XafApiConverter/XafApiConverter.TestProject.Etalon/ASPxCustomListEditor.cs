@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Text;
 using DevExpress.ExpressApp.Editors;
@@ -39,17 +39,17 @@ namespace FeatureCenter.Module.Web.ListEditors {
     // TODO: The 'ASPxCustomListEditorControl' class has been commented out automatically due to usage of types that have no XAF .NET equivalent.
     //       Please review the class and implement necessary changes to ensure compatibility with XAF .NET.
     // NOTE:
-    //   - Type 'IXafCallbackHandler' has no equivalent in XAF .NET
+    //   - Type 'DevExpress.ExpressApp.Web.Templates.IXafCallbackHandler' has no equivalent in XAF .NET
     //     IXafCallbackHandler has no equivalent in XAF .NET (loaded from removed-api.txt)
-    //   - Type 'XafCallbackManager' has no equivalent in XAF .NET
+    //   - Type 'DevExpress.ExpressApp.Web.Templates.XafCallbackManager' has no equivalent in XAF .NET
     //     XafCallbackManager has no equivalent in XAF .NET (loaded from removed-api.txt)
-    //   - Type 'ICallbackManagerHolder' has no equivalent in XAF .NET
+    //   - Type 'DevExpress.ExpressApp.Web.Templates.ICallbackManagerHolder' has no equivalent in XAF .NET
     //     ICallbackManagerHolder has no equivalent in XAF .NET (loaded from removed-api.txt)
-    //   - Type 'ImageInfoEventArgs' has no equivalent in XAF .NET
+    //   - Type 'DevExpress.ExpressApp.Web.ImageInfoEventArgs' has no equivalent in XAF .NET
     //     ImageInfoEventArgs has no equivalent in XAF .NET (loaded from removed-api.txt)
-    //   - Type 'ImageResourceHttpHandler' has no equivalent in XAF .NET
+    //   - Type 'DevExpress.ExpressApp.Web.ImageResourceHttpHandler' has no equivalent in XAF .NET
     //     ImageResourceHttpHandler has no Blazor equivalent (Web Forms specific HTTP handler)
-    //   - Type 'WebImageHelper' has no equivalent in XAF .NET
+    //   - Type 'DevExpress.ExpressApp.Web.WebImageHelper' has no equivalent in XAF .NET
     //     WebImageHelper has no equivalent in XAF .NET (loaded from removed-api.txt)
     //   - Class 'Paddings' has no equivalent in XAF .NET
     //     DevExpress.Web.v25.1 assembly is removed in v25.2

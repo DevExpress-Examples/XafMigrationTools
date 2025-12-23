@@ -9,11 +9,11 @@ namespace FeatureCenter.Module.Web {
     // TODO: The 'FeatureCenterAspNetModule' class has been marked automatically due to usage of types that have no XAF .NET equivalent.
     //       Please review the class and implement necessary changes to ensure compatibility with XAF .NET.
     // NOTE:
-    //   - Type 'ChartAspNetModule' has no equivalent in XAF .NET
+    //   - Type 'DevExpress.ExpressApp.Chart.Web.ChartAspNetModule' has no equivalent in XAF .NET
     //     ChartAspNetModule has no equivalent in XAF .NET (loaded from removed-api.txt)
-    //   - Type 'PivotGridAspNetModule' has no equivalent in XAF .NET
+    //   - Type 'DevExpress.ExpressApp.PivotGrid.Web.PivotGridAspNetModule' has no equivalent in XAF .NET
     //     PivotGridAspNetModule has no equivalent in XAF .NET (loaded from removed-api.txt)
-    //   - Type 'MapsAspNetModule' has no equivalent in XAF .NET
+    //   - Type 'DevExpress.ExpressApp.Maps.Web.MapsAspNetModule' has no equivalent in XAF .NET
     //     MapsAspNetModule has no Blazor equivalent
 [ToolboxItemFilter("Xaf.Platform.Web")]
     public sealed partial class FeatureCenterAspNetModule : ModuleBase {
