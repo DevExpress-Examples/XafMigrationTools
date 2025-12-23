@@ -13,9 +13,9 @@ namespace FeatureCenter.Module.Web.PropertyEditors {
 	// TODO: The 'CustomStringEditor' class has been commented out automatically due to usage of types that have no XAF .NET equivalent.
 	//       Please review the class and implement necessary changes to ensure compatibility with XAF .NET.
 	// NOTE:
-	//   - Base class 'ASPxPropertyEditor' has no equivalent (inferred from using DevExpress.ExpressApp.Web.Editors.ASPx)
+	//   - Type 'ASPxPropertyEditor' has no equivalent (inferred from using DevExpress.ExpressApp.Web.Editors.ASPx)
 	//     ASPxPropertyEditor has no equivalent in XAF .NET (loaded from removed-api.txt)
-	//   - Base class 'RenderHelper' has no equivalent (inferred from using DevExpress.ExpressApp.Web)
+	//   - Type 'RenderHelper' has no equivalent (inferred from using DevExpress.ExpressApp.Web)
 	//     RenderHelper has no equivalent in XAF .NET (loaded from removed-api.txt)
 	// ========== COMMENTED OUT CLASS ==========
 	// [PropertyEditor(typeof(String), FeatureCenterEditorAliases.CustomStringEditor, false)]

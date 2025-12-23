@@ -25,9 +25,9 @@ namespace FeatureCenter.Module.Notifications {
     // TODO: The 'TaskWithNotifications' class has been marked automatically due to usage of types that have no XAF .NET equivalent.
     //       Please review the class and implement necessary changes to ensure compatibility with XAF .NET.
     // NOTE:
-    //   - Base class 'TaskImpl' has no equivalent (inferred from using DevExpress.Persistent.Base.General)
+    //   - Type 'TaskImpl' has no equivalent (inferred from using DevExpress.Persistent.Base.General)
     //     TaskImpl has no equivalent in XAF .NET (loaded from removed-api.txt)
-    //   - Base class 'TaskStatus' has no equivalent (inferred from using DevExpress.Persistent.Base.General)
+    //   - Type 'TaskStatus' has no equivalent (inferred from using DevExpress.Persistent.Base.General)
     //     TaskStatus has no equivalent in XAF .NET (loaded from removed-api.txt)
 [NavigationItem(false)]
     [Hint(Hints.TaskNotificationsHint)]

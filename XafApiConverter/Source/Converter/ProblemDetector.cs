@@ -301,7 +301,7 @@ namespace XafApiConverter.Converter {
                 problems.Add(new TypeProblem {
                     TypeName = typeName,
                     FullTypeName = fullTypeName,
-                    Reason = $"Base class '{typeName}' has no equivalent in XAF .NET",
+                    Reason = $"Type '{typeName}' has no equivalent in XAF .NET",
                     Description = matchingNoEquiv.Description,
                     Severity = ProblemSeverity.Critical,
                     RequiresCommentOut = matchingNoEquiv.CommentOutEntireClass
@@ -321,7 +321,7 @@ namespace XafApiConverter.Converter {
                 problems.Add(new TypeProblem {
                     TypeName = typeName,
                     FullTypeName = fullTypeName,
-                    Reason = $"Base class '{typeName}' has equivalent but requires manual conversion",
+                    Reason = $"Type '{typeName}' has equivalent but requires manual conversion",
                     Description = matchingManual.Description,
                     Severity = ProblemSeverity.High,
                     RequiresCommentOut = matchingManual.CommentOutEntireClass
@@ -371,8 +371,8 @@ namespace XafApiConverter.Converter {
                         TypeName = typeName,
                         FullTypeName = candidateType.GetFullOldTypeName(),
                         Reason = isNoEquiv
-                            ? $"Base class '{typeName}' has no equivalent (inferred from using {candidateType.OldNamespace})"
-                            : $"Base class '{typeName}' requires manual conversion (inferred from using {candidateType.OldNamespace})",
+                            ? $"Type '{typeName}' has no equivalent (inferred from using {candidateType.OldNamespace})"
+                            : $"Type '{typeName}' requires manual conversion (inferred from using {candidateType.OldNamespace})",
                         Description = candidateType.Description,
                         Severity = isNoEquiv ? ProblemSeverity.Critical : ProblemSeverity.High,
                         RequiresCommentOut = candidateType.CommentOutEntireClass

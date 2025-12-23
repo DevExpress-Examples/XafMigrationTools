@@ -8,9 +8,9 @@ namespace FeatureCenter.Module.Web.Layout {
     // TODO: The 'CustomLayoutItemTemplate' class has been commented out automatically due to usage of types that have no XAF .NET equivalent.
     //       Please review the class and implement necessary changes to ensure compatibility with XAF .NET.
     // NOTE:
-    //   - Base class 'LayoutItemTemplate' has no equivalent (inferred from using DevExpress.ExpressApp.Web.Layout)
+    //   - Type 'LayoutItemTemplate' has no equivalent (inferred from using DevExpress.ExpressApp.Web.Layout)
     //     LayoutItemTemplate has no Blazor equivalent (Web Forms layout specific)
-    //   - Base class 'LayoutItemTemplateContainer' has no equivalent (inferred from using DevExpress.ExpressApp.Web.Layout)
+    //   - Type 'LayoutItemTemplateContainer' has no equivalent (inferred from using DevExpress.ExpressApp.Web.Layout)
     //     LayoutItemTemplateContainer has no equivalent in XAF .NET (loaded from removed-api.txt)
     // ========== COMMENTED OUT CLASS ==========
     // public class CustomLayoutItemTemplate : LayoutItemTemplate {
@@ -36,13 +36,13 @@ namespace FeatureCenter.Module.Web.Layout {
     // TODO: The 'CustomLayoutGroupTemplate' class has been commented out automatically due to usage of types that have no XAF .NET equivalent.
     //       Please review the class and implement necessary changes to ensure compatibility with XAF .NET.
     // NOTE:
-    //   - Base class 'LayoutGroupTemplate' has no equivalent (inferred from using DevExpress.ExpressApp.Web.Layout)
+    //   - Type 'LayoutGroupTemplate' has no equivalent (inferred from using DevExpress.ExpressApp.Web.Layout)
     //     LayoutGroupTemplate has no Blazor equivalent (Web Forms layout specific)
-    //   - Base class 'LayoutItemTemplateContainerBase' has no equivalent (inferred from using DevExpress.ExpressApp.Web.Layout)
+    //   - Type 'LayoutItemTemplateContainerBase' has no equivalent (inferred from using DevExpress.ExpressApp.Web.Layout)
     //     LayoutItemTemplateContainerBase has no equivalent in XAF .NET (loaded from removed-api.txt)
-    //   - Base class 'LayoutGroupTemplateContainer' has no equivalent (inferred from using DevExpress.ExpressApp.Web.Layout)
+    //   - Type 'LayoutGroupTemplateContainer' has no equivalent (inferred from using DevExpress.ExpressApp.Web.Layout)
     //     LayoutGroupTemplateContainer has no equivalent in XAF .NET (loaded from removed-api.txt)
-    //   - Base class 'ASPxImageHelper' has no equivalent (inferred from using DevExpress.ExpressApp.Web)
+    //   - Type 'ASPxImageHelper' has no equivalent (inferred from using DevExpress.ExpressApp.Web)
     //     ASPxImageHelper has no equivalent in XAF .NET (loaded from removed-api.txt)
     // ========== COMMENTED OUT CLASS ==========
     // public class CustomLayoutGroupTemplate : LayoutGroupTemplate {
@@ -79,9 +79,9 @@ namespace FeatureCenter.Module.Web.Layout {
     // TODO: The 'CustomLayoutTabbedGroupTemplate' class has been commented out automatically due to usage of types that have no XAF .NET equivalent.
     //       Please review the class and implement necessary changes to ensure compatibility with XAF .NET.
     // NOTE:
-    //   - Base class 'TabbedGroupTemplate' has no equivalent (inferred from using DevExpress.ExpressApp.Web.Layout)
+    //   - Type 'TabbedGroupTemplate' has no equivalent (inferred from using DevExpress.ExpressApp.Web.Layout)
     //     TabbedGroupTemplate has no Blazor equivalent (Web Forms layout specific)
-    //   - Base class 'TabbedGroupTemplateContainer' has no equivalent (inferred from using DevExpress.ExpressApp.Web.Layout)
+    //   - Type 'TabbedGroupTemplateContainer' has no equivalent (inferred from using DevExpress.ExpressApp.Web.Layout)
     //     TabbedGroupTemplateContainer has no equivalent in XAF .NET (loaded from removed-api.txt)
     // ========== COMMENTED OUT CLASS ==========
     // public class CustomLayoutTabbedGroupTemplate : TabbedGroupTemplate {
