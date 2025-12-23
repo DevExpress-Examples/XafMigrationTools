@@ -396,7 +396,18 @@ namespace XafApiConverter.Converter {
                 // Try semantic model first (preferred)
                 var cached = _semanticCache?.TryGetValue(filePath);
                 if (cached != null) {
-                    isProtected = IsProtectedClassUsingSemanticModel(classDecl, cached.SemanticModel);
+                    var classFromCachedModel = cached.SyntaxTree.GetRoot().DescendantNodes() // get ClassDeclarationSyntax from cached model, to avoid 'Syntax node is not within syntax tree' exceptions
+                            .OfType<ClassDeclarationSyntax>()
+                            .Where(c => c.Identifier.Text == className)
+                            .Where(c => !IsClassInsideComment(c, content))
+                            .FirstOrDefault();
+                    if (classFromCachedModel != null) {
+                        isProtected = IsProtectedClassUsingSemanticModel(classFromCachedModel, cached.SemanticModel);
+                    }
+                    else {
+                        // Fallback to syntax-only check
+                        isProtected = IsProtectedClassSyntaxOnly(classDecl, filePath, content);
+                    }
                 } else {
                     // Fallback to syntax-only check
                     isProtected = IsProtectedClassSyntaxOnly(classDecl, filePath, content);
@@ -591,7 +602,18 @@ namespace XafApiConverter.Converter {
                 // Try semantic model first (preferred)
                 var cached = _semanticCache?.TryGetValue(filePath);
                 if (cached != null) {
-                    isProtected = IsProtectedClassUsingSemanticModel(classDecl, cached.SemanticModel);
+                    var classFromCachedModel = cached.SyntaxTree.GetRoot().DescendantNodes() // get ClassDeclarationSyntax from cached model, to avoid 'Syntax node is not within syntax tree' exceptions
+                            .OfType<ClassDeclarationSyntax>()
+                            .Where(c => c.Identifier.Text == className)
+                            .Where(c => !IsClassInsideComment(c, content))
+                            .FirstOrDefault();
+                    if (classFromCachedModel != null) {
+                        isProtected = IsProtectedClassUsingSemanticModel(classFromCachedModel, cached.SemanticModel);
+                    }
+                    else {
+                        // Fallback to syntax-only check
+                        isProtected = IsProtectedClassSyntaxOnly(classDecl, filePath, content);
+                    }
                 } else {
                     // Fallback to syntax-only check
                     isProtected = IsProtectedClassSyntaxOnly(classDecl, filePath, content);
