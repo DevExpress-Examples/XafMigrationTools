@@ -32,9 +32,9 @@ namespace XafApiConverter.Converter {
         /// Default: false (normal mode with automatic commenting for non-protected classes).
         /// </summary>
         public bool CommentIssuesOnly { get; set; } = false;
-        public TypeMigrationTool(MigrationOptions options) {
+        public TypeMigrationTool(string solutionPath, MigrationOptions options) {
             _options = options;
-            _solutionPath = options.SolutionPath;
+            _solutionPath = solutionPath;
             _report = new MigrationReport { SolutionPath = _solutionPath };
             _semanticCache = new SemanticCache();
         }
@@ -48,7 +48,7 @@ namespace XafApiConverter.Converter {
 
             try {
                 // Phase 1: Load solution
-                Console.WriteLine("Phase 1: Loading solution...");
+                Console.WriteLine($"Phase 1: Loading solution {Path.GetFileName(_solutionPath)}...");
                 LoadSolution();
 
                 // Phase 1.5: Build semantic cache of original state

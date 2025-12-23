@@ -486,7 +486,7 @@ namespace XafApiConverter.Converter {
         private static int RunTypeMigration(string solutionPath, MigrationOptions options) {
             try {
                 // Create migration tool with merged options
-                var tool = new TypeMigrationTool(options) {
+                var tool = new TypeMigrationTool(solutionPath, options) {
                     CommentIssuesOnly = options.CommentIssuesOnly
                 };
 
