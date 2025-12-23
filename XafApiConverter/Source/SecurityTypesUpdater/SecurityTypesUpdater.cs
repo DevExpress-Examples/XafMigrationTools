@@ -95,11 +95,19 @@ namespace XafApiConverter {
             }
 
             if (syntaxRoot != oldSyntaxRoot) {
+                // replace AllowCreate / AllowRead / AllowWrite / etc. to CreateState / ReadStateWriteState / etc.
                 doc = doc.WithText(syntaxRoot.GetText());
                 syntaxRoot = doc.GetSyntaxRootAsync().Result;
                 var semanticModel = doc.GetSemanticModelAsync().Result;
                 var permissionStateReplacer = new PermissionStateSetterRewriter(semanticModel);
                 syntaxRoot = permissionStateReplacer.Visit(syntaxRoot);
+
+                // remove access to ParentRoles / ChildRoles
+                doc = doc.WithText(syntaxRoot.GetText());
+                syntaxRoot = doc.GetSyntaxRootAsync().Result;
+                semanticModel = doc.GetSemanticModelAsync().Result;
+                var memberRemoveReplacer = new MemberRemoveRewriter(semanticModel, "PermissionPolicyRole", new string[] { "ParentRoles", "ChildRoles" });
+                syntaxRoot = memberRemoveReplacer.Visit(syntaxRoot);
             }
 
             if (syntaxRoot != oldSyntaxRoot) {
