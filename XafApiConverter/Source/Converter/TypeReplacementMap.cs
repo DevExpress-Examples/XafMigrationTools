@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.IO.Pipelines;
 using System.Linq;
 using System.Reflection;
 
@@ -554,65 +555,33 @@ namespace XafApiConverter.Converter {
         /// </summary>
         private static void LoadRemovedApiTypes() {
             try {
-                // Get the assembly containing this class
-                var assembly = Assembly.GetExecutingAssembly();
-                
-                // Get the resource name - typically namespace + filename
-                // Expected format: "XafApiConverter.Converter.removed-api.txt"
-                string resourceName = "XafApiConverter.Converter.removed-api.txt";
-                
-                // Try to find the resource with different possible names
-                var resourceNames = assembly.GetManifestResourceNames();
-                var matchingResource = resourceNames.FirstOrDefault(r => r.EndsWith("removed-api.txt", StringComparison.OrdinalIgnoreCase));
-                
-                if (matchingResource == null) {
-                    // Resource not found, skip loading (NoEquivalentTypes will only contain manually defined entries)
-                    Console.WriteLine($"Warning: removed-api.txt resource not found. Available resources: {string.Join(", ", resourceNames)}");
-                    return;
-                }
+                List<string> removedTypeNames = ReadTypeNamesFromResource("removed-api.txt");
+                HashSet<string> typesExistingBothForEF6AndEFCore = ReadTypeNamesFromResource("TypesExistingBothEF6AndEFCore.txt").ToHashSet();
+                removedTypeNames = removedTypeNames
+                    .Where(t => !typesExistingBothForEF6AndEFCore.Contains(t))
+                    .ToList();
 
-                // Read the embedded resource
-                using (Stream stream = assembly.GetManifestResourceStream(matchingResource)) {
-                    if (stream == null) {
-                        Console.WriteLine($"Warning: Could not open stream for resource '{matchingResource}'");
-                        return;
+                foreach (string fullTypeName in removedTypeNames) {
+                    // Extract namespace and type name
+                    int lastDotIndex = fullTypeName.LastIndexOf('.');
+                    if (lastDotIndex == -1) {
+                        // No namespace, skip
+                        continue;
                     }
 
-                    using (StreamReader reader = new StreamReader(stream)) {
-                        string line;
-                        while ((line = reader.ReadLine()) != null) {
-                            string trimmedLine = line.Trim();
+                    string namespaceName = fullTypeName.Substring(0, lastDotIndex);
+                    string typeName = fullTypeName.Substring(lastDotIndex + 1);
 
-                            // Skip empty lines and comments
-                            if (string.IsNullOrWhiteSpace(trimmedLine) || trimmedLine.StartsWith("#")) {
-                                continue;
-                            }
-
-                            // Parse full type name (e.g., "DevExpress.ExpressApp.Security.ClientPermissionRequestProcessor")
-                            string fullTypeName = trimmedLine;
-
-                            // Extract namespace and type name
-                            int lastDotIndex = fullTypeName.LastIndexOf('.');
-                            if (lastDotIndex == -1) {
-                                // No namespace, skip
-                                continue;
-                            }
-
-                            string namespaceName = fullTypeName.Substring(0, lastDotIndex);
-                            string typeName = fullTypeName.Substring(lastDotIndex + 1);
-
-                            // Only add if not already in the dictionary (manually defined entries take precedence)
-                            if (!NoEquivalentTypes.ContainsKey(typeName)) {
-                                NoEquivalentTypes[typeName] = new TypeReplacement(
-                                    typeName,
-                                    null, // No equivalent
-                                    namespaceName,
-                                    null,
-                                    $"{typeName} has no equivalent in XAF .NET (loaded from removed-api.txt)",
-                                    new[] { ".cs" },
-                                    commentOutEntireClass: true);
-                            }
-                        }
+                    // Only add if not already in the dictionary (manually defined entries take precedence)
+                    if (!NoEquivalentTypes.ContainsKey(typeName)) {
+                        NoEquivalentTypes[typeName] = new TypeReplacement(
+                            typeName,
+                            null, // No equivalent
+                            namespaceName,
+                            null,
+                            $"{typeName} has no equivalent in XAF .NET (loaded from removed-api.txt)",
+                            new[] { ".cs" },
+                            commentOutEntireClass: true);
                     }
                 }
 
@@ -632,6 +601,48 @@ namespace XafApiConverter.Converter {
                 // Log error or handle gracefully - don't crash the application
                 Console.WriteLine($"Warning: Failed to load removed-api.txt from embedded resources: {ex.Message}");
             }
+        }
+
+        static List<string> ReadTypeNamesFromResource(string resourceName) {
+            // Get the assembly containing this class
+            var assembly = Assembly.GetExecutingAssembly();
+
+            // Try to find the resource with different possible names
+            var resourceNames = assembly.GetManifestResourceNames();
+            var matchingResource = resourceNames.FirstOrDefault(r => r.EndsWith(resourceName, StringComparison.OrdinalIgnoreCase));
+
+            var result = new List<string>();
+            if (matchingResource == null) {
+                // Resource not found, skip loading (NoEquivalentTypes will only contain manually defined entries)
+                Console.WriteLine($"Warning: {resourceName} resource not found. Available resources: {string.Join(", ", resourceNames)}");
+                return result;
+            }
+
+            // Read the embedded resource
+            using (Stream stream = assembly.GetManifestResourceStream(matchingResource)) {
+                if (stream == null) {
+                    Console.WriteLine($"Warning: Could not open stream for resource '{matchingResource}'");
+                    return result;
+                }
+
+                using (StreamReader reader = new StreamReader(stream)) {
+                    string line;
+                    while ((line = reader.ReadLine()) != null) {
+                        string trimmedLine = line.Trim();
+
+                        // Skip empty lines and comments
+                        if (string.IsNullOrWhiteSpace(trimmedLine) || trimmedLine.StartsWith("#")) {
+                            continue;
+                        }
+
+                        // Parse full type name (e.g., "DevExpress.ExpressApp.Security.ClientPermissionRequestProcessor")
+                        string fullTypeName = trimmedLine;
+                        result.Add(fullTypeName);
+                    }
+                }
+            }
+
+            return result;
         }
 
         /// <summary>
@@ -654,61 +665,32 @@ namespace XafApiConverter.Converter {
         /// </summary>
         private static void LoadProtectedTypes() {
             try {
-                var assembly = Assembly.GetExecutingAssembly();
+                List<string> protectedTypes = ReadTypeNamesFromResource("ProtectedTypes.txt");
                 
-                // Try to find ProtectedTypes.txt resource
-                var resourceNames = assembly.GetManifestResourceNames();
-                var matchingResource = resourceNames.FirstOrDefault(r => r.EndsWith("ProtectedTypes.txt", StringComparison.OrdinalIgnoreCase));
-                
-                if (matchingResource == null) {
-                    Console.WriteLine($"Info: ProtectedTypes.txt resource not found. Using only manually defined protected types.");
-                    return;
-                }
-
                 int loadedCount = 0;
-                
-                using (Stream stream = assembly.GetManifestResourceStream(matchingResource)) {
-                    if (stream == null) {
-                        Console.WriteLine($"Warning: Could not open stream for resource '{matchingResource}'");
-                        return;
+
+                foreach (string fullTypeName in protectedTypes) {
+                    // Extract simple type name (after last dot)
+                    int lastDotIndex = fullTypeName.LastIndexOf('.');
+                    if (lastDotIndex == -1) {
+                        // No namespace - use as-is
+                        if (!ProtectedBaseClasses.Contains(fullTypeName)) {
+                            ProtectedBaseClasses.Add(fullTypeName);
+                            loadedCount++;
+                        }
+                        continue;
                     }
 
-                    using (StreamReader reader = new StreamReader(stream)) {
-                        string line;
-                        while ((line = reader.ReadLine()) != null) {
-                            string trimmedLine = line.Trim();
+                    string typeName = fullTypeName.Substring(lastDotIndex + 1);
 
-                            // Skip empty lines and comments
-                            if (string.IsNullOrWhiteSpace(trimmedLine) || trimmedLine.StartsWith("#")) {
-                                continue;
-                            }
-
-                            // Parse full type name (e.g., "DevExpress.Persistent.BaseImpl.Task")
-                            string fullTypeName = trimmedLine;
-
-                            // Extract simple type name (after last dot)
-                            int lastDotIndex = fullTypeName.LastIndexOf('.');
-                            if (lastDotIndex == -1) {
-                                // No namespace - use as-is
-                                if (!ProtectedBaseClasses.Contains(fullTypeName)) {
-                                    ProtectedBaseClasses.Add(fullTypeName);
-                                    loadedCount++;
-                                }
-                                continue;
-                            }
-
-                            string typeName = fullTypeName.Substring(lastDotIndex + 1);
-
-                            // Add to ProtectedBaseClasses if not already present
-                            // (manually defined entries take precedence due to case-insensitive comparison)
-                            if (!ProtectedBaseClasses.Contains(typeName)) {
-                                ProtectedBaseClasses.Add(typeName);
-                                loadedCount++;
-                            }
-                        }
+                    // Add to ProtectedBaseClasses if not already present
+                    // (manually defined entries take precedence due to case-insensitive comparison)
+                    if (!ProtectedBaseClasses.Contains(typeName)) {
+                        ProtectedBaseClasses.Add(typeName);
+                        loadedCount++;
                     }
                 }
-
+                
                 if (loadedCount > 0) {
                     Console.WriteLine($"Info: Loaded {loadedCount} protected types from ProtectedTypes.txt");
                 }
