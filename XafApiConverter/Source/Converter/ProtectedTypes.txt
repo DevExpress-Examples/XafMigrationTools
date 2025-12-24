@@ -56,6 +56,35 @@ DevExpress.Persistent.BaseImpl.ServerPrefix
 DevExpress.Persistent.BaseImpl.State
 DevExpress.Persistent.BaseImpl.Task
 
+# DevExpress.Persistent.BaseImpl.EF6.v25.1.dll
+
+DevExpress.Persistent.BaseImpl.EF.DashboardData
+DevExpress.Persistent.BaseImpl.EF.DimensionPropertiesList
+DevExpress.Persistent.BaseImpl.EF.Event
+DevExpress.Persistent.BaseImpl.EF.FileAttachment
+DevExpress.Persistent.BaseImpl.EF.FileData
+DevExpress.Persistent.BaseImpl.EF.HCategory
+DevExpress.Persistent.BaseImpl.EF.MediaDataObject
+DevExpress.Persistent.BaseImpl.EF.MediaResourceObject
+DevExpress.Persistent.BaseImpl.EF.ModelDifference
+DevExpress.Persistent.BaseImpl.EF.ModelDifferenceAspect
+DevExpress.Persistent.BaseImpl.EF.PermissionPolicy.PermissionPolicyActionPermissionObject
+DevExpress.Persistent.BaseImpl.EF.PermissionPolicy.PermissionPolicyMemberPermissionsObject
+DevExpress.Persistent.BaseImpl.EF.PermissionPolicy.PermissionPolicyNavigationPermissionObject
+DevExpress.Persistent.BaseImpl.EF.PermissionPolicy.PermissionPolicyObjectPermissionsObject
+DevExpress.Persistent.BaseImpl.EF.PermissionPolicy.PermissionPolicyRole
+DevExpress.Persistent.BaseImpl.EF.PermissionPolicy.PermissionPolicyRoleBase
+DevExpress.Persistent.BaseImpl.EF.PermissionPolicy.PermissionPolicyTypePermissionObject
+DevExpress.Persistent.BaseImpl.EF.PermissionPolicy.PermissionPolicyUser
+DevExpress.Persistent.BaseImpl.EF.ReportDataV2
+DevExpress.Persistent.BaseImpl.EF.Resource
+DevExpress.Persistent.BaseImpl.EF.RichTextMailMergeData
+DevExpress.Persistent.BaseImpl.EF.State
+DevExpress.Persistent.BaseImpl.EF.StateMachine.StateMachine
+DevExpress.Persistent.BaseImpl.EF.StateMachine.StateMachineAppearance
+DevExpress.Persistent.BaseImpl.EF.StateMachine.StateMachineState
+DevExpress.Persistent.BaseImpl.EF.StateMachine.StateMachineTransition
+
 # DevExpress.Xpo.v25.2
 
 DevExpress.Xpo.XPBaseObject
