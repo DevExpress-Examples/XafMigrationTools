@@ -4,9 +4,6 @@ using XafApiConverter.Converter;
 namespace XafApiConverter {
     static class Program {
         static void Main(string[] args) {
-            args = new[] { "d:\\Work\\Temp_Convert_NET\\FeatureCenter.NETFramework.XPO.sln" };
-            //args = new[] { "d:\\Work\\Temp_Convert_NET\\MainDemo.NETFramework.XPO.sln" };
-            //args = new[] { "d:\\Work\\DXSources\\G\\Examples\\XafMigrationTools\\XafApiConverter\\XafApiConverter.TestProject\\XafApiConverter.TestProject.sln" };
             // Register MSBuild
             MSBuildLocator.RegisterDefaults();
 
