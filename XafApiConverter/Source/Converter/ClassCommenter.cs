@@ -234,15 +234,7 @@ namespace XafApiConverter.Converter {
         /// </summary>
         private bool HasWarningComment(string content, string className) {
             var patterns = new[] {
-                //GetTodoClassCommentedComment(className).Trim(),
-                $"// TODO: The '{className}' class",
-                //GetTodoClassWithIssuesComment(className).Trim()
-                //"// NOTE: Partial class commented out due to types having no XAF .NET equivalent",
-                //"// NOTE: Class commented out due to types having no XAF .NET equivalent",
-                //"// NOTE: Class has no XAF .NET equivalent",
-                //"// NOTE: Partial class has no XAF .NET equivalent",
-                //"// NOTE: This class inherits from protected base class",
-                //"// WARNING: This class uses types with no XAF .NET equivalent"
+                $"// TODO: The '{className}' class"
             };
 
             // Search in the area before where class might be
@@ -250,12 +242,6 @@ namespace XafApiConverter.Converter {
                 var index = content.IndexOf(pattern, StringComparison.OrdinalIgnoreCase);
                 if (index >= 0) {
                     return true;
-                    // Check if class name appears within next 500 characters
-                    //var searchEnd = Math.Min(index + 500, content.Length);
-                    //var searchRegion = content.Substring(index, searchEnd - index);
-                    //if (searchRegion.Contains(className, StringComparison.OrdinalIgnoreCase)) {
-                    //    return true;
-                    //}
                 }
             }
 
