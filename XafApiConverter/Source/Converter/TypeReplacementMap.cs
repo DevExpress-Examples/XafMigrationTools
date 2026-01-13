@@ -370,6 +370,14 @@ namespace XafApiConverter.Converter {
                 "DevExpress.ExpressApp.Dashboards.Web",
                 "DevExpress.ExpressApp.Dashboards.Blazor",
                 "Dashboards ASP.NET to Blazor",
+                new[] { ".cs" }) },
+
+            { "NotificationsAspNetModule", new TypeReplacement(
+                "NotificationsAspNetModule",
+                "NotificationsBlazorModule",
+                "DevExpress.ExpressApp.Notifications.Web",
+                "DevExpress.ExpressApp.Notifications.Blazor",
+                "Notifications ASP.NET to Blazor",
                 new[] { ".cs" }) }
         };
 
