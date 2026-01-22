@@ -32,21 +32,21 @@ XafApiConverter.exe <path> <step> [step] [step] [options]
 `<step>` - the migration step to perform. You can run several steps simultaneously in the following order:
 
 * `security-update` step updates legacy security types:
-    * Replaces `SecuritySystem*` with `PermissionPolicy*`.
-    * Removes obsolete feature toggles.
-    * Adds `PermissionPolicyRoleExtensions`.
-    * Updates permission state setters.
+    * Replaces `SecuritySystem*` with `PermissionPolicy*`
+    * Removes obsolete feature toggles
+    * Adds `PermissionPolicyRoleExtensions`
+    * Updates permission state setters
 * `migrate-types` step removes .NET Framework APIs, and legacy .NET-based APIs and modules. The tool marks or comments out problematic classes.
 * `project-conversion` step converts projects from .NET Framework to .NET:
-    * Converts _.csproj_ to SDK-style format.
-    * Updates the target framework to .NET 9/10.
-    * Adds NuGet packages (base, Microsoft, Blazor) if needed.
-    * Removes legacy assembly references.
-    * Validates converted projects.
+    * Converts _.csproj_ to SDK-style format
+    * Updates the target framework to .NET 9/10
+    * Adds NuGet packages (base, Microsoft, Blazor) if needed
+    * Removes legacy assembly references
+    * Validates converted projects
     * Changes `System.Data.SqlClient` to `Microsoft.Data.SqlClient`
     * Changes `DevExpress.ExpressApp.Web.*` to `DevExpress.ExpressApp.Blazor.*`
-    * Replaces types (for instance, `WebApplication` with `BlazorApplication`).
-    * Processes _.cs_ and _.xafml_ files.
+    * Replaces types (for instance, `WebApplication` with `BlazorApplication`)
+    * Processes _.cs_ and _.xafml_ files
 
 ### Options
 
