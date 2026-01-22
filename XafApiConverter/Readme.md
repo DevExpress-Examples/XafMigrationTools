@@ -1,4 +1,4 @@
-# XAF Legacy API Converter Tool
+# XAF Converter for Legacy API in v25.2
 
 XAF v25.2 ends support for .NET Framework and other legacy APIs and features. Review the full list of removed APIs in the following knowledge base article: [T1312589 - XAF - Legacy .NET Framework (WinForms and ASP.NET WebForms) APIs, .NET-based API/Modules, and Security System have been removed from distribution](https://supportcenter.devexpress.com/ticket/details/t1312589/xaf-legacy-net-framework-winforms-and-asp-net-webforms-apis-net-based-api-modules-and).
 
