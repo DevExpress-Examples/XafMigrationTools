@@ -1,4 +1,5 @@
-# XAF Converter for Legacy API in v25.2
+# XAF - Converter for Legacy API
+
 
 XAF v25.2 ends support for .NET Framework and other legacy APIs and features. Review the full list of removed APIs in the following knowledge base article: [T1312589 - XAF - Legacy .NET Framework (WinForms and ASP.NET WebForms) APIs, .NET-based API/Modules, and Security System have been removed from distribution](https://supportcenter.devexpress.com/ticket/details/t1312589/xaf-legacy-net-framework-winforms-and-asp-net-webforms-apis-net-based-api-modules-and).
 
@@ -20,7 +21,7 @@ Find a full step-by-step migration guide in the following DevExpress help topic:
 1. Download the repository.
 2. Open the _XafApiConverter/Source/XafApiConverter.sln_ solution.
 3. Build the solution.
-4. Once completed, run the executable file from the command line. Use this format:
+4. Once completed, run the executable file from the command line. Use the following command format:
 
 ```console
 XafApiConverter.exe <path> <step> [step] [step] [options]
