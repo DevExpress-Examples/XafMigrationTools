@@ -11,10 +11,10 @@ This repository contains the **XafApiConverter** tool that helps you to migrate 
 Find a full step-by-step migration guide in the following DevExpress documentation:
 * [Migrate XAF ASP.NET WebForms to ASP.NET Core Blazor](https://docs.devexpress.com/eXpressAppFramework/405736)
 
+## How to Use the Converter
+
 > [!IMPORTANT]  
 > **XafApiConverter** analyzes semantic trees that depend on the DevExpress version. To recognize types correctly **the conversion should be performed on an application v25.1**.
-
-## How to Use the Converter
 
 1. Download the repository.
 2. Open the _XafApiConverter/Source/XafApiConverter.sln_ solution.
