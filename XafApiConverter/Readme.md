@@ -65,13 +65,37 @@ When you do not use this option, the converter comments out problematic classes.
 
 `-h`, `--help` - displays help.
 
-## Examples
-Run one step with default options:
-```
-XafApiConverter.exe MySolution.sln migrate-types
-```
-Run all steps, specify the .NET version:
+## Use Case Examples
+
+### Migrate XAF Application from Web Forms to ASP.NET Core Blazor
 
 ```
-XafApiConverter.exe MySolution.sln security-update migrate-types project-conversion -tf net10.0
+XafApiConverter.exe MySolution.sln security-update migrate-types project-conversion -tf net10.0 -b
+```
+
+> [!NOTE]  
+> Migrating from Web Forms to ASP.NET Core Blazor involves number of manual steps, detailed in the topic "[Migrate XAF ASP.NET WebForms to ASP.NET Core Blazor](https://docs.devexpress.com/eXpressAppFramework/405736)." It is recommended to follow the steps in order and use the **XafApiConverter** tool as described.
+
+### Update legacy XAF Security System APIs
+
+```
+XafApiConverter.exe MySolution.sln security-update -b
+```
+
+### Remove legacy .NET-based APIs and modules from XAF WinForms/Blazor Application
+
+```
+XafApiConverter.exe MySolution.sln migrate-types -b
+```
+
+### Migrate XAF WinForms Application from .NET Framework to .NET
+
+```
+XafApiConverter.exe MySolution.sln security-update migrate-types project-conversion -b
+```
+
+### Remove legacy .NET Framework APIs from XAF WinForms/Web Forms Application
+
+```
+XafApiConverter.exe MySolution.sln migrate-types -b
 ```
