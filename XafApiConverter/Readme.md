@@ -11,13 +11,8 @@ This repository contains the **XafApiConverter** tool that helps you to migrate 
 Find a full step-by-step migration guide in the following DevExpress documentation:
 * [Migrate XAF ASP.NET WebForms to ASP.NET Core Blazor](https://docs.devexpress.com/eXpressAppFramework/405736)
 
-## Prerequisites
-
-Before you migrate your application, perform the following steps:
-
-* Upgrade your project to v25.1. Ensure your project compiles, runs, and works as expected.
-* Back up your databases. The conversion changes your database structure.
-* If you use our tools to update your project, use a version control system to review all changes.
+> [!IMPORTANT]  
+> **XafApiConverter** analyzes semantic trees that depend on the DevExpress version. To recognize types correctly **the conversion should be performed on an application v25.1**.
 
 ## How to Use the Converter
 
@@ -32,18 +27,18 @@ XafApiConverter.exe <path> <step> [step] [step] [options]
 
 `<path>` - the path to the .sln file or project folder.
 
-`<step>` - the migration step to perform. You can run several steps at once. Follow the steps in this order:
+`<step>` - the migration step to perform. You can run several steps at once in this order:
 
-* `security-update` - updates legacy security types:
+* `security-update` step updates legacy security types:
     * Replaces `SecuritySystem*` with `PermissionPolicy*`.
     * Removes obsolete feature toggles.
     * Adds `PermissionPolicyRoleExtensions`.
     * Updates permission state setters.
-* `migrate-types` removes .NET Framework APIs and legacy .NET-based APIs and modules. The tool marks or comments out problematic classes.
-* `project-conversion` converts projects from .NET Framework to .NET:
+* `migrate-types` step removes .NET Framework APIs and legacy .NET-based APIs and modules. The tool marks or comments out problematic classes.
+* `project-conversion` step converts projects from .NET Framework to .NET:
     * Converts _.csproj_ to SDK-style format.
     * Updates the target framework to .NET 9/10.
-    * Adds NuGet packages (BASE/WINDOWS/BLAZOR_WEB) if needed.
+    * Adds NuGet packages (base, Microsoft, Blazor) if needed.
     * Removes legacy assembly references.
     * Validates converted projects.
     * Changes System.Data.SqlClient to Microsoft.Data.SqlClient.
@@ -55,7 +50,7 @@ XafApiConverter.exe <path> <step> [step] [step] [options]
 
 `-tf`, `--target-framework` - sets target .NET version: `net8.0`, `net9.0`, or `net10.0`. The default is `net9.0`.
 
-`-dx`, `--dx-version` - sets DevExpress version, for instance: `25.2.2`, `26.1.6`. The default is `25.1.6`.
+`-dx`, `--dx-version` - sets version of added/updated DevExpress packages, for instance: `25.2.2`, `26.1.6`. The default is `25.1.6`.
 
 `-o`, `--output <path>` - sets folder to save reports.
 
