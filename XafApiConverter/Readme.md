@@ -74,7 +74,7 @@ XafApiConverter.exe MySolution.sln security-update migrate-types project-convers
 ```
 
 > [!NOTE]  
-> Migrating from Web Forms to ASP.NET Core Blazor involves number of manual steps, detailed in the topic "[Migrate XAF ASP.NET WebForms to ASP.NET Core Blazor](https://docs.devexpress.com/eXpressAppFramework/405736)." It is recommended to follow the steps in order and use the **XafApiConverter** tool as described.
+> Migrating from Web Forms to ASP.NET Core Blazor involves number of manual steps, detailed in the topic: [Migrate XAF ASP.NET WebForms to ASP.NET Core Blazor](https://docs.devexpress.com/eXpressAppFramework/405736). It is recommended to follow the steps in order and use the **XafApiConverter** tool as described.
 
 ### Update legacy XAF Security System APIs
 
