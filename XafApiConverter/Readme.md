@@ -1,6 +1,6 @@
 # XAF - Converter for Legacy API
 
-XAF v25.2+ no longer supports .NET Framework certain legacy APIs and features based on .NET. Review the full list of non-supported APIs in the following knowledge base article: [T1312589 - XAF - Legacy .NET Framework (WinForms and ASP.NET WebForms) APIs, .NET-based API/Modules, and Security System have been removed from distribution](https://supportcenter.devexpress.com/ticket/details/t1312589/xaf-legacy-net-framework-winforms-and-asp-net-webforms-apis-net-based-api-modules-and).
+XAF v25.2+ no longer supports .NET Framework and certain legacy APIs and features based on .NET. Review the full list of non-supported APIs in the following knowledge base article: [T1312589 - XAF - Legacy .NET Framework (WinForms and ASP.NET WebForms) APIs, .NET-based API/Modules, and Security System have been removed from distribution](https://supportcenter.devexpress.com/ticket/details/t1312589/xaf-legacy-net-framework-winforms-and-asp-net-webforms-apis-net-based-api-modules-and).
 
 This repository includes our **XafApiConverter** utility - designed for those migrating an XAF application to v25.2+. It automates the following routine migration tasks:
 
@@ -98,4 +98,5 @@ XafApiConverter.exe MySolution.sln security-update migrate-types project-convers
 
 ```
 XafApiConverter.exe MySolution.sln migrate-types -b
+
 ```
