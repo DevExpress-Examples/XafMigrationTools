@@ -1,27 +1,25 @@
 # XAF - Converter for Legacy API
 
+XAF v25.2+ no longer supports .NET Framework certain legacy APIs and features based on .NET. Review the full list of non-supported APIs in the following knowledge base article: [T1312589 - XAF - Legacy .NET Framework (WinForms and ASP.NET WebForms) APIs, .NET-based API/Modules, and Security System have been removed from distribution](https://supportcenter.devexpress.com/ticket/details/t1312589/xaf-legacy-net-framework-winforms-and-asp-net-webforms-apis-net-based-api-modules-and).
 
-XAF v25.2 ends support for .NET Framework and other legacy APIs and features. Review the full list of removed APIs in the following knowledge base article: [T1312589 - XAF - Legacy .NET Framework (WinForms and ASP.NET WebForms) APIs, .NET-based API/Modules, and Security System have been removed from distribution](https://supportcenter.devexpress.com/ticket/details/t1312589/xaf-legacy-net-framework-winforms-and-asp-net-webforms-apis-net-based-api-modules-and).
-
-This repository contains the **XafApiConverter** tool that helps you migrate your XAF application to v25.2. It automates the following routine tasks:
+This repository includes our **XafApiConverter** utility - designed for those migrating an XAF application to v25.2+. It automates the following routine migration tasks:
 
 1. Updates legacy security APIs.
 2. Removes .NET Framework APIs, and legacy .NET-based APIs and modules.
-3. Converts your application from .NET Framework to .NET.
+3. Converts an application from .NET Framework to .NET.
 
-Find a full step-by-step migration guide in the following DevExpress help topic:
+Full step-by-step migration guide:
 * [Migrate XAF ASP.NET WebForms to ASP.NET Core Blazor](https://docs.devexpress.com/eXpressAppFramework/405736)
 
 ## How to Use the Converter
 
 > [!IMPORTANT]  
-> **XafApiConverter** analyzes semantic trees that depend on the DevExpress version. To recognize types correctly **the conversion should be performed on a v25.1 application**.
-
+> **XafApiConverter** analyzes semantic trees based on DevExpress product versions. To recognize types correctly, **conversion should be performed against a v25.1 based application**.
 
 1. Download the repository.
 2. Open the _XafApiConverter/Source/XafApiConverter.sln_ solution.
 3. Build the solution.
-4. Once completed, run the executable file from the command line. Use the following command format:
+4. Once complete, run the executable file from the command line. Use the following command format:
 
 ```console
 XafApiConverter.exe <path> <step> [step] [step] [options]
@@ -76,7 +74,7 @@ XafApiConverter.exe MySolution.sln security-update migrate-types project-convers
 ```
 
 > [!NOTE]  
-> Migrating from Web Forms to ASP.NET Core Blazor involves number of manual steps, detailed in the topic: [Migrate XAF ASP.NET WebForms to ASP.NET Core Blazor](https://docs.devexpress.com/eXpressAppFramework/405736). We recommend that you follow the steps in order and use the **XafApiConverter** tool as described.
+> Migrating from Web Forms to ASP.NET Core Blazor involves number of manual steps, detailed in the following topic: [Migrate XAF ASP.NET WebForms to ASP.NET Core Blazor](https://docs.devexpress.com/eXpressAppFramework/405736). We recommend that you follow the steps in order and use the **XafApiConverter** tool as described herein.
 
 ### Update legacy XAF Security System APIs
 
